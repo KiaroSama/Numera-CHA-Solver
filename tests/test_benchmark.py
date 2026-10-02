@@ -50,7 +50,11 @@ def test_invalid_benchmark_samples_fail_before_inference(tmp_path, document):
         sdk.close()
 
 
-@pytest.mark.parametrize("content", [b"{", b"\xff", b" " * (1024 * 1024 + 1)])
+@pytest.mark.parametrize(
+    "content",
+    [b"{", b"\xff", b" " * (1024 * 1024 + 1)],
+    ids=["malformed-json", "invalid-utf8", "oversized"],
+)
 def test_benchmark_decode_errors_are_sanitized(tmp_path, content):
     manifest = tmp_path / "samples.json"
     manifest.write_bytes(content)
