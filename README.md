@@ -2,21 +2,23 @@
 
 <div align="center">
 
-<img src="assets/brand/logo.png" width="150" alt="Numera blue and cyan circular logo">
+<img src="assets/brand/logo.png" width="320" alt="Numera blue and cyan circular logo">
 
-![Version](https://img.shields.io/badge/version-0.1.0-147da5)
-![License](https://img.shields.io/badge/license-Proprietary-586a85)
-![Language](https://img.shields.io/badge/language-Python-147da5)
-![Runtime](https://img.shields.io/badge/runtime-Python_3.12--3.14-147da5)
-![Platform](https://img.shields.io/badge/platform-Windows_11-147da5)
-![Inference](https://img.shields.io/badge/inference-ONNX_Runtime-147da5)
-![GPU](https://img.shields.io/badge/device-CUDA_or_explicit_CPU-147da5)
-![API](https://img.shields.io/badge/API-FastAPI-147da5)
-![Storage](https://img.shields.io/badge/storage-SQLite-147da5)
-![Dependencies](https://img.shields.io/badge/dependencies-uv_locked-147da5)
-![Dashboard](https://img.shields.io/badge/dashboard-local_HTML-147da5)
-[![Docs](https://img.shields.io/badge/docs-English_%2B_Persian-147da5)](docs/QUICKSTART.fa.md)
-[![Support donations](https://img.shields.io/badge/Support-donations-d04a9a)](#donate)
+![Version](https://img.shields.io/badge/version-0.1.0-2563EB?style=for-the-badge&labelColor=172033)
+![License](https://img.shields.io/badge/license-Proprietary-7C3AED?style=for-the-badge&labelColor=172033)
+![Language](https://img.shields.io/badge/language-Python-007ACC?style=for-the-badge&labelColor=172033)
+![Runtime](https://img.shields.io/badge/runtime-Python_3.12--3.14-4338CA?style=for-the-badge&labelColor=172033)
+
+![Platform](https://img.shields.io/badge/platform-Windows_11-0067C0?style=for-the-badge&labelColor=172033)
+![Inference](https://img.shields.io/badge/inference-ONNX_Runtime-9333EA?style=for-the-badge&labelColor=172033)
+![GPU](https://img.shields.io/badge/device-CUDA_or_explicit_CPU-3F7D00?style=for-the-badge&labelColor=172033)
+![API](https://img.shields.io/badge/API-FastAPI-00826D?style=for-the-badge&labelColor=172033)
+![Storage](https://img.shields.io/badge/storage-SQLite-0369A1?style=for-the-badge&labelColor=172033)
+
+![Dependencies](https://img.shields.io/badge/dependencies-uv_locked-BB1BCD?style=for-the-badge&labelColor=172033)
+![Dashboard](https://img.shields.io/badge/dashboard-local_HTML-C2410C?style=for-the-badge&labelColor=172033)
+[![Docs](https://img.shields.io/badge/docs-English_%2B_Persian-BE185D?style=for-the-badge&labelColor=172033)](docs/QUICKSTART.fa.md)
+[![Support donations](https://img.shields.io/badge/Support-donations-d04a9a?style=for-the-badge&labelColor=172033)](#donate)
 
 </div>
 
