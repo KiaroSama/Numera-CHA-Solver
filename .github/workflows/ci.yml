@@ -1,0 +1,46 @@
+name: CI
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: numera-ci
+  cancel-in-progress: false
+jobs:
+  windows-local:
+    runs-on: [self-hosted, Windows, X64, numera-cha, gpu]
+    timeout-minutes: 15
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Bind project-owned runtime
+        run: |
+          $runnerRoot = Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $env:RUNNER_WORKSPACE))
+          "NUMERA_RUNTIME_ROOT=$runnerRoot" >> $env:GITHUB_ENV
+          $configuration = Join-Path $runnerRoot 'data/runtime-config.json'
+          if (Test-Path -LiteralPath $configuration) {
+            $config = Get-Content -LiteralPath $configuration -Raw -Encoding utf8 | ConvertFrom-Json
+            "NUMERA_DLL_DIRECTORY=$($config.dll_directory)" >> $env:GITHUB_ENV
+          }
+          $temp = Join-Path $env:GITHUB_WORKSPACE '.ci-cache/tmp'
+          New-Item -ItemType Directory -Force -Path $temp | Out-Null
+          "TEMP=$temp" >> $env:GITHUB_ENV
+          "TMP=$temp" >> $env:GITHUB_ENV
+      - name: Locked setup
+        run: |
+          uv sync --locked --extra gpu --extra browser
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Deterministic, model, browser and packaging gates
+        run: ./scripts/ci.ps1 -Gpu -Browser
+      - name: Preserve safe test evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: validation
+          path: .ci-work/results.xml
+          if-no-files-found: warn
+          retention-days: 7

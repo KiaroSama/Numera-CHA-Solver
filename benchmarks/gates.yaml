@@ -1,0 +1,14 @@
+schema_version: 1
+promotion:
+  native_visual_subtype:
+    minimum_independent_held_out_samples: 100
+    require_dataset_license: true
+    require_no_training_calibration_overlap: true
+    exact_accuracy_lower_95ci: 0.90
+    maximum_abstention_rate: 0.20
+    require_owned_server_acceptance_for_e2e_claim: true
+  smoke:
+    permits_accuracy_claim: false
+    permits_provider_support_claim: false
+    require_actual_model_revision_and_device: true
+notes: "These are pre-registered promotion thresholds, not achieved measurements."
