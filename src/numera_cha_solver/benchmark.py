@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from .assets import read_asset
-from .core.contracts import InputError
+from .core.contracts import Error, InputError, Result
 from .sdk import Numera
 
 
@@ -23,37 +23,80 @@ def wilson(correct: int, count: int) -> list[float] | None:
     return [max(0, center - margin), min(1, center + margin)]
 
 
-async def benchmark(sdk: Numera, manifest: Path) -> dict[str, Any]:
-    if (await asyncio.to_thread(manifest.stat)).st_size > 1024 * 1024:
+def read_manifest(manifest: Path) -> tuple[dict[str, Any], list[tuple[dict[str, Any], Path]]]:
+    try:
+        with manifest.open("rb") as stream:
+            content = stream.read(1024 * 1024 + 1)
+    except OSError:
+        raise InputError("invalid_benchmark", "Benchmark manifest could not be read.") from None
+    if len(content) > 1024 * 1024:
         raise InputError("invalid_benchmark", "Benchmark manifest exceeds its size limit.")
-    document = json.loads(await asyncio.to_thread(manifest.read_text, encoding="utf-8"))
+    try:
+        document = json.loads(content.decode("utf-8"))
+    except (ValueError, RecursionError):
+        raise InputError(
+            "invalid_benchmark", "Benchmark manifest must be valid UTF-8 JSON."
+        ) from None
+    if not isinstance(document, dict):
+        raise InputError("invalid_benchmark", "Benchmark manifest must be a JSON object.")
     samples = document.get("samples")
+    license_name = document.get("license")
     if (
         not isinstance(samples, list)
         or not 1 <= len(samples) <= 1000
-        or not document.get("license")
+        or not isinstance(license_name, str)
+        or not license_name.strip()
+        or len(license_name) > 256
+        or not isinstance(document.get("kind", "unverified"), str)
     ):
         raise InputError("invalid_benchmark", "Use 1-1000 labeled licensed samples.")
-    rows: list[dict[str, Any]] = []
-    identities = set()
+    identities: set[str] = set()
+    validated = []
+    root = manifest.parent.resolve()
     for sample in samples:
+        if not isinstance(sample, dict):
+            raise InputError("invalid_benchmark", "Each benchmark sample must be an object.")
+        label, identity, name = sample.get("label"), sample.get("session_id"), sample.get("path")
         if (
-            not isinstance(sample.get("label"), str)
-            or not sample.get("session_id")
-            or sample["session_id"] in identities
+            not isinstance(label, str)
+            or len(label) > 4096
+            or not isinstance(identity, str)
+            or not identity.strip()
+            or len(identity) > 128
+            or identity in identities
+            or not isinstance(name, str)
+            or not name
+            or len(name) > 4096
         ):
             raise InputError(
-                "invalid_benchmark",
-                "Each sample needs a distinct challenge/session identity and text label.",
+                "invalid_benchmark", "Each sample needs a unique identity, label and path."
             )
-        identities.add(sample["session_id"])
-        path = (manifest.parent / sample["path"]).resolve()
-        if not path.is_relative_to(manifest.parent.resolve()):
+        identities.add(identity)
+        try:
+            relative = Path(name)
+            path = (root / relative).resolve()
+        except (OSError, ValueError):
+            raise InputError("invalid_benchmark", "Sample path is invalid.") from None
+        if relative.is_absolute() or not path.is_relative_to(root):
             raise InputError(
                 "invalid_benchmark", "Sample paths must remain inside the manifest directory."
             )
+        validated.append((sample, path))
+    return document, validated
+
+
+async def benchmark(sdk: Numera, manifest: Path) -> dict[str, Any]:
+    document, samples = await asyncio.to_thread(read_manifest, manifest)
+    rows: list[dict[str, Any]] = []
+    for sample, path in samples:
         started = time.monotonic()
-        result = await sdk.recognize({"kind": "image", "asset": read_asset(path, sdk.settings)})
+        try:
+            content = await asyncio.to_thread(read_asset, path, sdk.settings)
+            result = await sdk.recognize({"kind": "image", "asset": content})
+        except (InputError, OSError):
+            result = Result(
+                "failed", error=Error("invalid_asset", "Benchmark sample could not be safely read.")
+            )
         rows.append(
             {
                 "session_id": sample["session_id"],

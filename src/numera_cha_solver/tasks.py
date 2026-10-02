@@ -125,8 +125,17 @@ class TaskService:
         return result
 
     async def close(self) -> None:
-        if self.consumer is not None:
-            self.consumer.cancel()
-            await asyncio.gather(self.consumer, return_exceptions=True)
-        self.sdk.close()
-        self.store.close()
+        try:
+            if self.consumer is not None:
+                self.consumer.cancel()
+                await asyncio.gather(self.consumer, return_exceptions=True)
+            while not self.queue.empty():
+                identifier, _, _ = self.queue.get_nowait()
+                self.pending.discard(identifier)
+                self.store.finish(identifier, {"outcome": "cancelled", "server_verified": False})
+                self.queue.task_done()
+        finally:
+            try:
+                self.sdk.close()
+            finally:
+                self.store.close()

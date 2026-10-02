@@ -16,13 +16,21 @@ class VerificationContext:
 
 
 def validate_assessment(assessment: dict[str, Any], expected: VerificationContext) -> Result:
-    if not expected.hostname or not expected.session_id:
+    if (
+        any(
+            not isinstance(value, str) or not value.strip()
+            for value in (expected.provider, expected.hostname, expected.session_id)
+        )
+        or not isinstance(expected.action, str)
+        or type(expected.test_keys) is not bool
+        or not isinstance(assessment, dict)
+    ):
         return Result(
             "failed",
             mode="browser_protocol",
             error=Error(
                 "verification_context",
-                "Verification requires an expected hostname and session identity.",
+                "Verification requires a valid provider, hostname and session context.",
             ),
         )
     if assessment.get("success") is not True:
@@ -32,6 +40,7 @@ def validate_assessment(assessment: dict[str, Any], expected: VerificationContex
             error=Error("server_rejected", "Owner-side verification did not accept the response."),
         )
     for field, value in (
+        ("provider", expected.provider),
         ("hostname", expected.hostname),
         ("action", expected.action),
         ("session_id", expected.session_id),

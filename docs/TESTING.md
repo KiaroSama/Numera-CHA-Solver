@@ -2,7 +2,7 @@
 
 The confirmed test seams are SDK/CLI, API/task lifecycle, real model/device, owned browser and distribution contents. Tests exercise public behavior; no mocked result is counted as model inference.
 
-Focused TDD tracers were run while implementing arithmetic, missing models, image availability, durable cancellation/idempotency, API authorization and assessment binding. The final integrated suite runs once in manually dispatched Windows CI, not as duplicate local and remote suites.
+Focused TDD tracers were run while implementing arithmetic, missing models, image availability, durable cancellation/idempotency, API authorization and assessment binding. Continuation regressions cover SDK method parity, provider binding, malformed benchmark manifests, queued shutdown cancellation and recovery after partial startup failure; each repaired seam first reproduced its failure. Additional bounded public cases cover input shape, corrupt assets, TTL and queue pressure. The final integrated suite runs once in manually dispatched Windows CI, not as duplicate local and remote suites.
 
 ## Manual local runner
 

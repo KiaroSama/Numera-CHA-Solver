@@ -1,6 +1,8 @@
 # Validation
 
-Status: initial implementation; final integrated CI pending.
+Status: partial local application. Initial runtime revision `f9e71d87cb1205f6dd659234fc458339b2251452` passed manual Windows CI [36944907182](https://github.com/KiaroSama/Numera-CHA-Solver/actions/runs/36944907182): 24 passed, 0 failed, 0 skipped, 1 upstream TestClient deprecation warning; measured code coverage 67%. This evidence does not certify later revisions.
+
+Continuation: shared SDK routes, explicit subtype rejection, provider-bound assessment, bounded benchmark validation and lifecycle cleanup repairs have focused regression evidence. The integrated CI result for this continuation is pending until the final commit is published; no newer SHA is marked green here.
 
 ## Observed focused execution
 

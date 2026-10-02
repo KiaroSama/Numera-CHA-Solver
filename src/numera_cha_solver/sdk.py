@@ -16,6 +16,30 @@ class Numera:
 
         self.engine = OCREngine(self.settings)
 
+    async def detect(self, value: Input | dict[str, Any]) -> dict[str, object]:
+        from .detection import detect
+
+        return detect(value if isinstance(value, Input) else Input.from_dict(value))
+
+    async def solve(self, value: Input | dict[str, Any], deadline: float | None = None) -> Result:
+        """Local recognition only; no browser action or implied owner acceptance."""
+        return await self.recognize(value, deadline)
+
+    async def capabilities(self) -> dict[str, Any]:
+        from .capabilities import capabilities
+
+        return await asyncio.to_thread(capabilities, self.settings)
+
+    async def models(self) -> list[dict[str, Any]]:
+        from .models import ModelRegistry
+
+        return await asyncio.to_thread(ModelRegistry(self.settings).list)
+
+    async def doctor(self) -> dict[str, Any]:
+        from .diagnostics import doctor
+
+        return await asyncio.to_thread(doctor, self.settings)
+
     async def recognize(
         self, value: Input | dict[str, Any], deadline: float | None = None
     ) -> Result:
@@ -23,6 +47,18 @@ class Numera:
             request = value if isinstance(value, Input) else Input.from_dict(value)
             if deadline is not None and deadline <= time.monotonic():
                 return Result("expired", error=Error("expired", "Task deadline exhausted."))
+            supported = {
+                "text": {"auto", "arithmetic"},
+                "image": {"auto", "generic_text_line"},
+            }
+            if request.kind in supported and request.subtype not in supported[request.kind]:
+                return Result(
+                    "unsupported",
+                    subtype=request.subtype,
+                    error=Error(
+                        "unsupported_subtype", "No evaluated local engine for this subtype."
+                    ),
+                )
             if request.kind == "text":
                 answer = evaluate(request.text)
                 return Result(

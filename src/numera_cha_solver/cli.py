@@ -9,11 +9,8 @@ from pathlib import Path
 
 from .assets import read_asset
 from .benchmark import benchmark
-from .capabilities import capabilities
 from .config import Settings
 from .core.contracts import Input, InputError
-from .detection import detect
-from .diagnostics import doctor
 from .logging import close, initialize
 from .models import ModelRegistry
 from .sdk import Numera
@@ -59,7 +56,7 @@ async def execute(args: argparse.Namespace, settings: Settings) -> tuple[dict, i
     sdk = Numera(settings)
     try:
         if args.command in {"capabilities", "report"}:
-            return capabilities(settings), 0
+            return await sdk.capabilities(), 0
         if args.command == "models":
             registry = ModelRegistry(settings)
             if args.operation == "list":
@@ -67,7 +64,7 @@ async def execute(args: argparse.Namespace, settings: Settings) -> tuple[dict, i
             status = await asyncio.to_thread(getattr(registry, args.operation), args.model)
             return status, 0 if status["availability"] == "ready" else 3
         if args.command == "doctor":
-            status = await asyncio.to_thread(doctor, settings)
+            status = await sdk.doctor()
             if args.smoke:
                 result = await sdk.recognize(
                     {"kind": "image", "asset": read_asset(args.smoke, settings)}
@@ -88,8 +85,8 @@ async def execute(args: argparse.Namespace, settings: Settings) -> tuple[dict, i
             )
         )
         if args.command == "detect":
-            return detect(request), 0
-        result = await sdk.recognize(request)
+            return await sdk.detect(request), 0
+        result = await getattr(sdk, args.command)(request)
         return result.to_dict(), 0 if result.outcome == "recognized" else 3 if result.outcome in {
             "unsupported",
             "needs_user_action",

@@ -13,12 +13,49 @@ def test_token_or_wrong_context_is_never_server_verified():
     ):
         assert validate_assessment(assessment, expected).server_verified is False
     result = validate_assessment(
-        {"success": True, "hostname": "localhost", "action": "test", "session_id": "session-a"},
+        {
+            "provider": "turnstile",
+            "success": True,
+            "hostname": "localhost",
+            "action": "test",
+            "session_id": "session-a",
+        },
         expected,
     )
     assert result.outcome == "challenge_completed"
     assert result.server_verified is False
     assert result.evidence["test_key_integration"] is True
+
+
+def test_provider_binding_is_required_for_owner_acceptance():
+    expected = VerificationContext("turnstile", "localhost", "test", "session-a", False)
+    valid = {
+        "provider": "turnstile",
+        "success": True,
+        "hostname": "localhost",
+        "action": "test",
+        "session_id": "session-a",
+    }
+    for provider in (None, "recaptcha", ""):
+        result = validate_assessment({**valid, "provider": provider}, expected)
+        assert result.outcome == "failed"
+        assert result.server_verified is False
+    assert validate_assessment(valid, expected).server_verified is True
+
+
+@pytest.mark.parametrize(
+    "context",
+    [
+        VerificationContext("", "localhost", "test", "session-a", False),
+        VerificationContext("turnstile", "", "test", "session-a", False),
+        VerificationContext("turnstile", "localhost", "test", "", False),
+        VerificationContext("turnstile", "localhost", "test", "session-a", "false"),
+    ],
+)
+def test_invalid_verification_context_cannot_claim_acceptance(context):
+    result = validate_assessment({"success": True}, context)
+    assert result.outcome == "failed"
+    assert result.error.code == "verification_context"
 
 
 def test_geometry_round_trip_and_stale_revision():

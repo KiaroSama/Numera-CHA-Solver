@@ -53,6 +53,8 @@ async def example():
 asyncio.run(example())
 ```
 
+Async SDK methods: `recognize`, `solve`, `detect`, `capabilities`, `models`, and `doctor`. CLI and HTTP adapters reuse these routes. `solve` is local recognition only: it does not click a widget, submit a token, or imply owner acceptance. Explicit subtypes must match an implemented engine (`arithmetic` for text, `generic_text_line` for images); unsupported subtypes fail closed.
+
 `recognized` never implies `server_verified`. The synchronous wrapper rejects an already-running event loop rather than deadlocking.
 
 ## CLI and API

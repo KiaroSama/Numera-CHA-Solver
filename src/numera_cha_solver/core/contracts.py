@@ -56,7 +56,7 @@ class Input:
     revision: str = ""
 
     def __post_init__(self) -> None:
-        if self.kind not in {"text", "image", "audio", "browser"}:
+        if not isinstance(self.kind, str) or self.kind not in {"text", "image", "audio", "browser"}:
             raise InputError("invalid_input", "Unsupported input kind.")
         for name in ("text", "subtype", "allowed_characters", "revision"):
             if not isinstance(getattr(self, name), str):
@@ -70,10 +70,17 @@ class Input:
 
     @classmethod
     def from_dict(cls, value: dict[str, Any]) -> "Input":
+        if not isinstance(value, dict):
+            raise InputError("invalid_input", "Input must be an observation object.")
         allowed = {"kind", "text", "asset", "subtype", "allowed_characters", "revision"}
         if set(value) - allowed:
             raise InputError("invalid_input", "Unknown input fields are not permitted.")
-        if value.get("kind") not in {"text", "image", "audio", "browser"}:
+        if not isinstance(value.get("kind"), str) or value["kind"] not in {
+            "text",
+            "image",
+            "audio",
+            "browser",
+        }:
             raise InputError("invalid_input", "Input kind must be text, image, audio or browser.")
         for name in allowed - {"kind", "asset"}:
             if not isinstance(value.get(name, ""), str):

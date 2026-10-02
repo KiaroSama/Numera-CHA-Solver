@@ -16,10 +16,8 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field
 
 from . import __version__
-from .capabilities import capabilities
 from .config import Settings
-from .core.contracts import Input
-from .detection import detect
+from .core.contracts import Input, InputError
 from .models import ModelRegistry
 from .sdk import Numera
 from .store import TaskStore
@@ -59,17 +57,30 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
         owner = ServerOwnership(settings.data_dir / ".server-owner.lock")
         owner.acquire()
-        sdk = Numera(settings)
-        store = TaskStore(settings.data_dir / "tasks.sqlite3", settings.result_ttl)
-        service = TaskService(sdk, store)
-        app.state.sdk, app.state.store, app.state.tasks = sdk, store, service
-        await service.start()
+        sdk = None
+        store = None
+        service = None
         try:
+            sdk = Numera(settings)
+            store = TaskStore(settings.data_dir / "tasks.sqlite3", settings.result_ttl)
+            service = TaskService(sdk, store)
+            app.state.sdk, app.state.store, app.state.tasks = sdk, store, service
+            await service.start()
             yield
         finally:
-            await service.close()
-            sessions.clear()
-            owner.close()
+            try:
+                if service is not None:
+                    await service.close()
+                else:
+                    try:
+                        if sdk is not None:
+                            sdk.close()
+                    finally:
+                        if store is not None:
+                            store.close()
+            finally:
+                sessions.clear()
+                owner.close()
 
     app = FastAPI(
         title="Numera CHA-Solver",
@@ -181,6 +192,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             exc.status_code,
         )
 
+    @app.exception_handler(InputError)
+    async def observation_error(request: Request, exc: InputError):
+        return JSONResponse(
+            {
+                "error": {"code": exc.code, "message": str(exc)},
+                "request_id": request.state.request_id,
+            },
+            422,
+        )
+
     @app.exception_handler(RequestValidationError)
     async def input_error(request: Request, exc: RequestValidationError):
         return JSONResponse(
@@ -222,15 +243,15 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @app.get("/v1/capabilities", dependencies=[Depends(authorize)])
     async def inventory():
-        return capabilities(settings)
+        return await app.state.sdk.capabilities()
 
     @app.get("/v1/models", dependencies=[Depends(authorize)])
     async def models():
-        return {"models": ModelRegistry(settings).list(), "device": settings.device}
+        return {"models": await app.state.sdk.models(), "device": settings.device}
 
     @app.post("/v1/detect", dependencies=[Depends(authorize)])
     async def detection(payload: AssetRequest):
-        return detect(payload.input())
+        return await app.state.sdk.detect(payload.input())
 
     @app.post("/v1/recognize", dependencies=[Depends(authorize)])
     async def recognize(payload: AssetRequest):
