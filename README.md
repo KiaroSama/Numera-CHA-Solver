@@ -4,21 +4,7 @@
 
 <img src="assets/brand/logo.png" width="320" alt="Numera blue and cyan circular logo">
 
-![Version](https://img.shields.io/badge/version-0.1.0-0d6efd?style=flat-square)
-![License](https://img.shields.io/badge/license-Proprietary-2ea44f?style=flat-square)
-![Language](https://img.shields.io/badge/language-Python-3776ab?style=flat-square)
-![Runtime](https://img.shields.io/badge/runtime-Python_3.12--3.14-3776ab?style=flat-square)
-
-![Platform](https://img.shields.io/badge/platform-Windows_11-2563eb?style=flat-square)
-![Inference](https://img.shields.io/badge/inference-ONNX_Runtime-2563eb?style=flat-square)
-![GPU](https://img.shields.io/badge/device-CUDA_or_explicit_CPU-2563eb?style=flat-square)
-![API](https://img.shields.io/badge/API-FastAPI-008080?style=flat-square)
-![Storage](https://img.shields.io/badge/storage-SQLite-2563eb?style=flat-square)
-
-![Dependencies](https://img.shields.io/badge/dependencies-uv_locked-008080?style=flat-square)
-![Dashboard](https://img.shields.io/badge/dashboard-local_HTML-2563eb?style=flat-square)
-[![Docs](https://img.shields.io/badge/docs-English_%2B_Persian-0369a1?style=flat-square)](docs/QUICKSTART.fa.md)
-[![Support donations](https://img.shields.io/badge/Support-donations-d04a9a)](#donate)
+[![License: Proprietary](https://img.shields.io/badge/License-Proprietary-2ea44f?style=flat-square)](LICENSE) [![Version: 0.1.0](https://img.shields.io/badge/Version-0.1.0-0d6efd?style=flat-square)](pyproject.toml) [![Language: Python](https://img.shields.io/badge/Language-Python-3776ab?style=flat-square)](pyproject.toml) [![Python: 3.12–3.14](https://img.shields.io/badge/Python-3.12--3.14-3776ab?style=flat-square)](pyproject.toml) [![OS: Windows 11](https://img.shields.io/badge/OS-Windows%2011-2563eb?style=flat-square)](docs/QUICKSTART.fa.md) [![Inference: ONNX Runtime](https://img.shields.io/badge/Inference-ONNX%20Runtime-2563eb?style=flat-square)](docs/MODELS.md) [![Device: CUDA or explicit CPU](https://img.shields.io/badge/Device-CUDA%20or%20explicit%20CPU-2563eb?style=flat-square)](docs/GPU.md) [![API: FastAPI](https://img.shields.io/badge/API-FastAPI-2563eb?style=flat-square)](docs/ARCHITECTURE.md) [![Storage: SQLite](https://img.shields.io/badge/Storage-SQLite-2563eb?style=flat-square)](docs/ARCHITECTURE.md) [![Dependencies: uv locked](https://img.shields.io/badge/Dependencies-uv%20locked-008080?style=flat-square)](uv.lock) [![Dashboard: local HTML](https://img.shields.io/badge/Dashboard-local%20HTML-2563eb?style=flat-square)](docs/QUICKSTART.fa.md) [![Documentation: English and Persian](https://img.shields.io/badge/Docs-English%20%7C%20Persian-0369a1?style=flat-square)](docs/QUICKSTART.fa.md) [![Support donations](https://img.shields.io/badge/Support-donations-d04a9a)](#donate)
 
 </div>
 
