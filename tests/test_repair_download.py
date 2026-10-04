@@ -60,7 +60,6 @@ def test_download_crash_releases_lease_and_live_contender_stays_busy(tmp_path, m
             registry.fetch("ppocr-v6-small")
         assert recovered.value.code == "offline_boundary"
     finally:
-        release.set()
         if process.is_alive():
             process.terminate()
         process.join(5)

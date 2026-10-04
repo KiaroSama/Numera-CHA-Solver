@@ -104,14 +104,14 @@ class OCREngine:
             with self.state_lock:
                 self._check(generation, deadline)
             return response
+        except InputError:
+            self._invalidate(generation)
+            raise
         except (EOFError, BrokenPipeError, OSError, ValueError):
             self._invalidate(generation)
             raise InputError(
                 "worker_failed", "Owned inference worker exited unexpectedly."
             ) from None
-        except InputError:
-            self._invalidate(generation)
-            raise
         finally:
             self.lock.release()
 
