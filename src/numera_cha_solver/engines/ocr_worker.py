@@ -162,7 +162,6 @@ def worker(connection: Connection, settings: Settings) -> None:
                         "cpu_preprocessing": True,
                         "preprocessing": "bgr48-pillow-bilinear-ctc-v1",
                         "character_count": len(characters),
-                        "input_shape": list(batch.shape),
                     }
                     profile_path.unlink(missing_ok=True)
                     profile_path = None
@@ -171,7 +170,7 @@ def worker(connection: Connection, settings: Settings) -> None:
                         "text": text,
                         "confidence": score,
                         "device": settings.device,
-                        "evidence": execution_evidence,
+                        "evidence": {**execution_evidence, "input_shape": list(batch.shape)},
                     }
                 )
             except InputError as exc:

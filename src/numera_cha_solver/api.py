@@ -18,7 +18,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from . import __version__
 from .config import Settings
 from .core.contracts import Input, InputError
-from .models import ModelRegistry
+from .readiness import Readiness
 from .sdk import Numera
 from .store import TaskStore
 from .tasks import TaskService
@@ -43,7 +43,7 @@ class AssetRequest(BaseModel):
         )
 
 
-def create_app(settings: Settings | None = None) -> FastAPI:
+def create_app(settings: Settings | None = None, *, ownership=None, on_ready=None) -> FastAPI:
     settings = settings or Settings.from_env()
     if not settings.api_token:
         raise ValueError("Set NUMERA_API_TOKEN or use the authenticated serve command.")
@@ -55,17 +55,23 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     async def lifespan(app: FastAPI):
         from .ownership import ServerOwnership
 
-        owner = ServerOwnership(settings.data_dir / ".server-owner.lock")
-        owner.acquire()
+        owner = ownership or ServerOwnership(settings.data_dir / ".server-owner.lock")
+        if ownership is None:
+            owner.acquire()
         sdk = None
         store = None
         service = None
+        health = None
         try:
+            health = Readiness(settings)
+            app.state.readiness = health
             sdk = Numera(settings)
             store = TaskStore(settings.data_dir / "tasks.sqlite3", settings.result_ttl)
             service = TaskService(sdk, store)
             app.state.sdk, app.state.store, app.state.tasks = sdk, store, service
             await service.start()
+            if on_ready is not None:
+                on_ready()
             yield
         finally:
             try:
@@ -79,8 +85,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                         if store is not None:
                             store.close()
             finally:
-                sessions.clear()
-                owner.close()
+                try:
+                    if health is not None:
+                        await health.close()
+                finally:
+                    sessions.clear()
+                    owner.close()
 
     app = FastAPI(
         title="Numera CHA-Solver",
@@ -221,14 +231,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @app.get("/health/ready")
     async def ready():
-        status = ModelRegistry(settings).verify("ppocr-v6-small")
-        return {
-            "ready": True,
-            "model_assets_ready": status["availability"] == "ready",
-            "arithmetic_ready": True,
-            "model": status,
-            "gpu_execution_verified": False,
-        }
+        return await app.state.readiness.get()
 
     @app.post("/v1/session", dependencies=[Depends(authorize)])
     async def login(response: Response):

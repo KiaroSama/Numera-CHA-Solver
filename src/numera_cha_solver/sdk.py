@@ -15,6 +15,7 @@ class Numera:
         from .engines.ocr import OCREngine
 
         self.engine = OCREngine(self.settings)
+        self.inflight = 0
 
     async def detect(self, value: Input | dict[str, Any]) -> dict[str, object]:
         from .detection import detect
@@ -43,10 +44,29 @@ class Numera:
     async def recognize(
         self, value: Input | dict[str, Any], deadline: float | None = None
     ) -> Result:
+        if self.inflight >= self.settings.queue_size:
+            return Result("failed", error=Error("inference_busy", "Recognition admission is full."))
+        self.inflight += 1
+        try:
+            return await self._recognize(value, deadline)
+        finally:
+            self.inflight -= 1
+
+    async def _recognize(
+        self, value: Input | dict[str, Any], deadline: float | None = None
+    ) -> Result:
+        subtype = value.subtype if isinstance(value, Input) else "auto"
         try:
             request = value if isinstance(value, Input) else Input.from_dict(value)
+            subtype = (
+                request.subtype
+                if request.subtype != "auto"
+                else ("generic_text_line" if request.kind == "image" else "arithmetic")
+            )
             if deadline is not None and deadline <= time.monotonic():
-                return Result("expired", error=Error("expired", "Task deadline exhausted."))
+                return Result(
+                    "expired", subtype=subtype, error=Error("expired", "Task deadline exhausted.")
+                )
             supported = {
                 "text": {"auto", "arithmetic"},
                 "image": {"auto", "generic_text_line"},
@@ -71,10 +91,15 @@ class Numera:
                 from .assets import image
                 from .models import ModelRegistry
 
-                image(request.asset, self.settings)
-                response = await self.engine.recognize(
-                    request.asset, deadline or (time.monotonic() + self.settings.deadline_seconds)
+                deadline = (
+                    deadline
+                    if deadline is not None
+                    else (time.monotonic() + self.settings.deadline_seconds)
                 )
+                async with asyncio.timeout(max(0, deadline - time.monotonic())):
+                    decoded = await asyncio.to_thread(image, request.asset, self.settings)
+                    decoded.close()
+                    response = await self.engine.recognize(request.asset, deadline)
                 text, score = response["text"], response["confidence"]
                 abstained = not text or score < self.settings.confidence_threshold
                 if request.allowed_characters and any(
@@ -108,11 +133,20 @@ class Numera:
                 "runtime_unavailable",
             }
             return Result(
-                "unsupported" if exc.code in unavailable else "failed",
+                "expired"
+                if exc.code == "expired"
+                else "cancelled"
+                if exc.code == "cancelled"
+                else "unsupported"
+                if exc.code in unavailable
+                else "failed",
+                subtype=subtype,
                 error=Error(exc.code, str(exc)),
             )
         except TimeoutError:
-            return Result("expired", error=Error("expired", "Task deadline exhausted."))
+            return Result(
+                "expired", subtype=subtype, error=Error("expired", "Task deadline exhausted.")
+            )
 
     def close(self) -> None:
         self.engine.close()

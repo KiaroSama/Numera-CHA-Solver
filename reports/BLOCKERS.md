@@ -11,4 +11,10 @@
 | Latest Python/uv | Latest3.14.8 unavailable in uv metadata; uv update blocked by busy unrelateduvx. | Latest metadata checked; existing3.14.7 used. | Update with supported official runtime once available and re-run packaging/model compatibility. |
 | Platform breadth | Windows primary tested only; clean supported-version/Linux matrices not yet run. | Portable core/locked packaging retained. | Run platform matrix with available runners; do not infer cross-platform GPU reliability. |
 
+## Next perception slice: explicit intake
+
+The owner confirmed on 2026-10-04 that no licensed labeled image set is available. Offline perception does not require live credentials, but it still requires licensed inputs and traceable weights before accuracy can be measured. The named MIT-code reference `DannyLuna17/VisionAIRecaptchaSolver` was inspected at `133aaa47ba28f027e0c3ffec4a8708ca3daf7bae`; its code license alone does not establish dataset/weight redistribution or evaluated accuracy here. No provider engine was copied or claimed operational.
+
+Next bounded experiment: obtain an owner-controlled labeled image subtype set with dataset provenance/license; verify the selected checkpoint's own license and immutable hash; evaluate only local perception with exact-string/tile metrics before considering owner-browser integration. Domain replication, hosts/certificate changes and stealth are excluded. Other provider subtypes remain unevaluated, not disproved or inherited from the generic OCR smoke.
+
 This is a partial first release, not full completion of the original multi-provider mission.

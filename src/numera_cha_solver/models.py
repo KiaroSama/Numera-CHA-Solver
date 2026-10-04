@@ -39,6 +39,7 @@ class ModelRegistry:
     def verify(self, model_id: str) -> dict[str, Any]:
         model = self.get(model_id)
         failures = []
+        deadline = time.monotonic() + self.settings.deadline_seconds
         directory = self.directory(model_id)
         for asset in model["assets"]:
             path = directory / asset["file"]
@@ -48,9 +49,15 @@ class ModelRegistry:
             if path.is_symlink() or path.stat().st_size != asset["size"]:
                 failures.append({"file": asset["file"], "reason": "size_or_path_mismatch"})
                 continue
+            digest = hashlib.sha256()
             with path.open("rb") as stream:
-                digest = hashlib.file_digest(stream, "sha256").hexdigest()
-            if digest != asset["sha256"]:
+                while chunk := stream.read(1024 * 1024):
+                    if time.monotonic() >= deadline:
+                        raise InputError(
+                            "expired", "Model integrity verification deadline exhausted."
+                        )
+                    digest.update(chunk)
+            if digest.hexdigest() != asset["sha256"]:
                 failures.append({"file": asset["file"], "reason": "checksum_mismatch"})
         availability = (
             "ready"
@@ -76,14 +83,15 @@ class ModelRegistry:
         model = self.get(model_id)
         directory = self.directory(model_id)
         directory.mkdir(parents=True, exist_ok=True)
-        lock = directory / ".download.lock"
+        from .ownership import ServerOwnership
+
+        lease = ServerOwnership(directory / ".download.lock")
         try:
-            descriptor = os.open(lock, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
-        except FileExistsError:
+            lease.acquire()
+        except RuntimeError:
             raise InputError(
                 "model_busy", "Another model download owns this revision; retry after it completes."
             ) from None
-        os.close(descriptor)
         deadline = time.monotonic() + self.settings.deadline_seconds
         try:
             with httpx.Client(timeout=30, follow_redirects=False, trust_env=False) as client:
@@ -105,7 +113,7 @@ class ModelRegistry:
                 "download_failed", "Model download failed; no incomplete asset was published."
             ) from None
         finally:
-            lock.unlink(missing_ok=True)
+            lease.close()
 
     @staticmethod
     def _download(

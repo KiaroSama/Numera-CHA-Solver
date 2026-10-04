@@ -4,12 +4,11 @@ import argparse
 import asyncio
 import json
 import os
-import secrets
 from pathlib import Path
 
 from .assets import read_asset
 from .benchmark import benchmark
-from .config import Settings
+from .config import Settings, project_root
 from .core.contracts import Input, InputError
 from .logging import close, initialize
 from .models import ModelRegistry
@@ -97,69 +96,20 @@ async def execute(args: argparse.Namespace, settings: Settings) -> tuple[dict, i
 
 def main() -> int:
     args = parser().parse_args()
-    settings = Settings.from_env(device=args.device)
-    logger = initialize(settings.log_dir, debug=args.debug)
+    logger = initialize(project_root() / "logs", debug=args.debug)
     code = 0
     try:
+        settings = Settings.from_env(device=args.device)
         if args.device == "cpu":
             logger.warning("gpu explicit CPU inference selected")
         if args.command == "serve":
-            if not 1 <= args.port <= 65535:
-                raise InputError("invalid_config", "Port must be between 1 and 65535.")
-            token = settings.api_token
-            if not token:
-                token = secrets.token_urlsafe(32)
-                settings.data_dir.mkdir(parents=True, exist_ok=True)
-                path = settings.data_dir / "api-token.txt"
-                descriptor = os.open(path, os.O_CREAT | os.O_TRUNC | os.O_WRONLY, 0o600)
-                with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
-                    stream.write(token)
-                if os.name == "nt":
-                    import subprocess
+            from .startup import serve
 
-                    sid = subprocess.run(
-                        ["whoami", "/user", "/fo", "csv", "/nh"],
-                        capture_output=True,
-                        text=True,
-                        encoding="utf-8",
-                        timeout=5,
-                        creationflags=subprocess.CREATE_NO_WINDOW,
-                    )
-                    import csv
-
-                    identity = next(csv.reader([sid.stdout.strip()]))[1]
-                    permissions = subprocess.run(
-                        ["icacls", str(path), "/inheritance:r", "/grant:r", f"*{identity}:F"],
-                        capture_output=True,
-                        timeout=5,
-                        creationflags=subprocess.CREATE_NO_WINDOW,
-                    )
-                    if permissions.returncode != 0:
-                        path.unlink(missing_ok=True)
-                        raise InputError(
-                            "credential_permissions",
-                            "Local credential ACL could not be restricted.",
-                        )
-                logger.info(
-                    "config local API credential written to restricted data file; value not printed"
-                )
-            from dataclasses import replace
-
-            import uvicorn
-
-            from .api import create_app
-
-            uvicorn.run(
-                create_app(replace(settings, api_token=token)),
-                host=args.host,
-                port=args.port,
-                log_level="warning",
-                access_log=False,
-            )
+            serve(settings, args.host, args.port)
         else:
             response, code = asyncio.run(execute(args, settings))
             print(json.dumps(response, ensure_ascii=False, indent=2))
-    except (InputError, ValueError, OSError) as exc:
+    except (InputError, ValueError, OSError, RuntimeError) as exc:
         code = 2
         message = (
             str(exc)

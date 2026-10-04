@@ -1,6 +1,7 @@
 """Small evaluation reports preserve failures and abstentions in denominators."""
 
 import asyncio
+import hashlib
 import json
 import math
 import statistics
@@ -51,6 +52,7 @@ def read_manifest(manifest: Path) -> tuple[dict[str, Any], list[tuple[dict[str, 
     ):
         raise InputError("invalid_benchmark", "Use 1-1000 labeled licensed samples.")
     identities: set[str] = set()
+    paths: set[Path] = set()
     validated = []
     root = manifest.parent.resolve()
     for sample in samples:
@@ -71,6 +73,9 @@ def read_manifest(manifest: Path) -> tuple[dict[str, Any], list[tuple[dict[str, 
             raise InputError(
                 "invalid_benchmark", "Each sample needs a unique identity, label and path."
             )
+        source_id = sample.get("source_id", identity)
+        if not isinstance(source_id, str) or not source_id.strip() or len(source_id) > 128:
+            raise InputError("invalid_benchmark", "Source identity must be a bounded string.")
         identities.add(identity)
         try:
             relative = Path(name)
@@ -81,17 +86,39 @@ def read_manifest(manifest: Path) -> tuple[dict[str, Any], list[tuple[dict[str, 
             raise InputError(
                 "invalid_benchmark", "Sample paths must remain inside the manifest directory."
             )
+        if path in paths:
+            raise InputError(
+                "invalid_benchmark",
+                "Duplicate canonical sample paths are not independent evidence.",
+            )
+        paths.add(path)
         validated.append((sample, path))
     return document, validated
 
 
 async def benchmark(sdk: Numera, manifest: Path) -> dict[str, Any]:
     document, samples = await asyncio.to_thread(read_manifest, manifest)
+    hashes: dict[Path, str] = {}
+    seen_hashes: set[str] = set()
+    for _, path in samples:
+        try:
+            content = await asyncio.to_thread(read_asset, path, sdk.settings)
+        except (InputError, OSError):
+            continue
+        digest = hashlib.sha256(content).hexdigest()
+        if digest in seen_hashes:
+            raise InputError(
+                "invalid_benchmark", "Duplicate asset content is not independent evidence."
+            )
+        seen_hashes.add(digest)
+        hashes[path] = digest
     rows: list[dict[str, Any]] = []
     for sample, path in samples:
         started = time.monotonic()
         try:
             content = await asyncio.to_thread(read_asset, path, sdk.settings)
+            if hashlib.sha256(content).hexdigest() != hashes.get(path):
+                raise InputError("invalid_asset", "Sample changed after manifest validation.")
             result = await sdk.recognize({"kind": "image", "asset": content})
         except (InputError, OSError):
             result = Result(
@@ -121,7 +148,16 @@ async def benchmark(sdk: Numera, manifest: Path) -> dict[str, Any]:
         "p95_ms": latencies[min(count - 1, math.ceil(0.95 * count) - 1)],
         "license": document["license"],
         "dataset_kind": document.get("kind", "unverified"),
-        "limited_evidence": count < 100 or document.get("kind") != "held_out",
+        "unique_asset_count": len(seen_hashes),
+        "independent_unit_count": len(
+            {sample.get("source_id", sample["session_id"]) for sample, _ in samples}
+        ),
+        "split_provenance": document.get("split_provenance", "unverified"),
+        "limited_evidence": True,
+        "qualification": (
+            "Exact duplicates excluded; near-duplicates and training/calibration overlap "
+            "remain unverified. Promotion gates have not been evaluated."
+        ),
         "live_acceptance_measured": False,
         "rows": rows,
     }

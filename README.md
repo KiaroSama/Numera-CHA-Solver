@@ -61,7 +61,7 @@ Async SDK methods: `recognize`, `solve`, `detect`, `capabilities`, `models`, and
 
 Commands: `doctor`, `capabilities`, `models list|verify|fetch`, `detect`, `recognize`, `solve`, `serve`, `benchmark`, `report`. JSON goes to stdout; logs go to stderr and per-run files. Exit0success,2invalidinput/config,3unavailable/abstention,4failedrecognition,130cancelled.
 
-HTTP: `/health/live`, `/health/ready`, `/v1/capabilities`, `/v1/models`, `/v1/detect`, `/v1/recognize`, `/v1/tasks`, `/v1/tasks/{id}`, `/v1/tasks/{id}/cancel`. Bearer or local same-origin session required for v1; task creation requires `Idempotency-Key`. Strict JSON input accepts local data, not arbitrary paths/URLs/endpoints. Default queue32, taskbudget120seconds, resultTTL24hours.
+HTTP: `/health/live`, `/health/ready`, `/v1/capabilities`, `/v1/models`, `/v1/detect`, `/v1/recognize`, `/v1/tasks`, `/v1/tasks/{id}`, `/v1/tasks/{id}/cancel`. Bearer or local same-origin session required for v1; task creation requires `Idempotency-Key`. Strict JSON input accepts local data, not arbitrary paths/URLs/endpoints. Default queue32, taskbudget120seconds, retrieval TTL24hours (not a physical-purge guarantee). `/health/ready` returns a timestamped cached integrity snapshot; `checking` is not model readiness. Recognition overload returns `inference_busy`.
 
 ## Evidence and coverage
 
@@ -106,7 +106,7 @@ Real first-party PP-OCRv6small weights read the owned synthetic `NUMERA 123` sam
 
 ## Logs
 
-UTF8 diagnostic files live under `logs`, resolved from project root. One per execution: `<script>_YYYY-MM-DD_HH-mm-ss_UTC.log`; UTC entries `[timestamp UTC] [LEVEL] [COMPONENT] Message`. INFO/WARNING/ERROR/DEBUG supported; `--debug` enables verbose operational metadata. Logging initialization falls back safely to stderr. Pythonlogsrotateat2MBwith2backupsperrun; no automatic deletion of realoperationalruns. Credentials, authorization, cookies, response tokens, signed URLs and raw inputs are not logged. Attach only sanitized relevant logs, never credentials/raw private assets.
+UTF8 diagnostic files live under `logs`, resolved from project root. One per execution: `<script>_YYYY-MM-DD_HH-mm-ss_UTC.log`; UTC entries `[timestamp UTC] [LEVEL] [COMPONENT] Message`. INFO/WARNING/ERROR/DEBUG supported; `--debug` enables verbose operational metadata. Logging initialization falls back safely to stderr. Python handlers sanitize quoted/nested fields and exception text before formatting; unsafe formatting falls back to a fixed message. Pythonlogsrotateat2MBwith2backupsperrun; no automatic deletion of realoperationalruns. Credentials, authorization, cookies, response tokens, signed URLs and raw inputs are not logged. Attach only sanitized relevant logs, never credentials/raw private assets.
 
 ## Development and manual CI
 

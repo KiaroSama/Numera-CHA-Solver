@@ -32,6 +32,12 @@ class Settings:
     confidence_threshold: float = 0.7
 
     def __post_init__(self) -> None:
+        if not isinstance(self.dll_directory, str) or len(self.dll_directory) > 4096:
+            raise InputError(
+                "invalid_config", "Runtime library directory must be a bounded path string."
+            )
+        if self.dll_directory and not Path(self.dll_directory).is_dir():
+            raise InputError("invalid_config", "Runtime library directory is unavailable.")
         if self.device not in {"cuda", "cpu"}:
             raise InputError("invalid_config", "Device must be explicitly cuda or cpu.")
         if not 1 <= self.deadline_seconds <= 120 or not 1 <= self.queue_size <= 64:
@@ -67,8 +73,22 @@ class Settings:
             if path.is_file():
                 import json
 
-                configured = json.loads(path.read_text(encoding="utf-8"))
-                values["dll_directory"] = configured.get("dll_directory", "")
+                try:
+                    with path.open("rb") as stream:
+                        content = stream.read(64 * 1024 + 1)
+                    if len(content) > 64 * 1024:
+                        raise ValueError
+                    configured = json.loads(content.decode("utf-8"))
+                    if not isinstance(configured, dict):
+                        raise ValueError
+                    directory = configured.get("dll_directory", "")
+                    if not isinstance(directory, str):
+                        raise ValueError
+                except (OSError, ValueError, RecursionError):
+                    raise InputError(
+                        "invalid_config", "Saved runtime configuration is invalid or unreadable."
+                    ) from None
+                values["dll_directory"] = directory
         return cls(**values)
 
     @property

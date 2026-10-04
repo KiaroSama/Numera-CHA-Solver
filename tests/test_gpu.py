@@ -24,5 +24,14 @@ def test_owned_ascii_real_model_gpu_execution():
         assert result.device == "cuda"
         assert result.evidence["profile_node_counts"]["CUDAExecutionProvider"] > 0
         assert result.server_verified is False
+        sdk.close()
+        from dataclasses import replace
+
+        sdk = Numera(replace(settings, device="cpu"))
+        cpu = asyncio.run(sdk.recognize({"kind": "image", "asset": asset}))
+        assert cpu.answer == result.answer
+        assert cpu.device == "cpu"
+        assert cpu.evidence["input_shape"] == result.evidence["input_shape"]
+        assert cpu.server_verified is False
     finally:
         sdk.close()
