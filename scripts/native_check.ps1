@@ -7,6 +7,13 @@ $code=0
 try{
     $root=Get-ProjectRoot
     Initialize-NativeEnvironment
+    if($Operation -in @('worker-cancel','worker-fixture','task-active')){
+        $fixture=Join-Path $root '.ci-work/worker-fixture.exe'
+        [IO.Directory]::CreateDirectory((Split-Path -Parent $fixture))|Out-Null
+        $env:NUMERA_FIXTURE_WORKER_EXECUTABLE=$fixture
+        $code=Invoke-BoundedCommand (Get-RustTool rustc) @((Join-Path $root 'tests/fixtures/worker.rs'),'--edition=2024','--crate-type=bin','-o',$fixture) -WallSeconds 60 -IdleSeconds 30
+        if($code -ne 0){throw 'Native controlled worker fixture did not compile.'}
+    }
     $executable=Get-RustTool cargo
     $arguments=switch($Operation){
         'compile' {@('check','--locked','--all-targets');break}

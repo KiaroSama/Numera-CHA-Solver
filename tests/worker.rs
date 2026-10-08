@@ -10,19 +10,8 @@ fn fixture_engine(
 ) -> (OCREngine, tokio::net::TcpListener) {
     let listener = TcpListener::bind("127.0.0.1:0").expect("isolated control port");
     listener.set_nonblocking(true).expect("nonblocking");
-    let executable = std::env::split_paths(&std::env::var_os("PATH").expect("PATH"))
-        .map(|directory| directory.join(if cfg!(windows) { "pwsh.exe" } else { "pwsh" }))
-        .find(|path| path.is_file())
-        .expect("existing PowerShell 7 executable");
-    let mut command = Command::new(executable);
+    let mut command = Command::new(fixture_executable());
     command
-        .args([
-            "-NoLogo",
-            "-NoProfile",
-            "-NonInteractive",
-            "-Command",
-            FIXTURE_SCRIPT,
-        ])
         .env(
             "NUMERA_FIXTURE_ADDRESS",
             listener.local_addr().expect("address").to_string(),
@@ -38,6 +27,17 @@ fn fixture_engine(
         OCREngine::with_runtime(settings, command, verify),
         tokio::net::TcpListener::from_std(listener).expect("control listener"),
     )
+}
+fn fixture_executable() -> std::path::PathBuf {
+    let path = std::path::PathBuf::from(
+        std::env::var_os("NUMERA_FIXTURE_WORKER_EXECUTABLE")
+            .expect("Compile tests/fixtures/worker.rs with the native CI fixture stage first."),
+    );
+    assert!(
+        path.is_absolute() && path.is_file(),
+        "Native fixture executable must be an explicit existing absolute path."
+    );
+    path
 }
 fn ready() -> Arc<dyn Fn() -> Result<Value, Error> + Send + Sync> {
     Arc::new(|| Ok(json!({"availability":"ready"})))
@@ -100,32 +100,6 @@ impl Drop for ProcessHandle {
     }
 }
 
-// PowerShell is an existing launcher prerequisite. Its raw streams avoid libtest's stdout banner.
-// This fixture exchanges the real worker framing; it is lifecycle evidence, never model accuracy.
-const FIXTURE_SCRIPT: &str = r#"
-$ErrorActionPreference='Stop'
-trap {[IO.File]::WriteAllText($env:NUMERA_FIXTURE_DIAGNOSTIC,$_.Exception.Message,[Text.UTF8Encoding]::new($false));exit 2}
-[IO.File]::WriteAllText($env:NUMERA_FIXTURE_DIAGNOSTIC,'fixture-started',[Text.UTF8Encoding]::new($false))
-$parts=$env:NUMERA_FIXTURE_ADDRESS.Split(':');$client=[Net.Sockets.TcpClient]::new()
-$client.Connect($parts[0],[int]$parts[1]);$control=$client.GetStream();$control.ReadTimeout=5000;$control.WriteTimeout=2000
-$pidBytes=[BitConverter]::GetBytes([uint32]$PID);$control.Write($pidBytes);$control.Flush()
-if($env:NUMERA_FIXTURE_MODE -eq 'handshake'){$null=$control.ReadByte()}
-$workerInput=[Console]::OpenStandardInput();$workerOutput=[Console]::OpenStandardOutput()
-function Send-Frame([string]$Json){$bytes=[Text.Encoding]::UTF8.GetBytes($Json);$workerOutput.Write([BitConverter]::GetBytes([uint32]$bytes.Length));$workerOutput.Write($bytes);$workerOutput.Flush()}
-Send-Frame '{"ready":true}'
-[IO.File]::AppendAllText($env:NUMERA_FIXTURE_DIAGNOSTIC,'|ready-sent',[Text.UTF8Encoding]::new($false))
-while($true){
-    $length=[byte[]]::new(4);$first=$workerInput.ReadByte();if($first -lt 0){break};$length[0]=[byte]$first;$workerInput.ReadExactly($length,1,3)
-    $count=[BitConverter]::ToUInt32($length);if($count -gt 8388608){exit 2};$content=[byte[]]::new($count);$workerInput.ReadExactly($content)
-    [IO.File]::AppendAllText($env:NUMERA_FIXTURE_DIAGNOSTIC,'|request-read',[Text.UTF8Encoding]::new($false))
-    $control.WriteByte(73);$control.Flush()
-    if($env:NUMERA_FIXTURE_MODE -eq 'inference'){$null=$control.ReadByte()}
-    if($env:NUMERA_FIXTURE_MODE -eq 'crash'){exit 0}
-    Send-Frame '{"text":"owned","confidence":1.0,"device":"cpu","evidence":{}}'
-}
-$client.Dispose()
-"#;
-
 #[tokio::test]
 async fn fixture_startup_and_binary_frame_roundtrip_without_engine() {
     use tokio::io::{AsyncReadExt, AsyncWriteExt};
@@ -133,24 +107,14 @@ async fn fixture_startup_and_binary_frame_roundtrip_without_engine() {
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
         .await
         .expect("port");
-    let executable = std::env::split_paths(&std::env::var_os("PATH").expect("PATH"))
-        .map(|directory| directory.join("pwsh.exe"))
-        .find(|path| path.is_file())
-        .expect("PowerShell 7");
-    let mut command = tokio::process::Command::new(executable);
+    let mut command = tokio::process::Command::new(fixture_executable());
     command
-        .args([
-            "-NoLogo",
-            "-NoProfile",
-            "-NonInteractive",
-            "-Command",
-            FIXTURE_SCRIPT,
-        ])
         .env(
             "NUMERA_FIXTURE_ADDRESS",
             listener.local_addr().expect("address").to_string(),
         )
         .env("NUMERA_FIXTURE_MODE", "ready")
+        .env("NUMERA_ROOT", root.path())
         .env(
             "NUMERA_FIXTURE_DIAGNOSTIC",
             root.path().join("worker-diagnostic.txt"),

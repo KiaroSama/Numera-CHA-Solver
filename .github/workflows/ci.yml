@@ -35,11 +35,6 @@ jobs:
           [IO.Directory]::CreateDirectory($temp) | Out-Null
           "TEMP=$temp" >> $env:GITHUB_ENV
           "TMP=$temp" >> $env:GITHUB_ENV
-      - name: Bind temporary source oracle without installing application dependencies
-        run: |
-          $source = Join-Path $env:NUMERA_RUNTIME_ROOT '.venv/Scripts/python.exe'
-          if (-not (Test-Path -LiteralPath $source -PathType Leaf)) { throw 'Pinned source-oracle runtime is unavailable.' }
-          "NUMERA_ORACLE_PYTHON=$source" >> $env:GITHUB_ENV
       - name: Native parity, device, browser, package and launcher gates
         run: ./scripts/native_ci.ps1 -Gpu -Browser
       - name: Preserve bounded native evidence

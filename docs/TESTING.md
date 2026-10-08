@@ -10,7 +10,7 @@ The final integrated pass belongs to manually dispatched Windows CI after all co
 ./scripts/native_ci.ps1 -Gpu -Browser
 ```
 
-Use locally only for an explicitly selected run or recorded CI-unavailable fallback. Development uses compile/format checks and one narrowly scoped tracer only when the next edit needs its result. Native libtest has no universal per-case kill timeout: async/process tests use explicit bounds and the captured outer runner provides wall/idle/tree-cleanup ceilings. Two compiler jobs, one test thread and one GPU operation avoid shared-resource oversubscription.
+Use locally only for an explicitly selected run or recorded CI-unavailable fallback. Development uses compile/format checks and one narrowly scoped tracer only when the next edit needs its result. Native libtest has no universal per-case kill timeout: async/process tests use explicit bounds and the captured outer runner provides wall/idle/tree-cleanup ceilings. Two compiler jobs, one test thread and one GPU operation avoid shared-resource oversubscription. CI compiles the standalone synthetic Rust worker once before the worker regressions; direct worker-test invocations require `NUMERA_FIXTURE_WORKER_EXECUTABLE` pointing to that compiled fixture. Focused worker checks through `scripts/native_check.ps1` prepare it automatically.
 
 ## Required tiers
 

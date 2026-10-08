@@ -140,6 +140,9 @@ try{
     $env:NUMERA_WORKER_EXECUTABLE=Join-Path $root 'target/debug/numera-cha.exe'
     if($build -eq 0){
         $env:NUMERA_WORKER_EXECUTABLE=$null
+        $fixture=Join-Path $work 'worker-fixture.exe'
+        $env:NUMERA_FIXTURE_WORKER_EXECUTABLE=$fixture
+        $null=Run-Stage 'native-worker-fixture-build' (Get-RustTool rustc) @((Join-Path $root 'tests/fixtures/worker.rs'),'--edition=2024','--crate-type=bin','-o',$fixture) 60 30
         $null=Run-Stage 'all-native-tests' $cargo @('test','--locked','--all-targets','--no-fail-fast','--jobs','2','--','--test-threads=1') 420 120
         $env:NUMERA_WORKER_EXECUTABLE=$null
         $browserOutput=Join-Path $work 'browser-output.txt'
