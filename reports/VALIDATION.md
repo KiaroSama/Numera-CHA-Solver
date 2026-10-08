@@ -1,6 +1,14 @@
 # Validation
 
-## Rust migration — verified before source retirement (2026-10-08)
+## Rust migration — final native runtime verified (2026-10-08)
+
+Final runtime revision `43c272e7288bb75196b62e443f703a29baea811e` passed [CI 37802044609](https://github.com/KiaroSama/Numera-CHA-Solver/actions/runs/37802044609): **43 native tests, 0 failed/ignored, all 16 stages exited 0**. This includes regenerated historic-source fixtures, actual CUDA/explicit CPU, all seven worker lifecycle cases, headless dashboard, installed package/launchers and native-written copied-state rollback. The full native test stage took 50.78s including compilation; worker cases took 2.61s; cold optimized release build took 355.22s with two compiler jobs. Runner PID 65692 exited and the project-owned executable sweep was empty.
+
+The exact CI release executable was installed and SHA256 verified: `d9ef043b90a637b008aade6bb9f4fe7f0a71866ac1a19332fff83cda5b6bacd8`. After this green run, inspected old application/test environments, duplicate build outputs, CI checkout/staging and project test caches were removed. Read-only files in the disposable checkout required clearing their read-only attribute; inspected cache links were removed without following them. Current native binary/runtime notices, model assets, user data/configuration, maintained fixtures, operational logs, Git history and shared tools were preserved. The offline dedicated runner installation/registration remains infrastructure, not a second application version.
+
+The application runtime is Rust 0.2.0; retained HTML/CSS/JavaScript is the approved dashboard, C# is the narrow Windows launcher ownership adapter, and remaining Python files are historic-oracle/headless-test tooling only. Migration completion does not imply new provider support, real CAPTCHA accuracy, statistical timing stability or full measured Rust line coverage. The sections below preserve earlier commit-bound evidence; their pending statements describe those historical checkpoints, superseded by this final run.
+
+### Pre-retirement rehearsal
 
 Native revision `4a5e60b5592623253d39650853efa05e32a0c007` passed [CI 37777670392](https://github.com/KiaroSama/Numera-CHA-Solver/actions/runs/37777670392): 43 native tests, 0 failed/ignored; all 15 stages exited 0. The test stage took 38.48 seconds including compilation; cold optimized release build took 307.35 seconds with two compiler jobs. Actual CUDA/explicit CPU, headless dashboard, package allowlist/hashes/licenses, installed setup/doctor/start/stop and native-written copied-state rollback passed. The owned runner stopped after the job.
 
