@@ -1,12 +1,18 @@
 # Validation
 
-## Rust migration — in progress (2026-10-08)
+## Rust migration — verified before source retirement (2026-10-08)
 
-Rust 0.2.0 is implemented in the working tree but is not yet certified as the replacement. No migration commit/push or final exact-SHA native CI has occurred; old source/runtime remain until all gates and rollback pass.
+Native revision `4a5e60b5592623253d39650853efa05e32a0c007` passed [CI 37777670392](https://github.com/KiaroSama/Numera-CHA-Solver/actions/runs/37777670392): 43 native tests, 0 failed/ignored; all 15 stages exited 0. The test stage took 38.48 seconds including compilation; cold optimized release build took 307.35 seconds with two compiler jobs. Actual CUDA/explicit CPU, headless dashboard, package allowlist/hashes/licenses, installed setup/doctor/start/stop and native-written copied-state rollback passed. The owned runner stopped after the job.
+
+The first native run failed two test assertions and a bounded worker-fixture startup case. Assertions were corrected without weakening expected answers; the fixture gained public-state diagnostics without raising limits. Replacement CI passed every case. One replacement pass is not a statistical claim that the earlier timing failure can never recur.
+
+Source-retirement changes follow this successful rehearsal and need their own verification. Historical source regeneration from the fixed Git revision has been exercised with a fresh frozen test-only environment and matches all maintained expectations. Final retirement/cleanup status remains pending below.
+
+The evidence above certifies the pre-retirement migration revision, not any later unverified edit. Old application source is retired only after that green run; user databases, reviewed models, original operational logs and Git history are retained.
 
 Observed native focused evidence: 24 source arithmetic cases; initial 10 SDK cases; owned ASCII preprocessing 184320 bytes exactly equal to pinned Pillow output; actual CLI answer `36`; actual CUDA OCR `NUMERA 123` with 187 CUDA/2 CPU support nodes and `[1,3,48,320]`; 13 source-generated HTTP status/body/header cases including >2 MiB JSON input; restricted atomic credential replacement/failure preservation. These are focused development checks, not full-suite evidence. Current source oracle runs Python 3.14.8, while historical release evidence below ran 3.14.7.
 
-Required native lifecycle, installed package/launchers, full CUDA/CPU parity, headless dashboard, source-runtime copied-state rollback, replay/resource comparisons and final cleanup remain unverified. The controlled worker binary-protocol isolation and handshake/inference cancellation/reap/successor tracers now pass (0.66s and 4.16s); initial fixture failures remain recorded, and a single focused pass is not repeat-stability evidence. Verification-time cancellation, public deadline, active shutdown and unacknowledged-result race regressions still await final CI. Fixture mappings await final CI, not inferred green from implementation.
+Native lifecycle, installed package/launchers, owned CUDA/CPU parity, headless dashboard and copied-state rollback are now verified on the named native revision. Broader real-data evaluation, comparative peak memory/VRAM and statistical performance claims are not established; final source-retirement verification and disposable cleanup remain pending. The controlled worker binary-protocol isolation and handshake/inference cancellation/reap/successor tracers now pass (0.66s and 4.16s); initial fixture failures remain recorded, and a single focused pass is not repeat-stability evidence. Verification-time cancellation, public deadline, active shutdown and unacknowledged-result race regressions passed the replacement CI. All 45 source-function dispositions have native/parity coverage or the single explicit owner-approved Python SDK retirement; the native case count differs because source parametrizations are grouped.
 
 Status: partial local application. Initial runtime revision `f9e71d87cb1205f6dd659234fc458339b2251452` passed manual Windows CI [36944907182](https://github.com/KiaroSama/Numera-CHA-Solver/actions/runs/36944907182): 24 passed, 0 failed, 0 skipped, 1 upstream TestClient deprecation warning; measured code coverage 67%. This evidence does not certify later revisions.
 

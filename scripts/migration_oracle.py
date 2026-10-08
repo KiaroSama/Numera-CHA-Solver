@@ -5,11 +5,13 @@ import ast
 import hashlib
 import json
 import platform
+import os
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "src"))
+SOURCE_ROOT = Path(os.environ.get("NUMERA_ORACLE_SOURCE", ROOT)).resolve()
+sys.path.insert(0, str(SOURCE_ROOT / "src"))
 
 from numera_cha_solver.core.arithmetic import evaluate  # noqa: E402
 from numera_cha_solver.core.contracts import InputError  # noqa: E402
@@ -35,13 +37,13 @@ def arithmetic_cases():
 
 def source_inventory():
     rows = []
-    for path in sorted((ROOT / "tests").glob("test_*.py")):
+    for path in sorted((SOURCE_ROOT / "tests").glob("test_*.py")):
         content = path.read_bytes().replace(b"\r\n", b"\n")
         tree = ast.parse(content.decode("utf-8"))
         for node in tree.body:
             if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name.startswith("test_"):
                 rows.append({
-                    "source": path.relative_to(ROOT).as_posix(), "name": node.name,
+                    "source": path.relative_to(SOURCE_ROOT).as_posix(), "name": node.name,
                     "source_sha256": hashlib.sha256(content).hexdigest(), "source_hash_normalization": "CRLF to LF only",
                     "target": None, "status": "pending",
                 })
@@ -136,9 +138,10 @@ def main():
     try:
         import subprocess
         source_revision = "a8e25292317621e900d908c56927c489eecae06a"
-        verified = subprocess.run(["git", "diff", "--quiet", source_revision, "--", "src/numera_cha_solver", "pyproject.toml", "uv.lock", ".python-version", "tests/fixtures/ocr/ascii-smoke.png"], cwd=ROOT, capture_output=True, timeout=5, creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0)
-        if verified.returncode != 0:
-            raise RuntimeError("Source oracle differs from its pinned revision; generation is blocked.")
+        if SOURCE_ROOT == ROOT:
+            verified = subprocess.run(["git", "diff", "--quiet", source_revision, "--", "src/numera_cha_solver", "pyproject.toml", "uv.lock", ".python-version", "tests/fixtures/ocr/ascii-smoke.png"], cwd=ROOT, capture_output=True, timeout=5, creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0)
+            if verified.returncode != 0:
+                raise RuntimeError("Source oracle differs from its pinned revision; generation is blocked.")
         args.output.mkdir(parents=True, exist_ok=True)
         document = {
             "source_revision": "a8e25292317621e900d908c56927c489eecae06a",

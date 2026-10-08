@@ -1,6 +1,6 @@
 # Native Windows operation
 
-The replacement application is a Rust executable and library. The existing dashboard remains HTML/CSS/JavaScript. Python is not an application prerequisite; the temporary migration oracle and headless browser harness use the preserved source environment only during verification.
+The replacement application is a Rust executable and library. The existing dashboard remains HTML/CSS/JavaScript. Python is not an application prerequisite. Development/CI verification uses a disposable frozen test-only environment and a temporary Git snapshot of the historic source; neither is a second installed application version.
 
 ## Intentional Python SDK retirement
 
@@ -26,7 +26,7 @@ Setup stages only the approved existing local ONNX Runtime libraries:
 - `onnxruntime_providers_shared.dll`
 - `onnxruntime_providers_cuda.dll`
 
-They live in `data/runtime`, together with ONNX Runtime license and third-party notices. If absent there, setup can copy them from the existing project source environment. `-RuntimeSourceRoot <path>` selects another explicitly supplied local project runtime source. No native runtime download, model acquisition, Python installation or CUDA installation happens automatically. CUDA dependencies remain at the configured `NUMERA_DLL_DIRECTORY` or saved runtime configuration path. Missing runtime/license files block staging instead of inventing readiness.
+They live in `data/runtime`, together with ONNX Runtime license and third-party notices. If absent there, setup requires an explicitly supplied approved native runtime source; the prior Python environment fallback is retired. `-RuntimeSourceRoot <path>` selects another explicitly supplied local project runtime source. No native runtime download, model acquisition, Python installation or CUDA installation happens automatically. CUDA dependencies remain at the configured `NUMERA_DLL_DIRECTORY` or saved runtime configuration path. Missing runtime/license files block staging instead of inventing readiness.
 
 For an extracted native package, `setup.ps1 -Yes` checks the included executable/runtime without invoking Cargo or Python. A package does not include source for rebuilding; replace it with a newly inspected package while preserving data/models/configuration. Do not overlay an active executable.
 
@@ -73,4 +73,4 @@ This command is for the integrator's final manually dispatched Windows CI, not a
 
 Required tiers are native parity, preprocessing, adapters, lifecycle, GPU and CLI tests; source-generated fixture drift, a headless native-dashboard harness, an inspected package, installed executable and launcher checks also run. Build concurrency is two; test threads are one because global log/environment state and GPU execution are exclusive. Missing tiers or pending source-test mappings fail closed. Independent stage failures are collected before reporting. The source oracle compares immutable arithmetic/SDK/tensor fixtures and source test identities/hashes; it never regenerates expected answers from Rust.
 
-Keep old source/environment deployable until the final gates and copied-state rollback rehearsal pass. Only the integrator performs the approved allowlisted retirement. Never delete model assets, user data, operational logs, shared Rust/Python/CUDA tools or history as part of package cleanup. No runtime, packaging, browser, device or rollback success should be claimed merely because this procedure is documented.
+The pre-retirement migration passed all 15 stages on `4a5e60b` in [CI 37777670392](https://github.com/KiaroSama/Numera-CHA-Solver/actions/runs/37777670392). The previous application source and source-only tests/helpers are retired after the copied-state rollback rehearsal. Native fixtures remain maintained. `scripts/source_oracle.ps1` extracts the exact historic source revision into temporary project state, restores its frozen test environment when required, runs generation/rollback and removes the snapshot. Its disposable environment is not deployed and can be recreated; final cleanup removes it. Post-retirement changes require their own affected verification; prior CI is not automatically evidence for a new tree. Never delete model assets, user data, operational logs, shared Rust/Python/CUDA tools or history as part of package cleanup. No runtime, packaging, browser, device or rollback success should be claimed merely because this procedure is documented.

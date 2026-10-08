@@ -17,19 +17,7 @@ try{
             if(-not $process.WaitForExit(5000)){throw 'Owned server termination could not be confirmed.'}
             Write-RunLog INFO cleanup "Stopped owned native server pid=$($record.pid)."
         }
-    }else{
-        # Keep the old launch record readable during rollback; never kill its launcher shell.
-        $owner=Get-Process -Id ([int]$record.owner_pid) -ErrorAction SilentlyContinue
-        if($owner){
-            if($owner.StartTime.ToUniversalTime().ToString('o') -ne ([datetime]$record.owner_start).ToUniversalTime().ToString('o')){throw 'Legacy ownership identity does not match; no process was stopped.'}
-            $prefix=$root.TrimEnd('\','/')+[IO.Path]::DirectorySeparatorChar
-            $children=@(Get-CimInstance Win32_Process -Filter "ParentProcessId=$($owner.Id)"|Where-Object{$_.ExecutablePath -and $_.ExecutablePath.StartsWith($prefix,[StringComparison]::OrdinalIgnoreCase)})
-            foreach($child in $children){
-                $process=Get-Process -Id $child.ProcessId -ErrorAction SilentlyContinue
-                if($process -and $process.StartTime -ge $owner.StartTime){$process.Kill($true);if(-not $process.WaitForExit(5000)){throw 'Owned legacy child termination could not be confirmed.'}}
-            }
-        }
-    }
+    }else{throw 'Unsupported ownership record; no process was stopped.'}
     if([IO.File]::Exists($state)){[IO.File]::Delete($state)}
     Write-RunLog INFO cleanup 'Owned server stopped or already exited.'
 }catch{$code=1;Write-RunLog ERROR cleanup $_.Exception.Message}

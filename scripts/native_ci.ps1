@@ -119,9 +119,7 @@ try{
     $oracle=Join-Path $work ('oracle-'+[guid]::NewGuid().ToString('N'))
     [IO.Directory]::CreateDirectory($oracle)|Out-Null
     try{
-        if(-not $env:NUMERA_ORACLE_PYTHON){$env:NUMERA_ORACLE_PYTHON=Join-Path $RuntimeRoot '.venv/Scripts/python.exe'}
-        $python=Get-ProjectPython
-        if((Run-Stage 'source-oracle' $python @((Join-Path $PSScriptRoot 'migration_oracle.py'),'--output',$oracle) 90 30) -eq 0){
+        if((Run-Stage 'source-oracle' $pwsh @('-NoLogo','-NoProfile','-NonInteractive','-File',(Join-Path $PSScriptRoot 'source_oracle.ps1'),'-Work',$oracle) 180 60) -eq 0){
             foreach($name in @('arithmetic.json','sdk.json','ascii-preprocess.f32','preprocess.json','http.json','request-digests.json','contracts.json')){
                 $expected=Join-Path $root "tests/fixtures/parity/$name";$actual=Join-Path $oracle $name
                 if(-not [IO.File]::Exists($actual)){$failures.Add("oracle-drift:$name");continue}
@@ -137,6 +135,7 @@ try{
             if(@(Compare-Object $expected $actual).Count){$failures.Add('source-test-inventory-drift')}
         }
     }finally{if([IO.Directory]::Exists($oracle)){[IO.Directory]::Delete($oracle,$true)}}
+    $python=Get-ProjectPython
     $build=Run-Stage 'native-debug-build' $cargo @('build','--locked','--bin','numera-cha','--jobs','2') 300 120
     $env:NUMERA_WORKER_EXECUTABLE=Join-Path $root 'target/debug/numera-cha.exe'
     if($build -eq 0){
@@ -171,7 +170,7 @@ try{
                 $null=Run-Stage 'installed-setup-no-source' $pwsh @('-NoLogo','-NoProfile','-NonInteractive','-File',(Join-Path $installed 'scripts/setup.ps1'),'-Yes','-Engine','cpu') 60 30 '' $work
                 $null=Run-Stage 'installed-stop-without-owner' $pwsh @('-NoLogo','-NoProfile','-NonInteractive','-File',(Join-Path $installed 'scripts/stop.ps1')) 30 15 '' $work
                 $rollbackWork=Join-Path $work ('rollback-'+[guid]::NewGuid().ToString('N'))
-                $rollbackStatus=Run-Stage 'copied-source-runtime-rollback' $python @($rollbackScript,'--executable',$native,'--work',$rollbackWork) 90 30 (Join-Path $work 'rollback-result.txt') $root
+                $rollbackStatus=Run-Stage 'copied-source-runtime-rollback' $pwsh @('-NoLogo','-NoProfile','-NonInteractive','-File',(Join-Path $PSScriptRoot 'source_oracle.ps1'),'-Operation','Rollback','-Executable',$native,'-Work',$rollbackWork) 180 60 (Join-Path $work 'rollback-result.txt') $root
                 if($rollbackStatus -eq 0 -and [IO.Directory]::Exists($rollbackWork)){[IO.Directory]::Delete($rollbackWork,$true)}
                 $launcherWatch=[Diagnostics.Stopwatch]::StartNew();$launcherStatus=0
                 try{Test-InstalledLaunchers $installed $pwsh $work}catch{$launcherStatus=1;$failures.Add('installed-start-stop');Write-RunLog ERROR verification $_.Exception.Message}

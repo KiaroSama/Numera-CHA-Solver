@@ -1,1 +1,0 @@
-"""Isolated local inference adapters."""

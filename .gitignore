@@ -37,6 +37,7 @@ dist/
 /.ci-runner-win/
 /.ci-work/
 /.ci-cache/
+/.ci-oracle-env/
 .env
 .env.*
 !.env.example

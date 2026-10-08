@@ -24,7 +24,7 @@ function Write-RunLog([ValidateSet('INFO','WARNING','ERROR','DEBUG')][string]$Le
 }
 function Get-ProjectRoot { $script:Root }
 function Get-ProjectPython {
-    $python=if($env:NUMERA_ORACLE_PYTHON){$env:NUMERA_ORACLE_PYTHON}else{Join-Path $script:Root '.venv/Scripts/python.exe'}
+    $python=if($env:NUMERA_ORACLE_PYTHON){$env:NUMERA_ORACLE_PYTHON}else{Join-Path $script:Root '.ci-oracle-env/Scripts/python.exe'}
     if(-not [IO.File]::Exists($python)){throw 'Source-oracle environment is missing. It is needed only during migration verification.'}
     $python
 }
@@ -55,13 +55,13 @@ function Copy-NativeRuntime {
     $destination=Join-Path $script:Root 'data/runtime'
     $names=@('onnxruntime.dll','onnxruntime_providers_shared.dll','onnxruntime_providers_cuda.dll')
     $source=Join-Path $SourceRoot 'data/runtime'
-    if(-not [IO.File]::Exists((Join-Path $source 'onnxruntime.dll'))){$source=Join-Path $SourceRoot '.venv/Lib/site-packages/onnxruntime/capi'}
+    if(-not [IO.File]::Exists((Join-Path $source 'onnxruntime.dll'))){throw 'Approved native ONNX runtime DLLs must be supplied under data/runtime.'}
     foreach($name in $names){
         $path=Join-Path $source $name
         if(-not [IO.File]::Exists($path) -or ((Get-Item -LiteralPath $path -Force).Attributes -band [IO.FileAttributes]::ReparsePoint)){throw 'Reviewed native runtime DLLs are missing or linked. Supply the approved local ONNX Runtime; no download was attempted.'}
     }
     $licenseSource=Join-Path $SourceRoot 'data/runtime/licenses'
-    if(-not [IO.File]::Exists((Join-Path $licenseSource 'LICENSE'))){$licenseSource=Join-Path $SourceRoot '.venv/Lib/site-packages/onnxruntime'}
+    if(-not [IO.File]::Exists((Join-Path $licenseSource 'LICENSE'))){throw 'Approved native ONNX runtime license texts must be supplied.'}
     foreach($name in @('LICENSE','ThirdPartyNotices.txt')){if(-not [IO.File]::Exists((Join-Path $licenseSource $name))){throw 'Native runtime redistribution notices are unavailable; staging is blocked.'}}
     [IO.Directory]::CreateDirectory($destination)|Out-Null
     foreach($name in $names){

@@ -11,7 +11,8 @@ import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "src"))
+SOURCE_ROOT = Path(os.environ.get("NUMERA_ORACLE_SOURCE", ROOT)).resolve()
+sys.path.insert(0, str(SOURCE_ROOT / "src"))
 from numera_cha_solver.config import Settings  # noqa: E402
 from numera_cha_solver.core.contracts import Input  # noqa: E402
 from numera_cha_solver.logging import close, initialize  # noqa: E402
@@ -31,9 +32,10 @@ def main():
     logger = initialize(work / "logs")
     sdk = Numera(Settings(root=work))
     try:
-        pin = subprocess.run(["git", "diff", "--quiet", "a8e25292317621e900d908c56927c489eecae06a", "--", "src/numera_cha_solver", "pyproject.toml", "uv.lock"], cwd=ROOT, capture_output=True, timeout=5, creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0)
-        if pin.returncode != 0:
-            raise RuntimeError("Rollback source differs from its pinned revision.")
+        if SOURCE_ROOT == ROOT:
+            pin = subprocess.run(["git", "diff", "--quiet", "a8e25292317621e900d908c56927c489eecae06a", "--", "src/numera_cha_solver", "pyproject.toml", "uv.lock"], cwd=ROOT, capture_output=True, timeout=5, creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0)
+            if pin.returncode != 0:
+                raise RuntimeError("Rollback source differs from its pinned revision.")
         source = asyncio.run(sdk.recognize({"kind": "text", "text": "7+5"})).to_dict()
         request = Input("text", text="7+5")
         encoded = json.dumps({"kind": request.kind, "text": request.text,

@@ -10,7 +10,7 @@
 
 **Private local perception and owner-controlled verification laboratory—not a universal CAPTCHA solver.**
 
-Rust 0.2.0 migration is in progress. Focused parity/device checks work, but installed-package, lifecycle, rollback and final exact-commit CI gates have not all passed. The previous runtime remains available until those gates pass; do not treat this working tree as a verified replacement yet.
+Rust 0.2.0 passed the pre-retirement native verification on `4a5e60b`: 43 native tests plus all 15 build/device/browser/package/launcher/rollback stages. The previous application source is now retired; final source-retirement verification and disposable cache cleanup are in progress. Exact commit-bound evidence is in [Validation](reports/VALIDATION.md).
 
 Available: restricted arithmetic, actual local text-line OCR, typed async SDK, JSON CLI, authenticated loopback API, durable cancellable tasks, model inventory/acquisition/verification and local evidence dashboard. No paid-service hidden fallback, browser stealth, target impersonation or third-party protection bypass.
 
