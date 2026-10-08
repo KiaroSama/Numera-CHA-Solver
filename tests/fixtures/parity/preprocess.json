@@ -1,0 +1,12 @@
+{
+  "shape": [
+    1,
+    3,
+    48,
+    320
+  ],
+  "sha256": "2c289136141b9be09a04ab4bc720d7d8246d61ac0d8ac12bd0dd441008b1e8b3",
+  "source_asset": "../ocr/ascii-smoke.png",
+  "python": "3.14.8",
+  "numpy": "2.5.3"
+}

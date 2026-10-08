@@ -1,0 +1,328 @@
+{
+  "normalization": [
+    "request_id",
+    "x-request-id"
+  ],
+  "cases": [
+    {
+      "name": "unauthorized",
+      "method": "GET",
+      "path": "/v1/models",
+      "expected": {
+        "status": 401,
+        "body": {
+          "error": {
+            "code": "http_401",
+            "message": "Local client authorization is required."
+          },
+          "request_id": "<request-id>"
+        },
+        "headers": {
+          "x-content-type-options": "nosniff",
+          "content-security-policy": "default-src 'self'; img-src 'self' data:; frame-ancestors 'none'; base-uri 'none'; form-action 'self'",
+          "cache-control": "no-store",
+          "x-request-id": "<request-id>"
+        }
+      }
+    },
+    {
+      "name": "arithmetic",
+      "method": "POST",
+      "path": "/v1/recognize",
+      "authorized": true,
+      "body": {
+        "kind": "text",
+        "text": "1+2"
+      },
+      "expected": {
+        "status": 200,
+        "body": {
+          "outcome": "recognized",
+          "answer": "3",
+          "confidence": null,
+          "abstained": false,
+          "server_verified": false,
+          "mode": "local_classical",
+          "provider": "generic",
+          "subtype": "arithmetic",
+          "model_revision": null,
+          "device": "cpu",
+          "error": null,
+          "evidence": {
+            "grammar": "integer-binary-v1"
+          }
+        },
+        "headers": {
+          "x-content-type-options": "nosniff",
+          "content-security-policy": "default-src 'self'; img-src 'self' data:; frame-ancestors 'none'; base-uri 'none'; form-action 'self'",
+          "cache-control": "no-store",
+          "x-request-id": "<request-id>"
+        }
+      }
+    },
+    {
+      "name": "unknown-field",
+      "method": "POST",
+      "path": "/v1/recognize",
+      "authorized": true,
+      "body": {
+        "kind": "text",
+        "endpoint": "https://example.com"
+      },
+      "expected": {
+        "status": 422,
+        "body": {
+          "error": {
+            "code": "invalid_input",
+            "message": "Request does not match the strict input schema."
+          },
+          "request_id": "<request-id>"
+        },
+        "headers": {
+          "x-content-type-options": "nosniff",
+          "content-security-policy": "default-src 'self'; img-src 'self' data:; frame-ancestors 'none'; base-uri 'none'; form-action 'self'",
+          "cache-control": "no-store",
+          "x-request-id": "<request-id>"
+        }
+      }
+    },
+    {
+      "name": "invalid-kind",
+      "method": "POST",
+      "path": "/v1/recognize",
+      "authorized": true,
+      "body": {
+        "kind": "unknown"
+      },
+      "expected": {
+        "status": 422,
+        "body": {
+          "error": {
+            "code": "invalid_input",
+            "message": "Request does not match the strict input schema."
+          },
+          "request_id": "<request-id>"
+        },
+        "headers": {
+          "x-content-type-options": "nosniff",
+          "content-security-policy": "default-src 'self'; img-src 'self' data:; frame-ancestors 'none'; base-uri 'none'; form-action 'self'",
+          "cache-control": "no-store",
+          "x-request-id": "<request-id>"
+        }
+      }
+    },
+    {
+      "name": "text-type",
+      "method": "POST",
+      "path": "/v1/recognize",
+      "authorized": true,
+      "body": {
+        "kind": "text",
+        "text": 3
+      },
+      "expected": {
+        "status": 422,
+        "body": {
+          "error": {
+            "code": "invalid_input",
+            "message": "Request does not match the strict input schema."
+          },
+          "request_id": "<request-id>"
+        },
+        "headers": {
+          "x-content-type-options": "nosniff",
+          "content-security-policy": "default-src 'self'; img-src 'self' data:; frame-ancestors 'none'; base-uri 'none'; form-action 'self'",
+          "cache-control": "no-store",
+          "x-request-id": "<request-id>"
+        }
+      }
+    },
+    {
+      "name": "text-bound",
+      "method": "POST",
+      "path": "/v1/recognize",
+      "authorized": true,
+      "text_count": 4097,
+      "expected": {
+        "status": 422,
+        "body": {
+          "error": {
+            "code": "invalid_input",
+            "message": "Request does not match the strict input schema."
+          },
+          "request_id": "<request-id>"
+        },
+        "headers": {
+          "x-content-type-options": "nosniff",
+          "content-security-policy": "default-src 'self'; img-src 'self' data:; frame-ancestors 'none'; base-uri 'none'; form-action 'self'",
+          "cache-control": "no-store",
+          "x-request-id": "<request-id>"
+        }
+      }
+    },
+    {
+      "name": "base64",
+      "method": "POST",
+      "path": "/v1/recognize",
+      "authorized": true,
+      "body": {
+        "kind": "image",
+        "asset_base64": "%%%"
+      },
+      "expected": {
+        "status": 422,
+        "body": {
+          "error": {
+            "code": "http_422",
+            "message": "Asset must be valid base64."
+          },
+          "request_id": "<request-id>"
+        },
+        "headers": {
+          "x-content-type-options": "nosniff",
+          "content-security-policy": "default-src 'self'; img-src 'self' data:; frame-ancestors 'none'; base-uri 'none'; form-action 'self'",
+          "cache-control": "no-store",
+          "x-request-id": "<request-id>"
+        }
+      }
+    },
+    {
+      "name": "large-valid-body",
+      "method": "POST",
+      "path": "/v1/recognize",
+      "authorized": true,
+      "asset_bytes": 1600000,
+      "expected": {
+        "status": 200,
+        "body": {
+          "outcome": "unsupported",
+          "answer": null,
+          "confidence": null,
+          "abstained": false,
+          "server_verified": false,
+          "mode": "local_classical",
+          "provider": "generic",
+          "subtype": "arithmetic",
+          "model_revision": null,
+          "device": null,
+          "error": {
+            "code": "unsupported_modality",
+            "message": "This input requires an available declared perception engine."
+          },
+          "evidence": {}
+        },
+        "headers": {
+          "x-content-type-options": "nosniff",
+          "content-security-policy": "default-src 'self'; img-src 'self' data:; frame-ancestors 'none'; base-uri 'none'; form-action 'self'",
+          "cache-control": "no-store",
+          "x-request-id": "<request-id>"
+        }
+      }
+    },
+    {
+      "name": "host",
+      "method": "GET",
+      "path": "/health/live",
+      "headers": {
+        "host": "outside.invalid"
+      },
+      "expected": {
+        "status": 403,
+        "body": {
+          "error": {
+            "code": "invalid_host",
+            "message": "Loopback host is required."
+          },
+          "request_id": "<request-id>"
+        },
+        "headers": {}
+      }
+    },
+    {
+      "name": "origin",
+      "method": "GET",
+      "path": "/health/live",
+      "headers": {
+        "origin": "https://outside.invalid"
+      },
+      "expected": {
+        "status": 403,
+        "body": {
+          "error": {
+            "code": "invalid_origin",
+            "message": "Cross-origin requests are not permitted."
+          },
+          "request_id": "<request-id>"
+        },
+        "headers": {}
+      }
+    },
+    {
+      "name": "declared-bound",
+      "method": "POST",
+      "path": "/v1/recognize",
+      "headers": {
+        "content-length": "11190001"
+      },
+      "expected": {
+        "status": 413,
+        "body": {
+          "error": {
+            "code": "input_too_large",
+            "message": "Request body exceeds its limit."
+          },
+          "request_id": "<request-id>"
+        },
+        "headers": {}
+      }
+    },
+    {
+      "name": "missing-key",
+      "method": "POST",
+      "path": "/v1/tasks",
+      "authorized": true,
+      "body": {
+        "kind": "text",
+        "text": "1+2"
+      },
+      "expected": {
+        "status": 400,
+        "body": {
+          "error": {
+            "code": "http_400",
+            "message": "Idempotency-Key is required."
+          },
+          "request_id": "<request-id>"
+        },
+        "headers": {
+          "x-content-type-options": "nosniff",
+          "content-security-policy": "default-src 'self'; img-src 'self' data:; frame-ancestors 'none'; base-uri 'none'; form-action 'self'",
+          "cache-control": "no-store",
+          "x-request-id": "<request-id>"
+        }
+      }
+    },
+    {
+      "name": "missing-task",
+      "method": "GET",
+      "path": "/v1/tasks/missing",
+      "authorized": true,
+      "expected": {
+        "status": 404,
+        "body": {
+          "error": {
+            "code": "http_404",
+            "message": "Task is missing or expired."
+          },
+          "request_id": "<request-id>"
+        },
+        "headers": {
+          "x-content-type-options": "nosniff",
+          "content-security-policy": "default-src 'self'; img-src 'self' data:; frame-ancestors 'none'; base-uri 'none'; form-action 'self'",
+          "cache-control": "no-store",
+          "x-request-id": "<request-id>"
+        }
+      }
+    }
+  ]
+}

@@ -1,5 +1,13 @@
 # Validation
 
+## Rust migration — in progress (2026-10-08)
+
+Rust 0.2.0 is implemented in the working tree but is not yet certified as the replacement. No migration commit/push or final exact-SHA native CI has occurred; old source/runtime remain until all gates and rollback pass.
+
+Observed native focused evidence: 24 source arithmetic cases; initial 10 SDK cases; owned ASCII preprocessing 184320 bytes exactly equal to pinned Pillow output; actual CLI answer `36`; actual CUDA OCR `NUMERA 123` with 187 CUDA/2 CPU support nodes and `[1,3,48,320]`; 13 source-generated HTTP status/body/header cases including >2 MiB JSON input; restricted atomic credential replacement/failure preservation. These are focused development checks, not full-suite evidence. Current source oracle runs Python 3.14.8, while historical release evidence below ran 3.14.7.
+
+Required native lifecycle, installed package/launchers, full CUDA/CPU parity, headless dashboard, source-runtime copied-state rollback, replay/resource comparisons and final cleanup remain unverified. The controlled worker binary-protocol isolation and handshake/inference cancellation/reap/successor tracers now pass (0.66s and 4.16s); initial fixture failures remain recorded, and a single focused pass is not repeat-stability evidence. Verification-time cancellation, public deadline, active shutdown and unacknowledged-result race regressions still await final CI. Fixture mappings await final CI, not inferred green from implementation.
+
 Status: partial local application. Initial runtime revision `f9e71d87cb1205f6dd659234fc458339b2251452` passed manual Windows CI [36944907182](https://github.com/KiaroSama/Numera-CHA-Solver/actions/runs/36944907182): 24 passed, 0 failed, 0 skipped, 1 upstream TestClient deprecation warning; measured code coverage 67%. This evidence does not certify later revisions.
 
 ## Commit-bound evidence index

@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Numera / Perception Lab</title>
+  <link rel="stylesheet" href="/app.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to workspace</a>
+<aside class="rail">
+  <a href="#workspace" class="brand"><img src="/logo.png" width="44" height="44" alt="Numera circular blue and cyan logo"><span>NUMERA<small>PERCEPTION LAB</small></span></a>
+  <div class="rail-label">LOCAL WORKSPACE</div>
+  <nav aria-label="Workspace navigation"><a href="#workspace" class="selected">Recognition</a><a href="#coverage">Coverage catalog</a><a href="#tasks">Task history</a><a href="#runtime">Model &amp; runtime</a></nav>
+  <div class="rail-note"><span class="dot"></span> Local-first / private<br><small>No external inference.<br>No live third-party automation.</small></div>
+  <footer>CHA-Solver <span>v0.2.0</span></footer>
+</aside>
+<div class="shell">
+  <header><div class="breadcrumb">Workspace <span>/</span> Recognition</div><div class="header-actions"><span class="pill">LOOPBACK ONLY</span><button id="connect" class="quiet">Connect</button></div></header>
+  <main id="main">
+    <section id="workspace" class="intro"><div><p class="eyebrow">OBSERVE. RECOGNIZE. VERIFY.</p><h1>Evidence, not assumptions.</h1><p class="lede">Local perception with explicit limits. Every result keeps recognition separate from acceptance.</p></div><div class="session-state"><span class="dot" id="connection-dot"></span><span id="connection-state">Not connected</span></div></section>
+    <div class="notice"><strong>Initial release · limited evidence</strong><span>Generic OCR and arithmetic are available. Provider-specific native solving and real-world accuracy are not certified.</span></div>
+    <div class="workspace-grid">
+      <section class="panel input-panel" aria-labelledby="input-heading"><div class="panel-title"><div><p class="eyebrow">01 / INPUT</p><h2 id="input-heading">Recognition workspace</h2></div><span class="tag">LOCAL ASSETS</span></div>
+        <form id="recognition-form"><fieldset><legend>Input type</legend><label class="choice"><input type="radio" name="kind" value="text" checked> Arithmetic</label><label class="choice"><input type="radio" name="kind" value="image"> Text-line image</label></fieldset>
+          <div id="text-input"><label for="expression">Expression</label><input id="expression" type="text" value="12 * 3 = ?" maxlength="80" autocomplete="off"><p class="hint">Two integers, one operator: + − × ÷. Integer results only.</p></div>
+          <div id="image-input" hidden><label for="image-file" class="upload"><span class="upload-symbol" aria-hidden="true">↑</span><strong>Choose a local image</strong><span>PNG, JPEG, WEBP or BMP · up to 8 MB</span><input id="image-file" type="file" accept="image/png,image/jpeg,image/webp,image/bmp"></label><p class="hint">Use images you own or have permission to process. A generic text-line model is not a distorted-CAPTCHA accuracy claim.</p></div>
+          <div class="form-footer"><span class="hint">Local execution. No upload to an inference service.</span><button id="recognize" type="submit" class="primary">Run recognition <span aria-hidden="true">→</span></button></div>
+          <p id="form-error" role="alert"></p>
+        </form>
+      </section>
+      <section class="panel output-panel" aria-labelledby="result-heading"><div class="panel-title"><div><p class="eyebrow">02 / OBSERVATION</p><h2 id="result-heading">Result &amp; evidence</h2></div><span id="outcome" class="tag">AWAITING INPUT</span></div><div id="result" aria-live="polite"><div class="empty-result"><div class="crosshair" aria-hidden="true">+</div><strong>No observation yet</strong><p>Submit a local input to see the result, execution device and evidence.</p></div></div><div class="verification-note"><span aria-hidden="true">○</span><div><strong>Server acceptance is separate</strong><p>A recognized answer is not a verified challenge. This workspace does not submit to third-party sites.</p></div></div></section>
+    </div>
+    <section id="runtime" class="panel runtime-panel"><div class="panel-title"><div><p class="eyebrow">EXECUTION ENVIRONMENT</p><h2>Model &amp; runtime</h2></div><button id="refresh" class="quiet">Refresh status</button></div><div id="model-status" class="runtime-details"><p class="muted">Connect to inspect actual local model availability.</p></div></section>
+    <section id="coverage" class="panel"><div class="panel-title"><div><p class="eyebrow">HONEST COVERAGE</p><h2>Requested catalog</h2></div><label class="filter-label" for="filter">Filter <input id="filter" type="search" placeholder="Provider or subtype"></label></div><p class="hint">Registry entries are not support claims. Expand a family to inspect subtype-level blockers.</p><div id="coverage-list"><p class="muted">Connect to load the coverage catalog.</p></div></section>
+    <section id="tasks" class="panel"><div class="panel-title"><div><p class="eyebrow">BOUNDED &amp; DURABLE</p><h2>Task history</h2></div><button id="refresh-tasks" class="quiet">Refresh tasks</button></div><div id="task-list"><p class="muted">No task history loaded.</p></div></section>
+    <footer class="page-footer">Inference stays local. Capabilities stay explicit.<span>Numera CHA-Solver / 0.2.0</span></footer>
+  </main>
+</div>
+<dialog id="auth-dialog" aria-labelledby="auth-title"><form id="auth-form"><h2 id="auth-title">Connect to your local instance</h2><p>Paste the credential from <code>data/api-token.txt</code>. It is exchanged for an HTTP-only local session and is not saved in browser storage.</p><label for="api-token">Local API credential</label><input id="api-token" type="password" required autocomplete="off"><p id="auth-error" role="alert"></p><div class="dialog-actions"><button type="button" id="close-auth" class="quiet">Cancel</button><button type="submit" class="primary">Connect</button></div></form></dialog>
+</body>
+</html>

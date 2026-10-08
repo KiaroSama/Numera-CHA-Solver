@@ -1,6 +1,6 @@
 # شروع سریع Numera CHA-Solver
 
-این نسخه یک ابزار محلی OCR و آزمایش کنترل‌شده است؛ حل همهٔ CAPTCHAها یا پذیرش توسط سرویس‌های واقعی را ادعا نمی‌کند.
+این ابزار برای OCR محلی و آزمایش کنترل‌شده است؛ حل همهٔ CAPTCHAها یا پذیرش توسط سرویس‌های واقعی را ادعا نمی‌کند. مهاجرت Rust 0.2.0 هنوز در مرحلهٔ اعتبارسنجی است؛ تا پایان آزمون‌های نصب، چرخهٔ پردازش و بازیابی، نسخهٔ قبلی حذف نمی‌شود.
 
 ## 1. نصب
 
@@ -15,7 +15,7 @@ PowerShell 7 را در پوشهٔ پروژه باز کن:
 ## 2. دریافت مدل
 
 ```powershell
-uv run numera-cha models fetch ppocr-v6-small
+./bin/numera-cha.exe models fetch ppocr-v6-small
 ```
 
 فایل‌های مدل با SHA-256 کنترل می‌شوند و وارد Git نمی‌شوند.
@@ -23,11 +23,11 @@ uv run numera-cha models fetch ppocr-v6-small
 ## 3. اجرای تشخیص
 
 ```powershell
-uv run numera-cha recognize --text "12 * 3 = ?"
+./bin/numera-cha.exe recognize --text "12 * 3 = ?"
 ```
 
 ```powershell
-uv run numera-cha doctor --smoke tests/fixtures/ocr/ascii-smoke.png
+./bin/numera-cha.exe doctor --smoke tests/fixtures/ocr/ascii-smoke.png
 ```
 
 حالت پیش‌فرض CUDA است. اگر DLLهای CUDA/cuDNN پیدا نمی‌شوند، مسیر معتبر محلی را در `NUMERA_DLL_DIRECTORY` تنظیم کن. CPU فقط با انتخاب صریح `--device cpu` اجرا می‌شود.

@@ -1,21 +1,18 @@
 #requires -Version 7.0
 [CmdletBinding()]
-param([ValidateRange(1,65535)][int]$Port=8765)
+param([ValidateRange(1,65535)][int]$Port=8765,[ValidateSet('cuda','cpu')][string]$Device='cuda')
 Import-Module (Join-Path $PSScriptRoot 'Common.psm1') -Force
 Initialize-RunLog 'start'
 $code=0
-try {
-    $root=Get-ProjectRoot
-    $state=Join-Path $root 'data\server.json'
-    if (Test-Path -LiteralPath $state) { throw 'A server ownership record exists. Run stop.ps1 or inspect that record before starting another instance.' }
-    [IO.Directory]::CreateDirectory((Join-Path $root 'data')) | Out-Null
-    $python=Get-ProjectPython
-    Write-RunLog INFO startup "Starting authenticated loopback dashboard on port=$Port."
-    $record=@{ owner_pid=$PID; owner_start=(Get-Process -Id $PID).StartTime.ToUniversalTime().ToString('o'); root=$root }
-    [IO.File]::WriteAllText($state,($record|ConvertTo-Json),[Text.UTF8Encoding]::new($false))
-    try {
-        $code=Invoke-BoundedCommand -Executable $python -Arguments @('-m','numera_cha_solver','serve','--port',"$Port") -WallSeconds 86400 -IdleSeconds 86400
-    } finally { Remove-Item -LiteralPath $state -ErrorAction SilentlyContinue }
-} catch { $code=1; Write-RunLog ERROR startup $_.Exception.Message }
-finally { Write-RunLog INFO cleanup "Server launcher finished exit_code=$code." }
+try{
+    $root=Get-ProjectRoot;$env:NUMERA_ROOT=$root
+    $state=Join-Path $root 'data/server.json'
+    if([IO.File]::Exists($state)){throw 'A server ownership record exists. Run stop.ps1 or inspect the record before another start.'}
+    [IO.Directory]::CreateDirectory((Join-Path $root 'data'))|Out-Null
+    $native=Get-NativeExecutable
+    $env:NUMERA_SERVER_PORT="$Port"
+    Write-RunLog INFO startup "Starting authenticated native loopback dashboard port=$Port device=$Device."
+    $code=Invoke-BoundedCommand -Executable $native -Arguments @('--device',$Device,'serve','--port',"$Port") -WallSeconds 86400 -IdleSeconds 86400 -OwnershipPath $state
+}catch{if($code -eq 0){$code=1};Write-RunLog ERROR startup $_.Exception.Message}
+finally{Write-RunLog INFO cleanup "Server launcher finished exit_code=$code."}
 exit $code

@@ -1,0 +1,409 @@
+[
+  {
+    "source": "tests/test_api.py",
+    "name": "test_startup_failure_releases_owned_store_for_retry",
+    "source_sha256": "1b65527707c632a56cf362b9ed12fd61ba1675f6396b361f485a2d96b9530236",
+    "target": "tests/startup.rs::competing_start_occupied_port_and_failed_store_preserve_credential_and_release_owner",
+    "status": "native",
+    "evidence_state": "awaiting_final_ci",
+    "source_hash_normalization": "CRLF to LF only"
+  },
+  {
+    "source": "tests/test_api.py",
+    "name": "test_api_session_input_and_host_boundaries",
+    "source_sha256": "1b65527707c632a56cf362b9ed12fd61ba1675f6396b361f485a2d96b9530236",
+    "target": "tests/lifecycle.rs::authorized_api_strict_schema_tasks_and_readiness; tests/http_parity.rs::http_matches_source_schema_security_and_large_input_contracts",
+    "status": "parity",
+    "evidence_state": "awaiting_final_ci",
+    "source_hash_normalization": "CRLF to LF only"
+  },
+  {
+    "source": "tests/test_api.py",
+    "name": "test_api_shares_sdk_and_requires_local_client_authorization",
+    "source_sha256": "1b65527707c632a56cf362b9ed12fd61ba1675f6396b361f485a2d96b9530236",
+    "target": "tests/lifecycle.rs::authorized_api_strict_schema_tasks_and_readiness",
+    "status": "native",
+    "evidence_state": "awaiting_final_ci",
+    "source_hash_normalization": "CRLF to LF only"
+  },
+  {
+    "source": "tests/test_assets.py",
+    "name": "test_invalid_asset_is_rejected",
+    "source_sha256": "3416e4053f9d788f641fdcd9eebe4b88dca3d99c633fef655e42ccc581f347f9",
+    "target": "tests/adapters.rs::still_images_white_alpha_and_dimension_bounds",
+    "status": "native",
+    "evidence_state": "awaiting_final_ci",
+    "source_hash_normalization": "CRLF to LF only"
+  },
+  {
+    "source": "tests/test_assets.py",
+    "name": "test_transparency_dimensions_and_unicode_path",
+    "source_sha256": "3416e4053f9d788f641fdcd9eebe4b88dca3d99c633fef655e42ccc581f347f9",
+    "target": "tests/adapters.rs::still_images_white_alpha_and_dimension_bounds",
+    "status": "native",
+    "evidence_state": "awaiting_final_ci",
+    "source_hash_normalization": "CRLF to LF only"
+  },
+  {
+    "source": "tests/test_benchmark.py",
+    "name": "test_benchmark_rejects_scalar_manifest_without_crashing",
+    "source_sha256": "a830d20d2a017629457e288fccf44934d4005f923f1900d52d178efcd8e9ce84",
+    "target": "tests/core_contracts.rs::benchmarks_validate_failures_duplicates_and_denominators",
+    "status": "native",
+    "evidence_state": "awaiting_final_ci",
+    "source_hash_normalization": "CRLF to LF only"
+  },
+  {
+    "source": "tests/test_benchmark.py",
+    "name": "test_invalid_benchmark_samples_fail_before_inference",
+    "source_sha256": "a830d20d2a017629457e288fccf44934d4005f923f1900d52d178efcd8e9ce84",
+    "target": "tests/core_contracts.rs::benchmarks_validate_failures_duplicates_and_denominators",
+    "status": "native",
+    "evidence_state": "awaiting_final_ci",
+    "source_hash_normalization": "CRLF to LF only"
+  },
+  {
+    "source": "tests/test_benchmark.py",
+    "name": "test_benchmark_decode_errors_are_sanitized",
+    "source_sha256": "a830d20d2a017629457e288fccf44934d4005f923f1900d52d178efcd8e9ce84",
+    "target": "tests/core_contracts.rs::benchmarks_validate_failures_duplicates_and_denominators",
+    "status": "native",
+    "evidence_state": "awaiting_final_ci",
+    "source_hash_normalization": "CRLF to LF only"
+  },
+  {
+    "source": "tests/test_benchmark.py",
+    "name": "test_benchmark_keeps_unreadable_and_failed_samples_in_denominator",
+    "source_sha256": "a830d20d2a017629457e288fccf44934d4005f923f1900d52d178efcd8e9ce84",
+    "target": "tests/core_contracts.rs::benchmarks_validate_failures_duplicates_and_denominators",
+    "status": "native",
+    "evidence_state": "awaiting_final_ci",
+    "source_hash_normalization": "CRLF to LF only"
+  },
+  {
+    "source": "tests/test_browser.py",
+    "name": "test_owned_dashboard_authentication_arithmetic_and_mobile",
+    "source_sha256": "74581ac0512ee8a56f40d7b2d7aaa934a10cf46458e08018a9178880827b4021",
+    "target": "scripts/native_browser.py::main",
+    "status": "native",
+    "evidence_state": "awaiting_final_ci",
+    "source_hash_normalization": "CRLF to LF only"
+  },
+  {
+    "source": "tests/test_cli.py",
+    "name": "test_cli_json_and_error_exit",
+    "source_sha256": "299e04fcac4a1f02b6a42fae398ae520ebfec1e4ce778675a1095da3219484ef",
+    "target": "tests/cli.rs::cli_json_exit_codes_and_saved_configuration_failures",
+    "status": "native",
+    "evidence_state": "awaiting_final_ci",
+    "source_hash_normalization": "CRLF to LF only"
+  },
+  {
+    "source": "tests/test_gpu.py",
+    "name": "test_owned_ascii_real_model_gpu_execution",
+    "source_sha256": "7260667ee6602f20c79f2b34d439e67dce915dd62c4c2d7bb3c55a40c165603b",
+    "target": "tests/gpu.rs::owned_real_gpu_then_cpu_answer_and_shape_parity",
+    "status": "native",
+    "evidence_state": "awaiting_final_ci",
+    "source_hash_normalization": "CRLF to LF only"
+  },
+  {
+    "source": "tests/test_logging.py",
+    "name": "test_logging_is_utf8_per_run_redacted_and_closed",
+    "source_sha256": "9803d305c5194dbe253ba01de58708279d2b21f01e3a18a12bc9ef1dbfa5da67",
+    "target": "tests/adapters.rs::log_runs_are_unique_redacted_utf8_and_closed",
+    "status": "native",
+    "evidence_state": "awaiting_final_ci",
+    "source_hash_normalization": "CRLF to LF only"
+  },
+  {
+    "source": "tests/test_models.py",
+    "name": "test_missing_models_report_unavailable_without_download",
+    "source_sha256": "df90746e2648a7f08ea717e87e4ab8e7cffd38279c8baf0dd8195c6c03f8a1b3",
+    "target": "tests/adapters.rs::manifest_missing_and_corrupt_outcomes_do_not_acquire_assets",
+    "status": "native",
+    "evidence_state": "awaiting_final_ci",
+    "source_hash_normalization": "CRLF to LF only"
+  },
+  {
+    "source": "tests/test_models.py",
+    "name": "test_corrupt_model_assets_are_not_ready",
+    "source_sha256": "df90746e2648a7f08ea717e87e4ab8e7cffd38279c8baf0dd8195c6c03f8a1b3",
+    "target": "tests/adapters.rs::manifest_missing_and_corrupt_outcomes_do_not_acquire_assets",
+    "status": "native",
+    "evidence_state": "awaiting_final_ci",
+    "source_hash_normalization": "CRLF to LF only"
+  },
+  {
+    "source": "tests/test_ocr.py",
+    "name": "test_image_without_weights_is_not_fake_recognition",
+    "source_sha256": "c521fd70f6c0df69217e749e0f38dcf8340f779e7e4dbb6e51e19b32597a28b1",
+    "target": "tests/core_contracts.rs::missing_model_is_not_fake_image_recognition_and_shared_interfaces_exist",
+    "status": "native",
+    "evidence_state": "awaiting_final_ci",
+    "source_hash_normalization": "CRLF to LF only"
+  },
+  {
+    "source": "tests/test_ownership.py",
+    "name": "test_second_server_cannot_take_active_store_and_lock_releases",
+    "source_sha256": "ada51d8cb56f5c167c8286a6195fa39c01daaf4e21046342211a029f582c83f8",
+    "target": "tests/startup.rs::competing_start_occupied_port_and_failed_store_preserve_credential_and_release_owner",
+    "status": "native",
+    "evidence_state": "awaiting_final_ci",
+    "source_hash_normalization": "CRLF to LF only"
+  },
+  {
+    "source": "tests/test_repair_benchmark.py",
+    "name": "test_duplicate_asset_cannot_promote_independent_evidence",
+    "source_sha256": "4468773b1199c36c88e4d15e4b6b26e076cf74759656b26052fd1d1fd62c58d7",
+    "target": "tests/core_contracts.rs::benchmarks_validate_failures_duplicates_and_denominators",
+    "status": "native",
+    "evidence_state": "awaiting_final_ci",
+    "source_hash_normalization": "CRLF to LF only"
+  },
+  {
+    "source": "tests/test_repair_benchmark.py",
+    "name": "test_renamed_duplicate_content_is_rejected",
+    "source_sha256": "4468773b1199c36c88e4d15e4b6b26e076cf74759656b26052fd1d1fd62c58d7",
+    "target": "tests/core_contracts.rs::benchmarks_validate_failures_duplicates_and_denominators",
+    "status": "native",
+    "evidence_state": "awaiting_final_ci",
+    "source_hash_normalization": "CRLF to LF only"
+  },
+  {
+    "source": "tests/test_repair_config.py",
+    "name": "test_saved_config_failure_is_one_sanitized_cli_result",
+    "source_sha256": "65bdde75a819905f0489a290b50c39e04b06f3bcf308bdc3fd01b3fb4ce39bdc",
+    "target": "tests/cli.rs::cli_json_exit_codes_and_saved_configuration_failures",
+    "status": "native",
+    "evidence_state": "awaiting_final_ci",
+    "source_hash_normalization": "CRLF to LF only"
+  },
+  {
+    "source": "tests/test_repair_deadline.py",
+    "name": "test_worker_deadline_has_expired_public_outcome",
+    "source_sha256": "769815ae3ebb9a4b05fef4df88b21295d5322577626850f2c870f010dafa0504",
+    "target": "tests/worker.rs::owned_worker_deadline_is_expired_at_public_sdk_and_reaped",
+    "status": "native",
+    "evidence_state": "awaiting_final_ci",
+    "source_hash_normalization": "CRLF to LF only"
+  },
+  {
+    "source": "tests/test_repair_download.py",
+    "name": "test_stale_download_file_does_not_establish_active_owner",
+    "source_sha256": "50a5050a110fdb1c3e4e49d2033d92b2dcc56c245486de737423de7051bfdbdd",
+    "target": "tests/downloads.rs::stale_download_marker_and_crashed_live_download_owner_recover_without_network",
+    "status": "native",
+    "evidence_state": "awaiting_final_ci",
+    "source_hash_normalization": "CRLF to LF only"
+  },
+  {
+    "source": "tests/test_repair_download.py",
+    "name": "test_download_crash_releases_lease_and_live_contender_stays_busy",
+    "source_sha256": "50a5050a110fdb1c3e4e49d2033d92b2dcc56c245486de737423de7051bfdbdd",
+    "target": "tests/downloads.rs::stale_download_marker_and_crashed_live_download_owner_recover_without_network",
+    "status": "native",
+    "evidence_state": "awaiting_final_ci",
+    "source_hash_normalization": "CRLF to LF only"
+  },
+  {
+    "source": "tests/test_repair_inference.py",
+    "name": "test_cancel_during_verification_cannot_publish_late_worker",
+    "source_sha256": "08d535cbb385ce92d6b5a95757a58f4bf41b8a7a5751e05b60a18ff72c39b33f",
+    "target": "tests/worker.rs::cancellation_during_verification_never_publishes_late_worker",
+    "status": "native",
+    "evidence_state": "awaiting_final_ci",
+    "source_hash_normalization": "CRLF to LF only"
+  },
+  {
+    "source": "tests/test_repair_inference.py",
+    "name": "test_cancel_during_handshake_reaps_owned_process",
+    "source_sha256": "08d535cbb385ce92d6b5a95757a58f4bf41b8a7a5751e05b60a18ff72c39b33f",
+    "target": "tests/worker.rs::handshake_and_inference_cancellation_reap_before_successor",
+    "status": "native",
+    "evidence_state": "awaiting_final_ci",
+    "source_hash_normalization": "CRLF to LF only"
+  },
+  {
+    "source": "tests/test_repair_logging.py",
+    "name": "test_quoted_nested_and_exception_secrets_never_reach_handlers",
+    "source_sha256": "6f219bb5814f589f3446c7892da7dc6d755b7c1e80b25c9c2ccd8874b031c793",
+    "target": "tests/adapters.rs::log_runs_are_unique_redacted_utf8_and_closed; tests/cli.rs::cli_json_exit_codes_and_saved_configuration_failures",
+    "status": "native",
+    "evidence_state": "awaiting_final_ci",
+    "adaptation": "Rust uses stable explicit error messages instead of arbitrary Python exception/formatting callbacks; nested/quoted/bearer redaction and config failure logging remain covered.",
+    "source_hash_normalization": "CRLF to LF only"
+  },
+  {
+    "source": "tests/test_repair_readiness.py",
+    "name": "test_readiness_io_does_not_block_arithmetic_or_multiply_refreshes",
+    "source_sha256": "7f3647f726e2823972dde102fa92d917f87239af1c9fd3cd3813e0e7d3963f4a",
+    "target": "tests/task_regressions.rs::readiness_is_singleflight_offloop_and_close_retains_draining_refresh",
+    "status": "native",
+    "evidence_state": "awaiting_final_ci",
+    "source_hash_normalization": "CRLF to LF only"
+  },
+  {
+    "source": "tests/test_repair_startup.py",
+    "name": "test_competing_cli_start_preserves_active_credential",
+    "source_sha256": "71da3a90eb3bd7fdb00c755cc1054351bfb8cb9660aa7e38fdafcd2ceaf575aa",
+    "target": "tests/startup.rs::competing_start_occupied_port_and_failed_store_preserve_credential_and_release_owner",
+    "status": "native",
+    "evidence_state": "awaiting_final_ci",
+    "source_hash_normalization": "CRLF to LF only"
+  },
+  {
+    "source": "tests/test_repair_startup.py",
+    "name": "test_occupied_port_leaves_previous_credential_untouched",
+    "source_sha256": "71da3a90eb3bd7fdb00c755cc1054351bfb8cb9660aa7e38fdafcd2ceaf575aa",
+    "target": "tests/startup.rs::competing_start_occupied_port_and_failed_store_preserve_credential_and_release_owner",
+    "status": "native",
+    "evidence_state": "awaiting_final_ci",
+    "source_hash_normalization": "CRLF to LF only"
+  },
+  {
+    "source": "tests/test_repair_startup.py",
+    "name": "test_lifespan_failure_does_not_publish_new_credential",
+    "source_sha256": "71da3a90eb3bd7fdb00c755cc1054351bfb8cb9660aa7e38fdafcd2ceaf575aa",
+    "target": "tests/startup.rs::competing_start_occupied_port_and_failed_store_preserve_credential_and_release_owner",
+    "status": "native",
+    "evidence_state": "awaiting_final_ci",
+    "source_hash_normalization": "CRLF to LF only"
+  },
+  {
+    "source": "tests/test_sdk.py",
+    "name": "test_arithmetic_recognition_does_not_claim_server_acceptance",
+    "source_sha256": "c5bb588b73264e096408f9a1ba41201d2280674bc933b4376b1f1d54aaa661a9",
+    "target": "tests/parity.rs::sdk_matches_generated_source_results",
+    "status": "parity",
+    "evidence_state": "awaiting_final_ci",
+    "source_hash_normalization": "CRLF to LF only"
+  },
+  {
+    "source": "tests/test_sdk.py",
+    "name": "test_unsupported_arithmetic_is_rejected",
+    "source_sha256": "c5bb588b73264e096408f9a1ba41201d2280674bc933b4376b1f1d54aaa661a9",
+    "target": "tests/parity.rs::arithmetic_matches_generated_source_oracle",
+    "status": "parity",
+    "evidence_state": "awaiting_final_ci",
+    "source_hash_normalization": "CRLF to LF only"
+  },
+  {
+    "source": "tests/test_sdk.py",
+    "name": "test_sdk_exposes_the_shared_local_interfaces",
+    "source_sha256": "c5bb588b73264e096408f9a1ba41201d2280674bc933b4376b1f1d54aaa661a9",
+    "target": "tests/core_contracts.rs::missing_model_is_not_fake_image_recognition_and_shared_interfaces_exist",
+    "status": "native",
+    "evidence_state": "awaiting_final_ci",
+    "source_hash_normalization": "CRLF to LF only"
+  },
+  {
+    "source": "tests/test_sdk.py",
+    "name": "test_sdk_invalid_inputs_are_structured_failures",
+    "source_sha256": "c5bb588b73264e096408f9a1ba41201d2280674bc933b4376b1f1d54aaa661a9",
+    "target": "tests/parity.rs::sdk_matches_generated_source_results",
+    "status": "parity",
+    "evidence_state": "awaiting_final_ci",
+    "source_hash_normalization": "CRLF to LF only"
+  },
+  {
+    "source": "tests/test_sdk.py",
+    "name": "test_sdk_expired_and_unsupported_requests_do_not_recognize",
+    "source_sha256": "c5bb588b73264e096408f9a1ba41201d2280674bc933b4376b1f1d54aaa661a9",
+    "target": "tests/cli.rs::sdk_unknown_and_expired_requests_remain_nonrecognized",
+    "status": "native",
+    "evidence_state": "awaiting_final_ci",
+    "source_hash_normalization": "CRLF to LF only"
+  },
+  {
+    "source": "tests/test_sdk.py",
+    "name": "test_sync_sdk_rejects_running_loop",
+    "source_sha256": "c5bb588b73264e096408f9a1ba41201d2280674bc933b4376b1f1d54aaa661a9",
+    "target": "docs/NATIVE.md::intentional-python-sdk-retirement",
+    "status": "retired",
+    "evidence_state": "awaiting_final_ci",
+    "reason": "Owner explicitly approved Rust-only SDK; Python synchronous running-loop API is removed, not ported.",
+    "source_hash_normalization": "CRLF to LF only"
+  },
+  {
+    "source": "tests/test_tasks.py",
+    "name": "test_cancelled_task_cannot_be_overwritten_and_idempotency_is_stable",
+    "source_sha256": "f8ffc96ac6389ebd50025fc24e163919defcd99a7a67d0806cecf496b6474dd7",
+    "target": "tests/task_regressions.rs::corrupt_persisted_result_is_not_silently_null_and_restart_never_replays",
+    "status": "native",
+    "evidence_state": "awaiting_final_ci",
+    "source_hash_normalization": "CRLF to LF only"
+  },
+  {
+    "source": "tests/test_tasks.py",
+    "name": "test_graceful_shutdown_cancels_queued_tasks_without_replay",
+    "source_sha256": "f8ffc96ac6389ebd50025fc24e163919defcd99a7a67d0806cecf496b6474dd7",
+    "target": "tests/task_regressions.rs::unstarted_queue_shutdown_cancels_every_item_and_closed_service_rejects; tests/worker.rs::active_task_shutdown_joins_consumer_and_reaps_inference",
+    "status": "native",
+    "evidence_state": "awaiting_final_ci",
+    "source_hash_normalization": "CRLF to LF only"
+  },
+  {
+    "source": "tests/test_tasks.py",
+    "name": "test_task_expiry_and_ttl_use_persisted_metadata",
+    "source_sha256": "f8ffc96ac6389ebd50025fc24e163919defcd99a7a67d0806cecf496b6474dd7",
+    "target": "tests/task_regressions.rs::persisted_expiry_ttl_replacement_and_missing_transition_match_source",
+    "status": "native",
+    "evidence_state": "awaiting_final_ci",
+    "source_hash_normalization": "CRLF to LF only"
+  },
+  {
+    "source": "tests/test_tasks.py",
+    "name": "test_queue_full_is_terminal_and_duplicate_is_not_enqueued_twice",
+    "source_sha256": "f8ffc96ac6389ebd50025fc24e163919defcd99a7a67d0806cecf496b6474dd7",
+    "target": "tests/task_regressions.rs::queued_duplicate_overflow_cancel_and_shutdown_are_terminal",
+    "status": "native",
+    "evidence_state": "awaiting_final_ci",
+    "source_hash_normalization": "CRLF to LF only"
+  },
+  {
+    "source": "tests/test_tasks.py",
+    "name": "test_restart_interrupts_unfinished_tasks_without_replay",
+    "source_sha256": "f8ffc96ac6389ebd50025fc24e163919defcd99a7a67d0806cecf496b6474dd7",
+    "target": "tests/task_regressions.rs::corrupt_persisted_result_is_not_silently_null_and_restart_never_replays",
+    "status": "native",
+    "evidence_state": "awaiting_final_ci",
+    "source_hash_normalization": "CRLF to LF only"
+  },
+  {
+    "source": "tests/test_verification.py",
+    "name": "test_token_or_wrong_context_is_never_server_verified",
+    "source_sha256": "81e402528137107ca7e194a2b67e7ed45afe75ae494d94e70f6658b497c18a65",
+    "target": "tests/parity.rs::geometry_verification_and_ctc_match_source_contracts; tests/core_contracts.rs::provider_context_geometry_and_input_bounds_are_preserved",
+    "status": "parity",
+    "evidence_state": "awaiting_final_ci",
+    "source_hash_normalization": "CRLF to LF only"
+  },
+  {
+    "source": "tests/test_verification.py",
+    "name": "test_provider_binding_is_required_for_owner_acceptance",
+    "source_sha256": "81e402528137107ca7e194a2b67e7ed45afe75ae494d94e70f6658b497c18a65",
+    "target": "tests/parity.rs::geometry_verification_and_ctc_match_source_contracts",
+    "status": "parity",
+    "evidence_state": "awaiting_final_ci",
+    "source_hash_normalization": "CRLF to LF only"
+  },
+  {
+    "source": "tests/test_verification.py",
+    "name": "test_invalid_verification_context_cannot_claim_acceptance",
+    "source_sha256": "81e402528137107ca7e194a2b67e7ed45afe75ae494d94e70f6658b497c18a65",
+    "target": "tests/core_contracts.rs::provider_context_geometry_and_input_bounds_are_preserved",
+    "status": "native",
+    "evidence_state": "awaiting_final_ci",
+    "source_hash_normalization": "CRLF to LF only"
+  },
+  {
+    "source": "tests/test_verification.py",
+    "name": "test_geometry_round_trip_and_stale_revision",
+    "source_sha256": "81e402528137107ca7e194a2b67e7ed45afe75ae494d94e70f6658b497c18a65",
+    "target": "tests/parity.rs::geometry_verification_and_ctc_match_source_contracts; tests/core_contracts.rs::provider_context_geometry_and_input_bounds_are_preserved",
+    "status": "parity",
+    "evidence_state": "awaiting_final_ci",
+    "source_hash_normalization": "CRLF to LF only"
+  }
+]

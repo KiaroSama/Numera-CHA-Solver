@@ -1,30 +1,28 @@
 # Architecture
 
-`SDK / CLI / HTTP -> strict input -> modality hint -> declared local engine -> recognition result`
+`Rust SDK / CLI / Axum HTTP -> strict observation -> declared local engine -> recognition result`
 
-Owner-side assessment validation is independent of recognition. The initial release does not drive third-party provider challenges or infer verification from tokens.
+Owner-side assessment is separate from perception. The Windows application never infers server acceptance from a token or drives an unauthorized third-party challenge. The existing HTML/CSS/JavaScript dashboard is preserved.
 
 ## Responsibilities
 
-- `core/`: typed observation/result/error contracts, restricted arithmetic, reversible geometry and revision validation. No browser, HTTP or database implementation.
-- `sdk.py`: shared async `recognize`/`solve`/`detect`/`capabilities`/`models`/`doctor` routes and synchronous event-loop guard. `solve` does not add browser actions or acceptance. Explicit unsupported subtypes are rejected rather than silently routed to generic OCR.
-- `verification.py`: exact provider/hostname/action/session binding against owner-supplied evidence. Test-key success remains fixture completion; no network acceptance is inferred.
-- `engines/`: one owned subprocess, one cached ONNX session, generation-fenced cancellation and strict measured CUDA policy. Verification occurs outside the ownership lock; invalidated work cannot publish a late process or dispose a replacement generation. CPU preprocessing is explicit.
-- `models.py`: reviewed immutable manifest, size/hash validation and atomic, bounded downloads from allowlisted HTTPS origins.
-- `store.py` / `tasks.py`: SQLite WAL, idempotent creation, atomic terminal compare-and-set, bounded queue, cancellation and restart interruption without replay.
-- `api.py`: authenticated loopback-only requests, same-origin sessions, strict schemas, byte limits and redacted errors. No URL/path/endpoint input from clients.
-- `startup.py`: one exclusive root lease, socket bind, lifespan initialization, then atomic permission-restricted credential publication. Failed competing startup leaves active credentials intact.
-- `readiness.py`: timestamped 30-second snapshot, at most one integrity refresh off the event loop. Initial `checking` and failures are explicit; arithmetic remains ready independently.
-- `resources/web/`: dependency-free dashboard consuming the same HTTP contracts; no second solver implementation.
+- `src/core/`: typed observation/result/error contracts, bounded arithmetic and reversible geometry/revision checks. Independent of HTTP, persistence and native runtime libraries.
+- `src/sdk.rs`: shared recognition, solve, detection, inventory and diagnosis. Explicit subtype validation, bounded admission and inherited monotonic deadlines. The Python import SDK is intentionally replaced, not wrapped.
+- `src/engines/`: Pillow-compatible BGR preprocessing, CTC decoding, one cached ONNX session in an owned native child, framed bounded IPC, strict measured CUDA execution. Retained operation ownership separates caller cancellation from verification/child cleanup; an unacknowledged result cannot publish a reusable late worker.
+- `src/models.rs` / `assets.rs`: immutable reviewed assets, safe local decoding, exact sizes/hashes, allowlisted HTTPS downloads and crash-released revision lease. Explicit transport adapters still undergo immutable post-download verification.
+- `src/store.rs` / `tasks.rs`: existing SQLite WAL schema, sorted-JSON-compatible idempotency digest, bounded queue and one owned consumer. Atomic terminal results cannot be overwritten; restart interrupts unfinished work without replay.
+- `src/api.rs` / `startup.rs` / `readiness.rs`: loopback host/origin boundary, strict bounded JSON, bearer/same-origin sessions, root lease before exclusive socket binding, store initialization before restricted atomic credential publication, singleflight off-loop integrity snapshots.
+- `src/verification.rs`: exact provider/hostname/action/session binding. Test-key success remains fixture completion, not production acceptance.
+- `resources/web/`: retained dependency-free dashboard; no second recognition implementation. `scripts/` contains captured bounded Windows operational/build/package adapters.
 
-## Constraints
+## Contracts and limits
 
-One local operator and one inference worker. No Redis, distributed scheduler, stealth browser, remote model code, training stack or paid-service fallback. Tasks have a 120-second ceiling, queue capacity 32 and 24-hour result TTL. Pending inputs are memory-only; persistence contains bounded sanitized result metadata, never images or tokens.
+One local operator and one inference worker. No Redis, distributed scheduler, stealth browser, remote model execution, training stack or paid-service fallback. Operation ceiling 120 seconds, queue default 32/safety maximum 64, retrieval TTL default 24 hours. Inputs remain in memory; persisted results contain bounded metadata, not images or credentials.
 
-Graceful shutdown terminalizes queued tasks as cancelled, and partial startup failures release acquired store ownership. A forced interruption still uses restart recovery; it never replays pending actions.
+Shutdown cancels queued/active tasks and joins owned work. Arbitrary OS disk I/O cannot be force-interrupted safely inside a thread; draining work remains owned and blocks replacement rather than being falsely declared finished. Outer command/CI ceilings bound the process tree. Forced termination uses restart recovery, never replay.
 
-SDK admission bounds simultaneous recognition callers to the configured queue-size limit; overload returns `inference_busy`. Image validation is offloaded under the inherited deadline. Session profiling is immutable, but tensor shape is per-request evidence.
+Persistence uses wall-clock restart/TTL timestamps; execution and sessions use monotonic time. TTL is a retrieval bound, not scheduled physical purge: later task creation removes expired terminal rows.
 
-Result TTL is a retrieval limit, not a guaranteed physical deletion deadline: expired terminal rows are removed on later task creation. Idle database retention is not advertised as a physical purge guarantee.
+## Migration boundary
 
-The current implementation uses wall-clock timestamps for persisted restart/TTL metadata and a monotonic remaining budget during execution. Recognition does not perform external actions, so restart interruption never replays a submitted provider action.
+Rust 0.2.0 intentionally retires Python SDK imports and preserves command/HTTP semantics. Runtime-version diagnostics truthfully change to native fields; no fabricated Python values. Source-generated fixtures retain exact meaningful answers/errors and normalize named nondeterministic request IDs only. Current migration verification status is in [Validation](../reports/VALIDATION.md); design/source inspection is not final runtime evidence.

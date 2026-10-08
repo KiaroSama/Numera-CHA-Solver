@@ -1,0 +1,282 @@
+{
+  "cases": [
+    {
+      "name": "sdk-00",
+      "input": {
+        "kind": "text",
+        "text": "12 * 3 = ?"
+      },
+      "expected": {
+        "outcome": "recognized",
+        "answer": "36",
+        "confidence": null,
+        "abstained": false,
+        "server_verified": false,
+        "mode": "local_classical",
+        "provider": "generic",
+        "subtype": "arithmetic",
+        "model_revision": null,
+        "device": "cpu",
+        "error": null,
+        "evidence": {
+          "grammar": "integer-binary-v1"
+        }
+      }
+    },
+    {
+      "name": "sdk-01",
+      "input": {
+        "kind": "text",
+        "text": "3/2"
+      },
+      "expected": {
+        "outcome": "failed",
+        "answer": null,
+        "confidence": null,
+        "abstained": false,
+        "server_verified": false,
+        "mode": "local_classical",
+        "provider": "generic",
+        "subtype": "arithmetic",
+        "model_revision": null,
+        "device": null,
+        "error": {
+          "code": "invalid_expression",
+          "message": "Division must have a nonzero divisor and integer result."
+        },
+        "evidence": {}
+      }
+    },
+    {
+      "name": "sdk-02",
+      "input": {
+        "kind": "text",
+        "text": "1+2",
+        "subtype": "audio_digits"
+      },
+      "expected": {
+        "outcome": "unsupported",
+        "answer": null,
+        "confidence": null,
+        "abstained": false,
+        "server_verified": false,
+        "mode": "local_classical",
+        "provider": "generic",
+        "subtype": "audio_digits",
+        "model_revision": null,
+        "device": null,
+        "error": {
+          "code": "unsupported_subtype",
+          "message": "No evaluated local engine for this subtype."
+        },
+        "evidence": {}
+      }
+    },
+    {
+      "name": "sdk-03",
+      "input": {
+        "kind": "audio"
+      },
+      "expected": {
+        "outcome": "unsupported",
+        "answer": null,
+        "confidence": null,
+        "abstained": false,
+        "server_verified": false,
+        "mode": "local_classical",
+        "provider": "generic",
+        "subtype": "arithmetic",
+        "model_revision": null,
+        "device": null,
+        "error": {
+          "code": "unsupported_modality",
+          "message": "This input requires an available declared perception engine."
+        },
+        "evidence": {}
+      }
+    },
+    {
+      "name": "sdk-04",
+      "input": {
+        "kind": "browser"
+      },
+      "expected": {
+        "outcome": "unsupported",
+        "answer": null,
+        "confidence": null,
+        "abstained": false,
+        "server_verified": false,
+        "mode": "local_classical",
+        "provider": "generic",
+        "subtype": "arithmetic",
+        "model_revision": null,
+        "device": null,
+        "error": {
+          "code": "unsupported_modality",
+          "message": "This input requires an available declared perception engine."
+        },
+        "evidence": {}
+      }
+    },
+    {
+      "name": "sdk-05",
+      "input": {
+        "kind": "text",
+        "text": 3
+      },
+      "expected": {
+        "outcome": "failed",
+        "answer": null,
+        "confidence": null,
+        "abstained": false,
+        "server_verified": false,
+        "mode": "local_classical",
+        "provider": "generic",
+        "subtype": "auto",
+        "model_revision": null,
+        "device": null,
+        "error": {
+          "code": "invalid_input",
+          "message": "text must be a string."
+        },
+        "evidence": {}
+      }
+    },
+    {
+      "name": "sdk-06",
+      "input": {
+        "kind": "unknown"
+      },
+      "expected": {
+        "outcome": "failed",
+        "answer": null,
+        "confidence": null,
+        "abstained": false,
+        "server_verified": false,
+        "mode": "local_classical",
+        "provider": "generic",
+        "subtype": "auto",
+        "model_revision": null,
+        "device": null,
+        "error": {
+          "code": "invalid_input",
+          "message": "Input kind must be text, image, audio or browser."
+        },
+        "evidence": {}
+      }
+    },
+    {
+      "name": "sdk-07",
+      "input": {
+        "kind": []
+      },
+      "expected": {
+        "outcome": "failed",
+        "answer": null,
+        "confidence": null,
+        "abstained": false,
+        "server_verified": false,
+        "mode": "local_classical",
+        "provider": "generic",
+        "subtype": "auto",
+        "model_revision": null,
+        "device": null,
+        "error": {
+          "code": "invalid_input",
+          "message": "Input kind must be text, image, audio or browser."
+        },
+        "evidence": {}
+      }
+    },
+    {
+      "name": "sdk-08",
+      "input": {
+        "kind": "image",
+        "asset": "https://example.com/image"
+      },
+      "expected": {
+        "outcome": "failed",
+        "answer": null,
+        "confidence": null,
+        "abstained": false,
+        "server_verified": false,
+        "mode": "local_classical",
+        "provider": "generic",
+        "subtype": "auto",
+        "model_revision": null,
+        "device": null,
+        "error": {
+          "code": "invalid_input",
+          "message": "Asset must contain local bytes, not a URL."
+        },
+        "evidence": {}
+      }
+    },
+    {
+      "name": "sdk-09",
+      "input": {
+        "kind": "text",
+        "endpoint": "https://example.com"
+      },
+      "expected": {
+        "outcome": "failed",
+        "answer": null,
+        "confidence": null,
+        "abstained": false,
+        "server_verified": false,
+        "mode": "local_classical",
+        "provider": "generic",
+        "subtype": "auto",
+        "model_revision": null,
+        "device": null,
+        "error": {
+          "code": "invalid_input",
+          "message": "Unknown input fields are not permitted."
+        },
+        "evidence": {}
+      }
+    },
+    {
+      "name": "sdk-10",
+      "input": null,
+      "expected": {
+        "outcome": "failed",
+        "answer": null,
+        "confidence": null,
+        "abstained": false,
+        "server_verified": false,
+        "mode": "local_classical",
+        "provider": "generic",
+        "subtype": "auto",
+        "model_revision": null,
+        "device": null,
+        "error": {
+          "code": "invalid_input",
+          "message": "Input must be an observation object."
+        },
+        "evidence": {}
+      }
+    },
+    {
+      "name": "sdk-11",
+      "input": [],
+      "expected": {
+        "outcome": "failed",
+        "answer": null,
+        "confidence": null,
+        "abstained": false,
+        "server_verified": false,
+        "mode": "local_classical",
+        "provider": "generic",
+        "subtype": "auto",
+        "model_revision": null,
+        "device": null,
+        "error": {
+          "code": "invalid_input",
+          "message": "Input must be an observation object."
+        },
+        "evidence": {}
+      }
+    }
+  ]
+}

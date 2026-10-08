@@ -1,0 +1,643 @@
+{
+  "verification": [
+    {
+      "context": {
+        "provider": "turnstile",
+        "hostname": "localhost",
+        "action": "test",
+        "session_id": "session-a",
+        "test_keys": true
+      },
+      "input": {
+        "provider": "turnstile",
+        "hostname": "localhost",
+        "action": "test",
+        "session_id": "session-a",
+        "success": true
+      },
+      "expected": {
+        "outcome": "challenge_completed",
+        "answer": null,
+        "confidence": null,
+        "abstained": false,
+        "server_verified": false,
+        "mode": "browser_protocol",
+        "provider": "turnstile",
+        "subtype": "arithmetic",
+        "model_revision": null,
+        "device": null,
+        "error": null,
+        "evidence": {
+          "test_key_integration": true,
+          "production_acceptance_measured": false
+        }
+      }
+    },
+    {
+      "context": {
+        "provider": "turnstile",
+        "hostname": "localhost",
+        "action": "test",
+        "session_id": "session-a",
+        "test_keys": true
+      },
+      "input": {
+        "token": "not-evidence"
+      },
+      "expected": {
+        "outcome": "failed",
+        "answer": null,
+        "confidence": null,
+        "abstained": false,
+        "server_verified": false,
+        "mode": "browser_protocol",
+        "provider": "generic",
+        "subtype": "arithmetic",
+        "model_revision": null,
+        "device": null,
+        "error": {
+          "code": "server_rejected",
+          "message": "Owner-side verification did not accept the response."
+        },
+        "evidence": {}
+      }
+    },
+    {
+      "context": {
+        "provider": "turnstile",
+        "hostname": "localhost",
+        "action": "test",
+        "session_id": "session-a",
+        "test_keys": true
+      },
+      "input": {
+        "provider": "turnstile",
+        "hostname": "localhost",
+        "action": "test",
+        "session_id": "session-a",
+        "success": "true"
+      },
+      "expected": {
+        "outcome": "failed",
+        "answer": null,
+        "confidence": null,
+        "abstained": false,
+        "server_verified": false,
+        "mode": "browser_protocol",
+        "provider": "generic",
+        "subtype": "arithmetic",
+        "model_revision": null,
+        "device": null,
+        "error": {
+          "code": "server_rejected",
+          "message": "Owner-side verification did not accept the response."
+        },
+        "evidence": {}
+      }
+    },
+    {
+      "context": {
+        "provider": "turnstile",
+        "hostname": "localhost",
+        "action": "test",
+        "session_id": "session-a",
+        "test_keys": true
+      },
+      "input": {
+        "provider": "other",
+        "hostname": "localhost",
+        "action": "test",
+        "session_id": "session-a",
+        "success": true
+      },
+      "expected": {
+        "outcome": "failed",
+        "answer": null,
+        "confidence": null,
+        "abstained": false,
+        "server_verified": false,
+        "mode": "browser_protocol",
+        "provider": "generic",
+        "subtype": "arithmetic",
+        "model_revision": null,
+        "device": null,
+        "error": {
+          "code": "verification_context",
+          "message": "Owner-side evidence does not match the expected context."
+        },
+        "evidence": {}
+      }
+    },
+    {
+      "context": {
+        "provider": "turnstile",
+        "hostname": "localhost",
+        "action": "test",
+        "session_id": "session-a",
+        "test_keys": true
+      },
+      "input": {
+        "provider": "turnstile",
+        "hostname": "other",
+        "action": "test",
+        "session_id": "session-a",
+        "success": true
+      },
+      "expected": {
+        "outcome": "failed",
+        "answer": null,
+        "confidence": null,
+        "abstained": false,
+        "server_verified": false,
+        "mode": "browser_protocol",
+        "provider": "generic",
+        "subtype": "arithmetic",
+        "model_revision": null,
+        "device": null,
+        "error": {
+          "code": "verification_context",
+          "message": "Owner-side evidence does not match the expected context."
+        },
+        "evidence": {}
+      }
+    },
+    {
+      "context": {
+        "provider": "turnstile",
+        "hostname": "localhost",
+        "action": "test",
+        "session_id": "session-a",
+        "test_keys": true
+      },
+      "input": {
+        "provider": "turnstile",
+        "hostname": "localhost",
+        "action": "other",
+        "session_id": "session-a",
+        "success": true
+      },
+      "expected": {
+        "outcome": "failed",
+        "answer": null,
+        "confidence": null,
+        "abstained": false,
+        "server_verified": false,
+        "mode": "browser_protocol",
+        "provider": "generic",
+        "subtype": "arithmetic",
+        "model_revision": null,
+        "device": null,
+        "error": {
+          "code": "verification_context",
+          "message": "Owner-side evidence does not match the expected context."
+        },
+        "evidence": {}
+      }
+    },
+    {
+      "context": {
+        "provider": "turnstile",
+        "hostname": "localhost",
+        "action": "test",
+        "session_id": "session-a",
+        "test_keys": true
+      },
+      "input": {
+        "provider": "turnstile",
+        "hostname": "localhost",
+        "action": "test",
+        "session_id": "other",
+        "success": true
+      },
+      "expected": {
+        "outcome": "failed",
+        "answer": null,
+        "confidence": null,
+        "abstained": false,
+        "server_verified": false,
+        "mode": "browser_protocol",
+        "provider": "generic",
+        "subtype": "arithmetic",
+        "model_revision": null,
+        "device": null,
+        "error": {
+          "code": "verification_context",
+          "message": "Owner-side evidence does not match the expected context."
+        },
+        "evidence": {}
+      }
+    },
+    {
+      "context": {
+        "provider": "turnstile",
+        "hostname": "localhost",
+        "action": "test",
+        "session_id": "session-a",
+        "test_keys": false
+      },
+      "input": {
+        "provider": "turnstile",
+        "hostname": "localhost",
+        "action": "test",
+        "session_id": "session-a",
+        "success": true
+      },
+      "expected": {
+        "outcome": "server_verified",
+        "answer": null,
+        "confidence": null,
+        "abstained": false,
+        "server_verified": true,
+        "mode": "browser_protocol",
+        "provider": "turnstile",
+        "subtype": "arithmetic",
+        "model_revision": null,
+        "device": null,
+        "error": null,
+        "evidence": {
+          "owner_assessment": true
+        }
+      }
+    },
+    {
+      "context": {
+        "provider": "turnstile",
+        "hostname": "localhost",
+        "action": "test",
+        "session_id": "session-a",
+        "test_keys": false
+      },
+      "input": {
+        "token": "not-evidence"
+      },
+      "expected": {
+        "outcome": "failed",
+        "answer": null,
+        "confidence": null,
+        "abstained": false,
+        "server_verified": false,
+        "mode": "browser_protocol",
+        "provider": "generic",
+        "subtype": "arithmetic",
+        "model_revision": null,
+        "device": null,
+        "error": {
+          "code": "server_rejected",
+          "message": "Owner-side verification did not accept the response."
+        },
+        "evidence": {}
+      }
+    },
+    {
+      "context": {
+        "provider": "turnstile",
+        "hostname": "localhost",
+        "action": "test",
+        "session_id": "session-a",
+        "test_keys": false
+      },
+      "input": {
+        "provider": "turnstile",
+        "hostname": "localhost",
+        "action": "test",
+        "session_id": "session-a",
+        "success": "true"
+      },
+      "expected": {
+        "outcome": "failed",
+        "answer": null,
+        "confidence": null,
+        "abstained": false,
+        "server_verified": false,
+        "mode": "browser_protocol",
+        "provider": "generic",
+        "subtype": "arithmetic",
+        "model_revision": null,
+        "device": null,
+        "error": {
+          "code": "server_rejected",
+          "message": "Owner-side verification did not accept the response."
+        },
+        "evidence": {}
+      }
+    },
+    {
+      "context": {
+        "provider": "turnstile",
+        "hostname": "localhost",
+        "action": "test",
+        "session_id": "session-a",
+        "test_keys": false
+      },
+      "input": {
+        "provider": "other",
+        "hostname": "localhost",
+        "action": "test",
+        "session_id": "session-a",
+        "success": true
+      },
+      "expected": {
+        "outcome": "failed",
+        "answer": null,
+        "confidence": null,
+        "abstained": false,
+        "server_verified": false,
+        "mode": "browser_protocol",
+        "provider": "generic",
+        "subtype": "arithmetic",
+        "model_revision": null,
+        "device": null,
+        "error": {
+          "code": "verification_context",
+          "message": "Owner-side evidence does not match the expected context."
+        },
+        "evidence": {}
+      }
+    },
+    {
+      "context": {
+        "provider": "turnstile",
+        "hostname": "localhost",
+        "action": "test",
+        "session_id": "session-a",
+        "test_keys": false
+      },
+      "input": {
+        "provider": "turnstile",
+        "hostname": "other",
+        "action": "test",
+        "session_id": "session-a",
+        "success": true
+      },
+      "expected": {
+        "outcome": "failed",
+        "answer": null,
+        "confidence": null,
+        "abstained": false,
+        "server_verified": false,
+        "mode": "browser_protocol",
+        "provider": "generic",
+        "subtype": "arithmetic",
+        "model_revision": null,
+        "device": null,
+        "error": {
+          "code": "verification_context",
+          "message": "Owner-side evidence does not match the expected context."
+        },
+        "evidence": {}
+      }
+    },
+    {
+      "context": {
+        "provider": "turnstile",
+        "hostname": "localhost",
+        "action": "test",
+        "session_id": "session-a",
+        "test_keys": false
+      },
+      "input": {
+        "provider": "turnstile",
+        "hostname": "localhost",
+        "action": "other",
+        "session_id": "session-a",
+        "success": true
+      },
+      "expected": {
+        "outcome": "failed",
+        "answer": null,
+        "confidence": null,
+        "abstained": false,
+        "server_verified": false,
+        "mode": "browser_protocol",
+        "provider": "generic",
+        "subtype": "arithmetic",
+        "model_revision": null,
+        "device": null,
+        "error": {
+          "code": "verification_context",
+          "message": "Owner-side evidence does not match the expected context."
+        },
+        "evidence": {}
+      }
+    },
+    {
+      "context": {
+        "provider": "turnstile",
+        "hostname": "localhost",
+        "action": "test",
+        "session_id": "session-a",
+        "test_keys": false
+      },
+      "input": {
+        "provider": "turnstile",
+        "hostname": "localhost",
+        "action": "test",
+        "session_id": "other",
+        "success": true
+      },
+      "expected": {
+        "outcome": "failed",
+        "answer": null,
+        "confidence": null,
+        "abstained": false,
+        "server_verified": false,
+        "mode": "browser_protocol",
+        "provider": "generic",
+        "subtype": "arithmetic",
+        "model_revision": null,
+        "device": null,
+        "error": {
+          "code": "verification_context",
+          "message": "Owner-side evidence does not match the expected context."
+        },
+        "evidence": {}
+      }
+    }
+  ],
+  "geometry": [
+    {
+      "dimensions": [
+        300,
+        300,
+        1.5,
+        2,
+        17,
+        80
+      ],
+      "operation": "to_viewport",
+      "point": [
+        100,
+        150
+      ],
+      "expected": {
+        "answer": [
+          167.0,
+          380
+        ],
+        "error": null
+      }
+    },
+    {
+      "dimensions": [
+        300,
+        300,
+        1.5,
+        2,
+        17,
+        80
+      ],
+      "operation": "to_image",
+      "point": [
+        167,
+        380
+      ],
+      "expected": {
+        "answer": [
+          100.0,
+          150.0
+        ],
+        "error": null
+      }
+    },
+    {
+      "dimensions": [
+        300,
+        300,
+        1,
+        1,
+        0,
+        0
+      ],
+      "operation": "to_viewport",
+      "point": [
+        300,
+        0
+      ],
+      "expected": {
+        "answer": null,
+        "error": {
+          "code": "invalid_geometry",
+          "message": "Action is outside the authorized image region."
+        }
+      }
+    },
+    {
+      "dimensions": [
+        0,
+        300,
+        1,
+        1,
+        0,
+        0
+      ],
+      "operation": "to_image",
+      "point": [
+        0,
+        0
+      ],
+      "expected": {
+        "answer": null,
+        "error": {
+          "code": "invalid_geometry",
+          "message": "Dimensions and scale must be finite and positive."
+        }
+      }
+    }
+  ],
+  "ctc": [
+    {
+      "rows": [
+        [
+          0.9,
+          0.05,
+          0.05
+        ]
+      ],
+      "expected": {
+        "answer": "",
+        "confidence": 0.0,
+        "error": null
+      }
+    },
+    {
+      "rows": [
+        [
+          0.1,
+          0.8,
+          0.1
+        ],
+        [
+          0.1,
+          0.8,
+          0.1
+        ],
+        [
+          0.9,
+          0.05,
+          0.05
+        ],
+        [
+          0.1,
+          0.8,
+          0.1
+        ],
+        [
+          0.1,
+          0.1,
+          0.8
+        ]
+      ],
+      "expected": {
+        "answer": "aab",
+        "confidence": 0.800000011920929,
+        "error": null
+      }
+    },
+    {
+      "rows": [
+        [
+          0.5,
+          0.5,
+          0
+        ]
+      ],
+      "expected": {
+        "answer": "",
+        "confidence": 0.0,
+        "error": null
+      }
+    },
+    {
+      "rows": [
+        [
+          -0.1,
+          0.8,
+          0.3
+        ]
+      ],
+      "expected": {
+        "answer": null,
+        "error": {
+          "code": "model_contract",
+          "message": "OCR output contains invalid probability values."
+        }
+      }
+    },
+    {
+      "rows": [
+        [
+          1.0001,
+          0,
+          0
+        ]
+      ],
+      "expected": {
+        "answer": null,
+        "error": {
+          "code": "model_contract",
+          "message": "OCR output contains invalid probability values."
+        }
+      }
+    }
+  ]
+}

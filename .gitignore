@@ -45,6 +45,11 @@ dist/
 *.sqlite3-shm
 .DS_Store
 Thumbs.db
+/target/
+*.rs.bk
+*.profraw
+/native-dist/
+/bin/
 
 # Hook Maker: local/private files (auto-managed)
 /.env

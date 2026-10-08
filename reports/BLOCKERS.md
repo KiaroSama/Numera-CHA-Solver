@@ -8,8 +8,8 @@
 | Spatial/temporal/VLM | Geometry is implemented, but no evaluated perception checkpoint/temporal fixture. | Heavy multimodal/training stacks deferred; no external hidden fallback. | Supply licensed subtype data and choose a traceable hardware-compatible local model. |
 | Multilingual model | PaddleOCR issue18364 reports possible non-ASCII corruption; not reproduced. | No blind re-encoding workaround. | Evaluate paired dictionary/output and real non-ASCII labels before promotion. |
 | Official network/live integration | Contract fixtures do not prove provider network acceptance; live scope deferred. | Google/Turnstile official docs/test keys researched. | Run bounded owner-controlled official positive/negative integration separately when selected. |
-| Latest Python/uv | Latest3.14.8 unavailable in uv metadata; uv update blocked by busy unrelateduvx. | Latest metadata checked; existing3.14.7 used. | Update with supported official runtime once available and re-run packaging/model compatibility. |
-| Platform breadth | Windows primary tested only; clean supported-version/Linux matrices not yet run. | Portable core/locked packaging retained. | Run platform matrix with available runners; do not infer cross-platform GPU reliability. |
+| Native migration verification | Rust 0.2.0 focused checks pass; final exact-commit Windows CI, installed package and copied-state rollback remain pending. | Preserve source until all gates pass. Current source oracle resolves Python 3.14.8; older Python/uv observations are historical, not native dependencies. | Complete native validation before old-version/cache cleanup. |
+| Platform breadth | Windows-only product by owner decision; other platforms are out of scope. | Portable Rust core retained without a cross-platform support promise. | Do not infer Linux/macOS or cross-platform GPU reliability from Windows tests. |
 
 ## Next perception slice: explicit intake
 

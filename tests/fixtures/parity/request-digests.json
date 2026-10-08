@@ -1,0 +1,46 @@
+{
+  "cases": [
+    {
+      "input": {
+        "kind": "text",
+        "text": "1+2"
+      },
+      "expected": "e16125b122a3126bf225aa148457f01a77c2909fbd960044e6aec2d8cf86f318"
+    },
+    {
+      "input": {
+        "kind": "text",
+        "text": ""
+      },
+      "expected": "79b74dd069e98c65d069076810449217750bf19af515c0c0ec0a5d8858c93d11"
+    },
+    {
+      "input": {
+        "kind": "text",
+        "text": ""
+      },
+      "expected": "e8098b8aceb3351ea914a7b32fd50fe6786fb3d5528ccfe28313f02405fd5b5c"
+    },
+    {
+      "input": {
+        "kind": "text",
+        "text": "😀"
+      },
+      "expected": "c442c8273864c46405f0843a7136633199efc39f8568576c77323106ec9d15d8"
+    },
+    {
+      "input": {
+        "kind": "text",
+        "text": "\u001f"
+      },
+      "expected": "d0fdd5b1b825a7c61c3fed16019c189f8b999d0df1ceb46e3a55296b96aa1f72"
+    },
+    {
+      "input": {
+        "kind": "text",
+        "text": "\"\\\\"
+      },
+      "expected": "1574227800d523eada3366d6236911329d207578d13c7886aa6edfdff86e4f91"
+    }
+  ]
+}

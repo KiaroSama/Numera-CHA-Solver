@@ -1,0 +1,235 @@
+{
+  "source_revision": "a8e25292317621e900d908c56927c489eecae06a",
+  "python": "3.14.8",
+  "contract": "exact arithmetic answer and stable error",
+  "cases": [
+    {
+      "name": "arithmetic-00",
+      "input": "12 * 3 = ?",
+      "expected": {
+        "answer": "36",
+        "error": null
+      }
+    },
+    {
+      "name": "arithmetic-01",
+      "input": "7+5",
+      "expected": {
+        "answer": "12",
+        "error": null
+      }
+    },
+    {
+      "name": "arithmetic-02",
+      "input": "-12/-3",
+      "expected": {
+        "answer": "4",
+        "error": null
+      }
+    },
+    {
+      "name": "arithmetic-03",
+      "input": "12/-3",
+      "expected": {
+        "answer": "-4",
+        "error": null
+      }
+    },
+    {
+      "name": "arithmetic-04",
+      "input": "1- -2",
+      "expected": {
+        "answer": "3",
+        "error": null
+      }
+    },
+    {
+      "name": "arithmetic-05",
+      "input": "-0 + 0",
+      "expected": {
+        "answer": "0",
+        "error": null
+      }
+    },
+    {
+      "name": "arithmetic-06",
+      "input": "000001+2",
+      "expected": {
+        "answer": "3",
+        "error": null
+      }
+    },
+    {
+      "name": "arithmetic-07",
+      "input": " 1 + 2 ",
+      "expected": {
+        "answer": "3",
+        "error": null
+      }
+    },
+    {
+      "name": "arithmetic-08",
+      "input": "\u001c1+2\u001f",
+      "expected": {
+        "answer": "3",
+        "error": null
+      }
+    },
+    {
+      "name": "arithmetic-09",
+      "input": "1+2=",
+      "expected": {
+        "answer": "3",
+        "error": null
+      }
+    },
+    {
+      "name": "arithmetic-10",
+      "input": "1+2=?",
+      "expected": {
+        "answer": "3",
+        "error": null
+      }
+    },
+    {
+      "name": "arithmetic-11",
+      "input": "2 ** 100",
+      "expected": {
+        "answer": null,
+        "error": {
+          "code": "invalid_expression",
+          "message": "Use two bounded integers and one +, -, *, or / operator."
+        }
+      }
+    },
+    {
+      "name": "arithmetic-12",
+      "input": "__import__('os')",
+      "expected": {
+        "answer": null,
+        "error": {
+          "code": "invalid_expression",
+          "message": "Use two bounded integers and one +, -, *, or / operator."
+        }
+      }
+    },
+    {
+      "name": "arithmetic-13",
+      "input": "9/0",
+      "expected": {
+        "answer": null,
+        "error": {
+          "code": "invalid_expression",
+          "message": "Division must have a nonzero divisor and integer result."
+        }
+      }
+    },
+    {
+      "name": "arithmetic-14",
+      "input": "3/2",
+      "expected": {
+        "answer": null,
+        "error": {
+          "code": "invalid_expression",
+          "message": "Division must have a nonzero divisor and integer result."
+        }
+      }
+    },
+    {
+      "name": "arithmetic-15",
+      "input": "99999999+1",
+      "expected": {
+        "answer": null,
+        "error": {
+          "code": "invalid_expression",
+          "message": "Use two bounded integers and one +, -, *, or / operator."
+        }
+      }
+    },
+    {
+      "name": "arithmetic-16",
+      "input": "100001+0",
+      "expected": {
+        "answer": null,
+        "error": {
+          "code": "invalid_expression",
+          "message": "Arithmetic operand exceeds the configured bound."
+        }
+      }
+    },
+    {
+      "name": "arithmetic-17",
+      "input": "100000+1",
+      "expected": {
+        "answer": null,
+        "error": {
+          "code": "invalid_expression",
+          "message": "Arithmetic result exceeds the configured bound."
+        }
+      }
+    },
+    {
+      "name": "arithmetic-18",
+      "input": "-100000-1",
+      "expected": {
+        "answer": null,
+        "error": {
+          "code": "invalid_expression",
+          "message": "Arithmetic result exceeds the configured bound."
+        }
+      }
+    },
+    {
+      "name": "arithmetic-19",
+      "input": "1+2?",
+      "expected": {
+        "answer": null,
+        "error": {
+          "code": "invalid_expression",
+          "message": "Use two bounded integers and one +, -, *, or / operator."
+        }
+      }
+    },
+    {
+      "name": "arithmetic-20",
+      "input": "١+٢",
+      "expected": {
+        "answer": null,
+        "error": {
+          "code": "invalid_expression",
+          "message": "Use two bounded integers and one +, -, *, or / operator."
+        }
+      }
+    },
+    {
+      "name": "arithmetic-21",
+      "input": "1.0+2",
+      "expected": {
+        "answer": null,
+        "error": {
+          "code": "invalid_expression",
+          "message": "Use two bounded integers and one +, -, *, or / operator."
+        }
+      }
+    },
+    {
+      "name": "arithmetic-22",
+      "input": "",
+      "expected": {
+        "answer": null,
+        "error": {
+          "code": "invalid_expression",
+          "message": "Use two bounded integers and one +, -, *, or / operator."
+        }
+      }
+    },
+    {
+      "name": "arithmetic-23",
+      "input": "1+2\n",
+      "expected": {
+        "answer": "3",
+        "error": null
+      }
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "models": [{
+    "id": "ppocr-v6-small",
+    "task": "generic_text_line_ocr",
+    "revision": "b8f84f0b80c529de40b4fbb3544b84fa7233a513",
+    "license": "Apache-2.0",
+    "license_url": "https://huggingface.co/PaddlePaddle/PP-OCRv6_small_rec_onnx/blob/b8f84f0b80c529de40b4fbb3544b84fa7233a513/README.md",
+    "preprocessing": "bgr48-pillow-bilinear-ctc-v1",
+    "input": "FP32 NCHW [1,3,48,W], BGR, [-1,1], right zero padding",
+    "output": "[1,T,C], CTC blank 0, ordered dictionary and trailing space",
+    "compatible_runtime": "onnxruntime 1.30.0",
+    "memory_budget_bytes": 1073741824,
+    "validation": "Generic ASCII smoke only; CAPTCHA and multilingual accuracy unverified.",
+    "assets": [
+      {
+        "file": "inference.onnx",
+        "url": "https://huggingface.co/PaddlePaddle/PP-OCRv6_small_rec_onnx/resolve/b8f84f0b80c529de40b4fbb3544b84fa7233a513/inference.onnx",
+        "sha256": "5435fd747c9e0efe15a96d0b378d5bd157e9492ed8fd80edf08f30d02fa24634",
+        "size": 21159378
+      },
+      {
+        "file": "characters.txt",
+        "url": "https://raw.githubusercontent.com/PaddlePaddle/PaddleOCR/dab3fe35379033fdcb2d0e9572fac0b36c9a9ebf/ppocr/utils/dict/ppocrv6_dict.txt",
+        "sha256": "b5f2bfe2bdd9448429e3e82b51c789775d9b42f2403d082b00662eb77e401c5d",
+        "size": 74947
+      },
+      {
+        "file": "inference.yml",
+        "url": "https://huggingface.co/PaddlePaddle/PP-OCRv6_small_rec_onnx/raw/b8f84f0b80c529de40b4fbb3544b84fa7233a513/inference.yml",
+        "sha256": "ab078671bb49f06228eadccd34f1bb501e157f7a047095ffb943ba81512c77d1",
+        "size": 150579
+      }
+    ]
+  }]
+}

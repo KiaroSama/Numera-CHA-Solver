@@ -29,7 +29,7 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Manual workflow dispatch failed.' }
     $watch=[Diagnostics.Stopwatch]::StartNew()
     while (-not $process.WaitForExit(2000)) {
-        if ($watch.Elapsed.TotalSeconds -gt 900) { throw 'Manual runner exceeded its lifecycle ceiling.' }
+        if ($watch.Elapsed.TotalSeconds -gt 2400) { throw 'Manual runner exceeded its lifecycle ceiling.' }
     }
     $code=$process.ExitCode
     Write-RunLog INFO runner "Owned single-job runner exited exit_code=$code."
@@ -44,7 +44,7 @@ try {
 } catch { $code=1; Write-RunLog ERROR runner $_.Exception.Message }
 finally {
     if ($process) {
-        if (-not $process.HasExited) { $process.Kill($true);$process.WaitForExit(5000)|Out-Null }
+        if (-not $process.HasExited) { $process.Kill($true);if(-not $process.WaitForExit(5000)){throw 'Owned runner termination could not be confirmed.'} }
         Write-RunLog INFO cleanup "Owned runner stopped pid=$($process.Id)."
         $process.Dispose()
     }
