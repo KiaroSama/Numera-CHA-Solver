@@ -1,6 +1,6 @@
 #requires -Version 7.0
 [CmdletBinding()]
-param([ValidateSet('oracle','compile','parity','sdk-parity','preprocess','build','smoke','gpu-smoke','http-parity','startup-credential','worker-cancel','worker-fixture','decode-owner','launcher-owner','cli-filter')][string]$Operation='compile')
+param([ValidateSet('oracle','compile','parity','sdk-parity','preprocess','build','smoke','gpu-smoke','http-parity','startup-credential','worker-cancel','worker-fixture','decode-owner','launcher-owner','cli-filter','task-active')][string]$Operation='compile')
 $ErrorActionPreference='Stop'
 $root=Split-Path -Parent $PSScriptRoot
 $work=Join-Path $root '.ci-work/rust-migration'
@@ -28,6 +28,7 @@ if($Operation -eq 'oracle'){
         'compile' {@('check','--all-targets');break}
         'build' {@('build','--bin','numera-cha');break}
         'smoke' {$executable=Join-Path $root 'target/debug/numera-cha.exe'; @('recognize','--text','12 * 3 = ?');break}
+        'task-active' {@('test','--test','worker','active_task_shutdown_joins_consumer_and_reaps_inference','--','--exact','--test-threads=1');break}
         'cli-filter' {@('test','--test','cli','image_character_filter_is_not_a_second_exclusive_input','--','--exact','--test-threads=1');break}
         'launcher-owner' {$executable=(Get-Command pwsh -ErrorAction Stop).Source; @('-NoLogo','-NoProfile','-NonInteractive','-File',(Join-Path $root 'tests/launcher_ownership.ps1'));break}
         'decode-owner' {@('test','--test','decode','cancelled_and_expired_decoders_hold_admission_until_drained','--','--exact','--test-threads=1');break}

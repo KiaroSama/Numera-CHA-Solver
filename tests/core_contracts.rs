@@ -107,7 +107,7 @@ async fn benchmarks_validate_failures_duplicates_and_denominators() {
     assert_eq!(result["limited_evidence"], true);
     assert_eq!(result["exact_accuracy"], 0.0);
     assert_eq!(result["live_acceptance_measured"], false);
-    assert_eq!(result["confidence_interval95"][0], 0.0);
+    assert_eq!(result["confidence_interval_95"][0], 0.0);
     assert_eq!(result["rows"][0]["outcome"], "failed");
     assert_eq!(result["rows"][1]["outcome"], "failed");
     std::fs::write(root.path().join("copy.png"), b"not an image").unwrap();

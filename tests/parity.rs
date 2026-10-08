@@ -60,7 +60,17 @@ fn geometry_verification_and_ctc_match_source_contracts() {
             Ok((x, y)) => json!({"answer":[x,y],"error":null}),
             Err(error) => json!({"answer":null,"error":error}),
         };
-        assert_eq!(actual, case["expected"])
+        if actual["error"].is_null() {
+            assert!(case["expected"]["error"].is_null());
+            for coordinate in 0..2 {
+                assert_eq!(
+                    actual["answer"][coordinate].as_f64(),
+                    case["expected"]["answer"][coordinate].as_f64()
+                );
+            }
+        } else {
+            assert_eq!(actual, case["expected"])
+        }
     }
     for case in document["ctc"].as_array().unwrap() {
         let rows = case["rows"].as_array().unwrap();

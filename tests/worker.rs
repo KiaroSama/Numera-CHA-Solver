@@ -393,7 +393,35 @@ async fn active_task_shutdown_joins_consumer_and_reaps_inference() {
         )
         .await
         .expect("task");
-    let (mut control, pid) = entered(&listener).await;
+    let id = task["id"].as_str().expect("task identity");
+    let connection = tokio::time::timeout(Duration::from_secs(3), async {
+        loop {
+            let persisted = store.get(id).expect("owned task state");
+            if persisted["state"] == "terminal" {
+                return Err(format!("Task completed before worker startup: {persisted}"));
+            }
+            tokio::select! {
+                connection = listener.accept() => return connection.map_err(|error| error.to_string()),
+                _ = tokio::task::yield_now() => {},
+            }
+        }
+    }).await;
+    let (mut control, _) = match connection {
+        Ok(Ok(connection)) => connection,
+        failed => {
+            let persisted = store.get(id).expect("failure task state");
+            let diagnostic = std::fs::read_to_string(root.path().join("worker-diagnostic.txt"))
+                .unwrap_or_else(|_| "fixture-not-started".into());
+            service.close().await.expect("failed startup cleanup");
+            panic!(
+                "Active task startup failed: {failed:?}; task={persisted}; fixture={diagnostic}"
+            );
+        }
+    };
+    let pid = tokio::time::timeout(Duration::from_secs(1), control.read_u32_le())
+        .await
+        .expect("worker identity deadline")
+        .expect("worker identity");
     #[cfg(windows)]
     let process = ProcessHandle::open(pid);
     assert_eq!(
