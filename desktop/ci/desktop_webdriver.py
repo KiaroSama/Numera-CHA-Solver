@@ -125,6 +125,15 @@ def main():
                 pass  # Closing the only window can close the driver transport before its response.
             driver.wait(lambda: any("Desktop API and owned tasks drained." in p.read_text(encoding="utf-8") for p in (args.work / "logs").glob("*.log")), "owned application drain")
             print("Packaged Linux native IPC/arithmetic/human-review/close passed.")
+        except Exception:
+            log.flush()
+            for path in [args.work / "native-driver.log", *sorted((args.work / "logs").glob("*.log"))]:
+                if path.is_file():
+                    with path.open("rb") as capture:
+                        capture.seek(max(0, path.stat().st_size - 8192))
+                        text = capture.read(8192).decode("utf-8", errors="replace")
+                    print("Native GUI diagnostic " + path.name + ": " + owned_process.safe(text), file=sys.stderr)
+            raise
         finally:
             if driver.session:
                 try:
