@@ -6,6 +6,8 @@ Confirmed seams: native SDK/CLI, authenticated HTTP/tasks/review, real model/dev
 
 Version0.3.0 is built/tested on GitHub-hosted Windows x64, Ubuntu24.04 x64 and Apple Silicon macOS. Main pushes, pull requests and manual dispatch trigger the native matrix; no local/self-hosted runner is used. The owner's current task explicitly excludes local builds and runtime tests. Source formatting/config syntax inspection does not count as execution evidence.
 
+Each job first exercises duplicate executable discovery and fail-closed dependency notice selection (unknown version, mismatched license/revision and altered bytes). The discovery placeholders are never executed. Packaging verifies all omitted notice texts and includes unchanged preferred source for every MPL-covered dependency; missing or mismatched catalog entries block delivery.
+
 Each job uses two compiler workers, one test thread and one model operation. Native tests have their own async/process deadlines; the captured outer command owner supplies wall/idle/tree cleanup. Stable libtest has no universal per-case kill timeout. Job wall limit is45min; each stage records exit status and duration. Genuine timeouts/failures block package upload, not waived by retries or disabled assertions.
 
 ## Required tiers

@@ -10,6 +10,12 @@ function Assert-Hosted {
     }
 }
 function Get-HostedRoot { $script:Root }
+function Get-HostedCommand([string]$Name) {
+    try { $commands=@(Get-Command $Name -CommandType Application -All -ErrorAction Stop) }
+    catch { throw "Hosted executable is unavailable: $Name." }
+    if ($commands.Count -eq 0 -or -not [IO.File]::Exists($commands[0].Source)) { throw "Hosted executable is unavailable: $Name." }
+    return $commands[0].Source
+}
 function Initialize-HostedLog([string]$Name) {
     Assert-Hosted
     try {
@@ -34,14 +40,14 @@ function Write-HostedLog([string]$Level, [string]$Component, [string]$Message) {
 }
 function Invoke-Hosted([string]$Executable, [string[]]$Arguments, [int]$Wall=120, [int]$Idle=45, [string]$Capture='', [string]$Cwd=$script:Root) {
     Assert-Hosted
-    if (-not [IO.Path]::IsPathRooted($Executable)) { $Executable=(Get-Command $Executable -CommandType Application -ErrorAction Stop).Source }
+    if (-not [IO.Path]::IsPathRooted($Executable)) { $Executable=Get-HostedCommand $Executable }
     if ($IsWindows) {
         Import-Module (Join-Path $script:Root 'scripts/Common.psm1') -Force
         Initialize-RunLog 'hosted-command'
         return (Invoke-BoundedCommand -Executable $Executable -Arguments $Arguments -WallSeconds $Wall -IdleSeconds $Idle -CapturePath $Capture -WorkingDirectory $Cwd)
     }
     $owner = Join-Path $PSScriptRoot 'run_owned.py'
-    $python = (Get-Command python -CommandType Application -ErrorAction Stop).Source
+    $python = Get-HostedCommand python
     $parameters = @('-I',$owner,'--cwd',$Cwd,'--work',(Join-Path $script:Root '.ci-work/owners'),'--wall',"$Wall",'--idle',"$Idle")
     if ($Capture) { $parameters += @('--capture',$Capture) }
     & $python @parameters -- $Executable @Arguments
@@ -58,4 +64,4 @@ function Assert-RegularFile([string]$Path) {
     }
     return $item
 }
-Export-ModuleMember -Function Assert-Hosted,Get-HostedRoot,Initialize-HostedLog,Write-HostedLog,Invoke-Hosted,Assert-Exit,Assert-RegularFile
+Export-ModuleMember -Function Assert-Hosted,Get-HostedRoot,Get-HostedCommand,Initialize-HostedLog,Write-HostedLog,Invoke-Hosted,Assert-Exit,Assert-RegularFile

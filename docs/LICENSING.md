@@ -12,6 +12,8 @@ Native CI packages include matching source archives and license notices. The sou
 
 Read [Third-party notices](../THIRD_PARTY_NOTICES.md). ONNX Runtime, rmcp, Tauri and other dependencies keep their own grants. Model weights and dictionaries are separately licensed and hash-pinned; no application license silently replaces them.
 
+Native packaging preserves complete upstream license/notice bytes, with an exact crate-version, source-revision and SHA256 catalog for texts omitted from registry packages. macOS dependency declarations by reference are accompanied by their full selected license text and the unchanged upstream Apple SDK caveat; this is not legal certification. MPL-covered dependencies include unchanged preferred-source `.crate` archives plus extraction/source/license instructions under `source/third-party/`. Those covered sources stay under MPL-2.0 and are not restricted by Numera's noncommercial terms.
+
 Buster and the referenced owner MCP projects use GPL terms. Their source is not copied into this noncommercial project. Their layout/protocol and accessibility principles were studied only; an HTTP/process wrapper is not automatically a copyleft exemption. Scrapling and Nstbrowser were researched, but their anti-detect/solver behavior is neither adopted nor claimed here. Product marketing is not source permission or accuracy evidence.
 
 ## Adoption limits

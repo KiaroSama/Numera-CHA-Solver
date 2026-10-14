@@ -78,8 +78,8 @@ jobs:
         run: |
           Import-Module ./desktop/ci/Hosted.psm1 -Force
           Initialize-HostedLog 'hosted-tools'
-          $bootstrap=[Diagnostics.ProcessStartInfo]::new();$bootstrap.FileName=(Get-Command uv).Source
-          foreach($argument in @('pip','install','--python',(Get-Command python).Source,'psutil==7.2.2')){$bootstrap.ArgumentList.Add($argument)}
+          $bootstrap=[Diagnostics.ProcessStartInfo]::new();$bootstrap.FileName=(Get-HostedCommand uv)
+          foreach($argument in @('pip','install','--python',(Get-HostedCommand python),'psutil==7.2.2')){$bootstrap.ArgumentList.Add($argument)}
           $bootstrap.UseShellExecute=$false;$bootstrap.CreateNoWindow=$true
           $bootstrap.RedirectStandardInput=$true;$bootstrap.RedirectStandardOutput=$true;$bootstrap.RedirectStandardError=$true
           $process=[Diagnostics.Process]::new();$process.StartInfo=$bootstrap
@@ -89,7 +89,7 @@ jobs:
             if(-not $process.WaitForExit(120000)){$process.Kill($true);$null=$process.WaitForExit(5000);throw 'Hosted process-identity prerequisite installation timed out.'}
             if($process.ExitCode -ne 0){throw 'Hosted process-identity prerequisite installation failed.'}
           } finally {$process.Dispose()}
-          Assert-Exit (Invoke-Hosted uv @('pip','check','--python',(Get-Command python).Source) 30 10) 'hosted-identity-tool-check'
+          Assert-Exit (Invoke-Hosted uv @('pip','check','--python',(Get-HostedCommand python)) 30 10) 'hosted-identity-tool-check'
           $tools=Join-Path $env:GITHUB_WORKSPACE '.ci-work/tools'
           $asset=@{
             'windows-x64'=@{name='cargo-tauri-x86_64-pc-windows-msvc.zip';hash='bef439eb1a0edd5192ed0009945e5de660b642a51519efe7d6953d70c5ab1939'}

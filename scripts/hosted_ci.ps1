@@ -68,8 +68,8 @@ try {
     $env:CARGO_BUILD_JOBS='2';$env:RUST_TEST_THREADS='1';$env:NUMERA_MAX_TEST_WORKERS='1'
     $env:NUMERA_TEST_GPU='0';$env:NUMERA_TEST_BROWSER='1';$env:NUMERA_DEVICE='cpu';$env:NUMERA_ROOT=$root
     if (-not $env:NUMERA_RUNTIME_ROOT -or -not $env:NUMERA_ORT_LIBRARY) { throw 'Verified CPU runtime/model fixture is required.' }
-    $suffix=if($IsWindows){'.exe'}else{''};$pwsh=(Get-Command pwsh).Source
-    $python=(Get-Command python).Source
+    $suffix=if($IsWindows){'.exe'}else{''};$pwsh=Get-HostedCommand pwsh
+    $python=Get-HostedCommand python
     $browserPython=Join-Path $root $(if($IsWindows){'.ci-work/browser-env/Scripts/python.exe'}else{'.ci-work/browser-env/bin/python'})
     $expected=@('parity','preprocessing','adapters','lifecycle','gpu','cli','http_parity','core_contracts','startup','worker','task_regressions','downloads','decode','mcp','mcp_bridge','review','platform')
     $actual=@(Get-ChildItem -LiteralPath (Join-Path $root 'tests') -File -Filter '*.rs'|ForEach-Object {$_.BaseName})
@@ -82,6 +82,7 @@ try {
             if ([IO.Path]::GetExtension($relative) -in @('.rs','.py','.ps1','.psm1','.cs','.js') -and ($text -split "`n").Count -gt 800) { throw 'Source file exceeds its line ceiling.' }
         }
     }
+    Required 'hosted-command-and-notice-contracts' $pwsh @('-NoLogo','-NoProfile','-NonInteractive','-File',(Join-Path $root 'desktop/ci/hosted_contracts.ps1')) 30 15
     if (-not $IsWindows) {
         Required 'posix-owned-process-regression' $python @('-I',(Join-Path $root 'desktop/ci/owner_contract.py'),'--work',(Join-Path $work 'owner-contract')) 45 15
     }

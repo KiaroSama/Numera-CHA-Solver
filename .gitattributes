@@ -1,0 +1,2 @@
+# Hash-pinned upstream notices retain their original bytes on every platform.
+resources/licenses/upstream/* -text whitespace=-blank-at-eol
