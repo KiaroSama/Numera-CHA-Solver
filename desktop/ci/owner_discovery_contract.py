@@ -62,6 +62,7 @@ def verify(work):
         denied.status.return_value = psutil.STATUS_RUNNING
         denied.environ.side_effect = psutil.AccessDenied(denied.pid)
         denied.parent.return_value = None
+        denied.ppid.return_value = 1
         try:
             snapshot([denied])
         except RuntimeError as error:
