@@ -1,72 +1,124 @@
-SPDX-License-Identifier: LicenseRef-Proprietary
+SPDX-License-Identifier: LicenseRef-Noncommercial-Network-ShareAlike-1.0
 
-PROPRIETARY SOFTWARE LICENSE
+# Noncommercial Network Share-Alike License — Version 1.0
 
-Copyright (c) 2026 KiaroSama. All Rights Reserved.
+Copyright (c) 2026 KiaroSama.
+Additional copyright holders retain the rights identified in the applicable notices.
 
-NOTE ON AUTOMATED LICENSE DETECTION
-GitHub identifies a licence by matching this file against a fixed corpus of
-standard open-source licences (MIT, Apache-2.0, GPL, ...). This is a custom
-proprietary licence, so no match is possible and GitHub will show a plain
-"View license" link rather than a named licence badge. That is expected, not a
-misconfiguration: making the badge appear would require replacing the text
-below with a standard open-source licence, which would grant the public rights
-this licence deliberately withholds. The SPDX line above is the machine-readable
-marker for a non-standard licence (LicenseRef-*).
+## 1. Scope and parties
 
-This software and its associated source code, documentation, configuration,
-scripts, tests, trained model weights, and any other files contained in this
-repository (collectively, the "Software") are the proprietary and confidential
-property of the copyright holder.
+“Software” means the code and associated material expressly identified by its copyright holders as offered under this license. Material identified as governed by a separate license is not relicensed by this document.
 
-NO LICENSE GRANTED
+A “Licensor” is a copyright holder offering rights under this license. Each Licensor grants only rights that the Licensor owns or is authorized to license.
 
-No license, express or implied, by estoppel or otherwise, is granted to you
-under any patent, copyright, trademark, trade secret, or other intellectual
-property right of the copyright holder.
+“You” means a person or legal entity exercising permissions provided by this license. Rights requiring permission are granted subject to compliance with the conditions below. To the extent applicable law permits, the obligations below also apply as contractual undertakings when You validly accept them. This license does not purport to bind a person who has neither exercised a licensed right nor otherwise validly accepted an obligation.
 
-PROHIBITED ACTIONS
+## 2. Covered works and permitted purposes
 
-Without the prior written permission of the copyright holder, you may NOT:
+A “Covered Work” is the Software, a copyright-protected portion of it, or a modification or derivative work of it requiring permission under applicable copyright law. It includes such material in source, compiled, translated, ported, reorganized, embedded, or otherwise transformed form.
 
-1. Copy, modify, merge, or create derivative works of the Software.
-2. Distribute, publish, sublicense, or sell copies of the Software.
-3. Use the Software for commercial or non-commercial purposes.
-4. Reverse engineer, decompile, or disassemble the Software, except to the
-   extent expressly permitted by applicable law.
-5. Remove or alter any proprietary notices, labels, or marks.
-6. Use the Software to develop a competing product.
-7. Disclose, share, or transmit the Software to any third party.
-8. Train, fine-tune, evaluate, or otherwise derive a machine-learning model
-   from the Software, its trained weights, or its datasets.
+Renaming, rebranding, repackaging, or adding new code does not remove the restrictions on material that remains a Covered Work. However, this definition does not make independently created software, unprotected ideas, or unrelated material a derivative work merely by calling it one.
 
-PERMITTED VIEWING
+A “Commercial Purpose” includes an activity involving a Covered Work that:
 
-If you have been granted access to view this repository, that access is limited
-to viewing only. It does not constitute a license to use, copy, or distribute
-the Software in any form.
+1. is undertaken in carrying on a business, trade, paid professional practice, or commercial product or service, including internal operations, development, or evaluation for such an activity;
+2. seeks or receives payment, revenue, commercial advantage, or other valuable consideration in exchange for, or in connection with, copies, access, features, operation, installation, modification, customization, hosting, support, or distribution of a Covered Work; or
+3. incorporates or uses a Covered Work to provide a paid deliverable, monetized service, commercial product, or other offering intended for commercial exploitation.
 
-NO WARRANTY
+Commercial Purpose includes selling a package containing a Covered Work; offering paid subscriptions, APIs, bots, hosted services, plugins, or applications using it; and using a nominally free Covered Work to supply a monetized offering. Advertising, commercial sponsorship, or contributions received in exchange for access, services, features, support, or another promised benefit count as monetization under this license. Charging only the cost of distribution or service provision does not create an exception.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
-FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. IN NO EVENT SHALL THE COPYRIGHT
-HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN
-ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION
-WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+Unconditional voluntary donations that grant no access, services, features, support, preferential treatment, or other promised benefit are permitted and do not alone create a Commercial Purpose.
 
-THIRD-PARTY DEPENDENCIES
+A “Permitted Purpose” is a purpose that is not a Commercial Purpose. Examples include personal study, private entertainment, hobby development, and genuinely noncommercial research, education, or volunteer collaboration. A person's employment status does not alone determine the purpose of an independent personal activity. An organization's label or tax status does not alone make its activity permitted.
 
-Third-party dependencies retain their own licences. Those licences grant no
-rights whatsoever in this repository's proprietary source code, trained model
-weights, datasets, or private materials.
+Paying for general-purpose computing, connectivity, storage, or hosting does not alone make Your otherwise permitted activity commercial. This sentence does not authorize an infrastructure provider to commercialize a Covered Work itself.
 
-ENFORCEMENT
+## 3. Permission for noncommercial activity
 
-Unauthorized use of the Software may violate copyright, trademark, trade secret,
-and other applicable laws, and may result in civil and criminal penalties.
+For Permitted Purposes only, each Licensor grants You a nonexclusive, worldwide, royalty-free copyright license to reproduce, inspect, execute, modify, and distribute that Licensor's material in Covered Works, subject to this license.
 
-CONTACT
+You may make and keep private modifications for a Permitted Purpose. Merely keeping such a modification private, or accessing it yourself from Your own devices, does not require disclosure of its source.
 
-For licensing inquiries, contact the copyright holder via the repository hosting
-platform.
+The grant does not authorize any Commercial Purpose. In particular, commercial activity does not become permitted because You make its source available, keep these notices, provide the Software free of charge, change its name, or offer a commercial product under this same license.
+
+No automatic commercial trial, revenue threshold, company-size exception, or future conversion to a commercial-use license is provided.
+
+## 4. Redistribution and continued licensing
+
+You may distribute a Covered Work without charge for Permitted Purposes if all of the following conditions are satisfied:
+
+1. You give every recipient a complete copy of this license and preserve relevant copyright, attribution, and disclaimer notices.
+2. You clearly identify modifications You made and do not represent a modified work as an unchanged release by its original author.
+3. You distribute the Covered Work under this same license. For contributions You own within that Covered Work, You grant recipients the rights needed to use, modify, and redistribute the Covered Work under these terms.
+4. You do not replace these terms with a license that permits commercial exploitation of another Licensor's material, or add restrictions that prevent recipients from exercising the permissions granted here.
+5. You comply with the source-delivery requirements in Section 5.
+
+Each recipient receives permissions in a Licensor's material from that Licensor under this license, rather than receiving authority from an intermediary to discard its conditions.
+
+These requirements apply to the Covered Work as a derivative whole, to the extent You possess the necessary rights. They do not require unrelated independent works merely distributed alongside it to adopt this license. Nevertheless, this license gives You no permission to sell a bundle containing a Covered Work.
+
+You retain ownership of Your original contributions. This license does not transfer them to the original author or grant the original author special commercial rights over them. You may separately license material You independently own, but doing so does not authorize commercial use of other Licensors' material or of a combined Covered Work for which the necessary rights have not been obtained.
+
+## 5. Source delivery
+
+When distributing source, provide the actual editable form of the Covered Work and preserve the license and notices.
+
+When distributing an executable, container, packaged application, library, or other nonsource form of a Covered Work, also provide its Complete Source without charge. For online distribution, place a clearly identified source download with the nonsource download and keep it available for as long as You offer that nonsource release. For offline distribution, include the Complete Source with the delivered copy.
+
+“Complete Source” means the editable source for the actual version of the Covered Work supplied, including Your changes and the build files, interface definitions, dependency information, and instructions reasonably necessary to build and run that version. Obfuscated, minified-only, or decompiled substitutes are not sufficient where the actual editable source exists.
+
+Complete Source need not include unrelated operating systems, general-purpose development tools, independent third-party components distributed under their own licenses, personal data, production databases, passwords, tokens, or other private credentials. Identify excluded dependencies and provide usable setup instructions and nonsecret configuration examples. Exclusions must not be used to hide source that is part of the Covered Work itself. Third-party license obligations still apply independently.
+
+## 6. Modified versions used over a network
+
+If You operate a modified Covered Work so that other users can interact with it remotely, You must prominently offer each such user a no-charge means to obtain the Complete Source of the version with which they interact, under this license.
+
+Make the offer available through an appropriate interface, such as an application information screen, a website source link, or clearly accessible API documentation. Keep the offered source current with the deployed version and available throughout its operation for those users. A link to an unchanged upstream release is insufficient when Your running version contains changes.
+
+You need not disclose private user data or credentials to comply. You may provide source access to the affected users without making a public repository, but may not prevent those recipients from exercising the redistribution rights granted by this license.
+
+This section creates no permission for a Commercial Purpose. A monetized deployment remains outside the grant even if its complete source is offered. Routing access through another frontend, proxy, or service does not by itself authorize commercial operation of the underlying Covered Work.
+
+## 7. Patents
+
+To the extent a Licensor owns or controls patent claims necessarily infringed by permitted use of the material that Licensor contributes, that Licensor grants You a nonexclusive, worldwide, royalty-free patent license for that permitted use, subject to these terms.
+
+This grant does not cover unrelated inventions, third-party patents, or claims infringed only by additional material not contributed by that Licensor. It grants no permission for a Commercial Purpose.
+
+## 8. Other software, outputs, and independent rights
+
+This license does not override separate permissions You already hold for the same material. It does not purport to replace the licenses of third-party code or to authorize combinations that conflict with those licenses.
+
+Operating the Software does not, by itself, give any Licensor ownership of Your data or outputs. An output is a Covered Work only to the extent it actually contains or adapts protected material from a Covered Work. However, operating the Software for a Commercial Purpose is not authorized merely because the resulting output is not itself a Covered Work.
+
+Nothing here restricts acts that applicable law permits without a license, including applicable copyright exceptions, mandatory interoperability rights, or use of material in the public domain. Independently implementing an unprotected idea without copying protected material is not prohibited by this license alone.
+
+## 9. Names, attribution, and trademarks
+
+You may preserve notices and truthfully identify the origin of the Software. This license does not grant permission to claim endorsement by a Licensor or to use a Licensor's trademarks as the branding of Your own product or service.
+
+Any trademark permission beyond accurate identification and rights otherwise provided by law must come separately from its holder. Removing or replacing branding does not remove the conditions on the code.
+
+## 10. Term and termination
+
+The grants last for the duration of the relevant intellectual-property rights while You comply with this license. They are not subject to discretionary revocation from a compliant recipient merely because a Licensor later changes its preferred license.
+
+Your grants terminate upon a material breach. Reinstatement requires written authorization from the relevant Licensor. Termination does not excuse an earlier breach or erase obligations arising from it.
+
+Termination of Your grants does not, by itself, terminate the grants of downstream recipients who remain compliant. Provisions concerning preserved notices, already-incurred source obligations, reserved rights, disclaimers, and responsibility for earlier breaches survive as applicable.
+
+## 11. No warranty; limits of liability
+
+To the extent applicable law permits, the Software is supplied as available, without warranties or conditions concerning performance, suitability, accuracy, security, merchantability, fitness for a particular purpose, title, or noninfringement.
+
+To the extent applicable law permits, no Licensor or contributor is liable under this license for losses or damages arising from use, inability to use, modification, or distribution of a Covered Work. This does not exclude liabilities or rights that cannot lawfully be excluded, or override an express separate written undertaking by the relevant party.
+
+## 12. Separate permissions and interpretation
+
+An activity outside this license requires separate permission from all holders of the necessary rights. Such permission must expressly cover the proposed activity. No commercial license is promised, and a payment, unanswered request, public issue, or acknowledgement does not itself grant one.
+
+This license does not authorize the original project maintainer to grant commercial permissions over another contributor's work without that contributor's authorization.
+
+No later version of this license, or different license, applies automatically. Use under another license requires a valid offer covering the relevant material. This document incorporates no GNU, PolyForm, or Creative Commons license by reference and provides no alternative election to use their terms.
+
+If a provision is unenforceable, it is to be limited or severed only as applicable law requires; remaining provisions continue to the extent permitted. Nothing in this clause is a promise that a court will preserve a particular restriction or remedy.

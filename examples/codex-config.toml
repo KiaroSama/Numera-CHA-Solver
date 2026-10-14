@@ -1,0 +1,7 @@
+[mcp_servers.Numera-CHA-Solver-MCP]
+command = "/absolute/installation/bin/numera-cha-solver-mcp"
+args = ["bridge"]
+[mcp_servers.Numera-CHA-Solver-MCP.env]
+NUMERA_ROOT = "/absolute/installation"
+NUMERA_MCP_PORT = "1583"
+NUMERA_DEVICE = "cpu"

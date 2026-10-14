@@ -2,7 +2,7 @@
 
 `Rust SDK / CLI / Axum HTTP -> strict observation -> declared local engine -> recognition result`
 
-Owner-side assessment is separate from perception. The Windows application never infers server acceptance from a token or drives an unauthorized third-party challenge. The existing HTML/CSS/JavaScript dashboard is preserved.
+Owner-side assessment is separate from perception. The native application never infers server acceptance from a token or drives a third-party protection bypass. The existing HTML/CSS/JavaScript dashboard is preserved; Tauri embeds it with an owned loopback API, restricted IPC connection and explicit human review.
 
 ## Responsibilities
 
@@ -22,6 +22,12 @@ One local operator and one inference worker. No Redis, distributed scheduler, st
 Shutdown cancels queued/active tasks and joins owned work. Arbitrary OS disk I/O cannot be force-interrupted safely inside a thread; draining work remains owned and blocks replacement rather than being falsely declared finished. Outer command/CI ceilings bound the process tree. Forced termination uses restart recovery, never replay.
 
 Persistence uses wall-clock restart/TTL timestamps; execution and sessions use monotonic time. TTL is a retrieval bound, not scheduled physical purge: later task creation removes expired terminal rows.
+
+## Agent and desktop boundaries
+
+`src/mcp/` uses the official Rust MCP SDK for authenticated bounded loopback HTTP and a stdio bridge to the owner's selected endpoint. Protocol stdout is separate from diagnostics. Tools reuse the SDK; agent confirmation and external submission are not exposed. `src/review.rs` persists exact revision-bound pending/terminal transitions with TTL and compare-and-set. Human attestation does not set owner/server acceptance.
+
+`desktop/` hosts the static workspace with Tauri. The main embedded origin alone can request the in-memory connection token, external navigation is blocked, and the owned API/worker drains on close. Windows/Linux/macOS packages use native platform runtime and worker names. Packaged desktop defaults to its CPU runtime unless explicitly configured; strict CUDA never silently falls back.
 
 ## Migration boundary
 

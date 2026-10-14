@@ -1,5 +1,15 @@
 # Validation
 
+## Native MCP and desktop delivery — verification pending (2026-10-14)
+
+Version0.3.0 is authored with local Rust MCP/stdio bridge, exact `Numera-CHA-Solver-MCP` registration, revision-bound manual review and Tauri native delivery targets. No local build/test/application run was performed for this task. Source formatting and PowerShell/Python/JSON/TOML syntax inspection are not runtime verification. Hosted Windows/Linux/macOS build, protocol/bridge/cancellation, actual CPU model, installed release OCR and package tiers must pass on the final source revision before release claims.
+
+Independent static reviews found released SDK constructor/peer metadata mismatches, inner body-cap inconsistency, completed-error forwarding, missing real bridge lifecycle evidence, stale UI review controls, Windows CPU staging, a missing upstream dependency license, POSIX detached descendants and missing installed OCR validation. Corrective source/tests were added without weakening assertions; their execution remains pending. Native Windows/macOS GUI interaction and trusted publisher signing/notarization are not claimed. Generic ASCII/model tests do not certify real CAPTCHA or provider acceptance.
+
+The project-owned self-hosted GitHub runner was offline/not busy before removal; its registration read back with zero runners and its inspected Windows installation was recycled. The specified WSL project runner/work/cache roots were absent. Other project runners/shared tools/data/models/operational logs were preserved. The earlier runner statements below are historical checkpoints, superseded for this delivery.
+
+A redacted scanner inspected all reachable Git history with zero candidates, and raw owner author/committer identities matched the permitted public address. This is scoped evidence, not a guarantee about every hosting cache, artifact or future commit; public visibility remains gated on final inclusion/history review.
+
 ## Rust migration — final native runtime verified (2026-10-08)
 
 Final runtime revision `43c272e7288bb75196b62e443f703a29baea811e` passed [CI 37802044609](https://github.com/KiaroSama/Numera-CHA-Solver/actions/runs/37802044609): **43 native tests, 0 failed/ignored, all 16 stages exited 0**. This includes regenerated historic-source fixtures, actual CUDA/explicit CPU, all seven worker lifecycle cases, headless dashboard, installed package/launchers and native-written copied-state rollback. The full native test stage took 50.78s including compilation; worker cases took 2.61s; cold optimized release build took 355.22s with two compiler jobs. Runner PID 65692 exited and the project-owned executable sweep was empty.

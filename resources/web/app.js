@@ -2,9 +2,18 @@
 const $ = (selector) => document.querySelector(selector);
 let catalog = [];
 let currentTask = null;
+let endpoint = "", desktopToken = "", review = null, observationGeneration = 0;
+async function invalidateReview() {
+  const previous = review; review = null;
+  document.querySelectorAll("#review-panel input, #review-panel button").forEach(node => { node.disabled = true; });
+  if (previous?.state === "pending") {
+    try { await api(`/v1/reviews/${previous.id}/cancel`, {method:"POST",body:JSON.stringify({revision:previous.revision,answer:null,human_confirmed:false})}); }
+    catch { message($("#form-error"), "Previous review could not be cancelled; its controls are disabled."); }
+  }
+}
 const message = (node, text) => { node.textContent = text; };
 async function api(path, options = {}) {
-  const response = await fetch(path, { ...options, signal: AbortSignal.timeout(125000), headers: { "Content-Type": "application/json", ...options.headers } });
+  const response = await fetch(endpoint + path, { ...options, signal: AbortSignal.timeout(125000), headers: { "Content-Type": "application/json", ...(desktopToken ? {Authorization: `Bearer ${desktopToken}`} : {}), ...options.headers } });
   const payload = await response.json();
   if (!response.ok) throw new Error(payload.error?.message || `Request failed (${response.status}).`);
   return payload;
@@ -58,10 +67,36 @@ async function tasks() {
     list.append(row);
   }
 }
-function showResult(result) {
+async function showResult(result, generation = observationGeneration) {
+  if (generation !== observationGeneration) return;
   message($("#outcome"), result.outcome.replaceAll("_", " ").toUpperCase());
   const area = $("#result"); area.replaceChildren();
   area.append(element("div", result.answer || result.error?.message || "Recognition abstained; supported input or user action is needed.", "answer"));
+  if (result.answer) {
+    const identity = await api("/v1/reviews", {method:"POST",body:JSON.stringify({revision:currentTask || crypto.randomUUID(),suggestion:result.answer})});
+    if (generation !== observationGeneration) {
+      try { await api(`/v1/reviews/${identity.id}/cancel`, {method:"POST",body:JSON.stringify({revision:identity.revision,answer:null,human_confirmed:false})}); } catch { /* Obsolete controls are never published. */ }
+      return;
+    }
+    review = identity;
+    const panel=element("div", ""); panel.id="review-panel";
+    const label=element("label","Review and correct this suggestion");label.htmlFor="review-answer";
+    const answer=element("input","");answer.id="review-answer";answer.value=result.answer;answer.maxLength=4096;
+    const confirm=element("button","I reviewed this answer","primary"),cancel=element("button","Cancel review","quiet"),status=element("p","Waiting for your review.");status.setAttribute("role","status");
+    const decide=async confirmed=>{
+      if (generation !== observationGeneration || review?.id !== identity.id) return;
+      confirm.disabled=true;cancel.disabled=true;
+      try {
+        const value=await api(`/v1/reviews/${identity.id}/${confirmed?"confirm":"cancel"}`,{method:"POST",body:JSON.stringify({revision:identity.revision,answer:confirmed?answer.value:null,human_confirmed:confirmed})});
+        if (generation !== observationGeneration || review?.id !== identity.id) return;
+        review=value;status.textContent=`Review ${value.state}. No answer was submitted to a website.`;answer.disabled=true;
+      } catch(error) {
+        if (generation !== observationGeneration || review?.id !== identity.id) return;
+        status.textContent=error.message;confirm.disabled=false;cancel.disabled=false;
+      }
+    };
+    confirm.addEventListener("click",()=>decide(true));cancel.addEventListener("click",()=>decide(false));panel.append(label,answer,confirm,cancel,status);area.append(panel);
+  }
   area.append(element("p", `Device: ${result.device || "not executed"} · Mode: ${result.mode || "none"} · Server verified: ${result.server_verified === true ? "yes" : "no"}`, "result-meta"));
   const details = document.createElement("details"); details.append(element("summary", "Inspect execution evidence"), element("pre", JSON.stringify(result.evidence || {}, null, 2))); area.append(details);
 }
@@ -75,6 +110,8 @@ $("#auth-form").addEventListener("submit", async (event) => {
 for (const input of document.querySelectorAll("input[name=kind]")) input.addEventListener("change", () => { $("#text-input").hidden = input.value !== "text"; $("#image-input").hidden = input.value !== "image"; });
 $("#recognition-form").addEventListener("submit", async (event) => {
   event.preventDefault(); message($("#form-error"), ""); const button = $("#recognize"); button.disabled = true; message(button, "Recognizing…");
+  const generation=++observationGeneration;
+  await invalidateReview();
   try {
     const kind = document.querySelector("input[name=kind]:checked").value;
     const payload = { kind };
@@ -89,7 +126,7 @@ $("#recognition-form").addEventListener("submit", async (event) => {
     const deadline = performance.now() + 122000;
     while (performance.now() < deadline) {
       const status = await api(`/v1/tasks/${currentTask}`);
-      if (status.state === "terminal") { showResult(status.result || { outcome: status.outcome }); await tasks(); return; }
+      if (status.state === "terminal") { await showResult(status.result || { outcome: status.outcome }, generation); await tasks(); return; }
       await new Promise(resolve => setTimeout(resolve, 400));
     }
     throw new Error("Task exceeded its deadline. Refresh task history to inspect its outcome.");
@@ -99,4 +136,4 @@ $("#recognition-form").addEventListener("submit", async (event) => {
 $("#filter").addEventListener("input", renderCoverage);
 $("#refresh").addEventListener("click", load);
 $("#refresh-tasks").addEventListener("click", () => tasks().catch(error => message($("#form-error"), error.message)));
-load();
+(async()=>{if(window.__TAURI_INTERNALS__){try{const connection=await window.__TAURI_INTERNALS__.invoke("api_connection");endpoint=connection.url;desktopToken=connection.token;}catch(error){message($("#form-error"),"Desktop connection could not initialize.");return;}}await load();})();

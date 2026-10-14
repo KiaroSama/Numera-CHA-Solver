@@ -20,6 +20,7 @@ pub struct Settings {
     pub dll_directory: String,
     pub confidence_threshold: f64,
     pub ort_library: PathBuf,
+    pub desktop_origin: Option<String>,
 }
 
 impl std::fmt::Debug for Settings {
@@ -42,10 +43,10 @@ impl std::fmt::Debug for Settings {
 
 impl Settings {
     pub fn new(root: PathBuf) -> Self {
-        let ort_library = root.join("data/runtime/onnxruntime.dll");
+        let ort_library = root.join("data/runtime").join(runtime_library_name());
         Self {
             root,
-            device: "cuda".into(),
+            device: default_device().into(),
             deadline_seconds: 120.0,
             max_asset_bytes: 8 * 1024 * 1024,
             max_pixels: 16_000_000,
@@ -55,6 +56,7 @@ impl Settings {
             dll_directory: String::new(),
             confidence_threshold: 0.7,
             ort_library,
+            desktop_origin: None,
         }
     }
 
@@ -67,7 +69,7 @@ impl Settings {
             project_root()?
         };
         let mut settings = Self::new(root);
-        settings.device = env_text("NUMERA_DEVICE", "cuda")?;
+        settings.device = env_text("NUMERA_DEVICE", default_device())?;
         settings.api_token = env_text("NUMERA_API_TOKEN", "")?;
         settings.dll_directory = env_text("NUMERA_DLL_DIRECTORY", "")?;
         if settings.dll_directory.is_empty() {
@@ -193,4 +195,28 @@ fn project_root() -> Result<PathBuf, Error> {
         }
     }
     Ok(home()?.join(".numera-cha"))
+}
+
+pub fn runtime_library_name() -> &'static str {
+    if cfg!(windows) {
+        "onnxruntime.dll"
+    } else if cfg!(target_os = "macos") {
+        "libonnxruntime.dylib"
+    } else {
+        "libonnxruntime.so"
+    }
+}
+pub fn worker_binary_name() -> &'static str {
+    if cfg!(windows) {
+        "numera-cha.exe"
+    } else {
+        "numera-cha"
+    }
+}
+fn default_device() -> &'static str {
+    if cfg!(target_os = "macos") {
+        "cpu"
+    } else {
+        "cuda"
+    }
 }

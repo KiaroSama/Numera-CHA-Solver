@@ -1,47 +1,139 @@
 name: CI
 on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 permissions:
   contents: read
 concurrency:
-  group: numera-ci
-  cancel-in-progress: false
+  group: numera-hosted-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
-  windows-native:
-    runs-on: [self-hosted, Windows, X64, numera-cha, gpu]
-    timeout-minutes: 40
+  native:
+    name: Native / ${{ matrix.platform }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-2025
+            platform: windows-x64
+            target: x86_64-pc-windows-msvc
+          - os: ubuntu-24.04
+            platform: linux-x64
+            target: x86_64-unknown-linux-gnu
+          - os: macos-15
+            platform: macos-arm64
+            target: aarch64-apple-darwin
     defaults:
       run:
         shell: pwsh
+    env:
+      CARGO_BUILD_JOBS: '2'
+      RUST_TEST_THREADS: '1'
+      NUMERA_MAX_TEST_WORKERS: '1'
+      NUMERA_TEST_GPU: '0'
+      NUMERA_DEVICE: cpu
+      UV_NO_PROGRESS: '1'
+      PIP_DISABLE_PIP_VERSION_CHECK: '1'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
           fetch-depth: 0
-      - name: Bind existing project-owned runtime
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.14.8'
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          version: '0.13.0'
+          enable-cache: false
+      - name: Bind isolated hosted work, cache and native toolchain
         run: |
-          $runtime = Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $env:RUNNER_WORKSPACE))
-          if (-not (Test-Path -LiteralPath (Join-Path $runtime 'data/models') -PathType Container)) {
-            throw 'Project-owned immutable model fixture directory is unavailable.'
+          $root=$env:GITHUB_WORKSPACE
+          foreach ($path in @('.ci-cache/tmp','.ci-cache/uv','.ci-cache/pip','.ci-cache/browser','.ci-work/tools','.ci-work/hosted')) {
+            [IO.Directory]::CreateDirectory((Join-Path $root $path))|Out-Null
           }
-          "NUMERA_RUNTIME_ROOT=$runtime" >> $env:GITHUB_ENV
-          $configuration = Join-Path $runtime 'data/runtime-config.json'
-          if (Test-Path -LiteralPath $configuration -PathType Leaf) {
-            $config = Get-Content -LiteralPath $configuration -Raw -Encoding utf8 | ConvertFrom-Json
-            if ($config.dll_directory -isnot [string]) { throw 'Runtime library configuration is invalid.' }
-            "NUMERA_DLL_DIRECTORY=$($config.dll_directory)" >> $env:GITHUB_ENV
+          foreach ($entry in @{
+            TEMP='.ci-cache/tmp'; TMP='.ci-cache/tmp'; TMPDIR='.ci-cache/tmp';
+            UV_CACHE_DIR='.ci-cache/uv'; PIP_CACHE_DIR='.ci-cache/pip';
+            PLAYWRIGHT_BROWSERS_PATH='.ci-cache/browser'
+          }.GetEnumerator()) {
+            "$($entry.Key)=$(Join-Path $root $entry.Value)"|Out-File $env:GITHUB_ENV -Append -Encoding utf8
           }
-          $temp = Join-Path $env:GITHUB_WORKSPACE '.ci-cache/tmp'
-          [IO.Directory]::CreateDirectory($temp) | Out-Null
-          "TEMP=$temp" >> $env:GITHUB_ENV
-          "TMP=$temp" >> $env:GITHUB_ENV
-      - name: Native parity, device, browser, package and launcher gates
-        run: ./scripts/native_ci.ps1 -Gpu -Browser
-      - name: Preserve bounded native evidence
+          rustup toolchain install 1.99.0 --profile minimal --component rustfmt --component clippy
+          if ($LASTEXITCODE -ne 0) { throw 'Approved Rust toolchain installation failed.' }
+          'RUSTUP_TOOLCHAIN=1.99.0'|Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Linux system WebView build dependencies
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo timeout 180 apt-get update
+          sudo timeout 300 apt-get install --no-install-recommends -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev libxdo-dev patchelf webkit2gtk-driver xvfb
+      - name: Install reviewed hosted CLI and browser tooling
+        run: |
+          Import-Module ./desktop/ci/Hosted.psm1 -Force
+          Initialize-HostedLog 'hosted-tools'
+          $bootstrap=[Diagnostics.ProcessStartInfo]::new();$bootstrap.FileName=(Get-Command uv).Source
+          foreach($argument in @('pip','install','--python',(Get-Command python).Source,'psutil==7.2.2')){$bootstrap.ArgumentList.Add($argument)}
+          $bootstrap.UseShellExecute=$false;$bootstrap.CreateNoWindow=$true
+          $bootstrap.RedirectStandardInput=$true;$bootstrap.RedirectStandardOutput=$true;$bootstrap.RedirectStandardError=$true
+          $process=[Diagnostics.Process]::new();$process.StartInfo=$bootstrap
+          try {
+            $null=$process.Start();$process.StandardInput.Close()
+            $stdout=$process.StandardOutput.ReadToEndAsync();$stderr=$process.StandardError.ReadToEndAsync()
+            if(-not $process.WaitForExit(120000)){$process.Kill($true);$null=$process.WaitForExit(5000);throw 'Hosted process-identity prerequisite installation timed out.'}
+            if($process.ExitCode -ne 0){throw 'Hosted process-identity prerequisite installation failed.'}
+          } finally {$process.Dispose()}
+          Assert-Exit (Invoke-Hosted uv @('pip','check','--python',(Get-Command python).Source) 30 10) 'hosted-identity-tool-check'
+          $tools=Join-Path $env:GITHUB_WORKSPACE '.ci-work/tools'
+          $asset=@{
+            'windows-x64'=@{name='cargo-tauri-x86_64-pc-windows-msvc.zip';hash='bef439eb1a0edd5192ed0009945e5de660b642a51519efe7d6953d70c5ab1939'}
+            'linux-x64'=@{name='cargo-tauri-x86_64-unknown-linux-gnu.tgz';hash='35c7b50266256cb6d5f757608d7097a59a5faeb0c75879ee1f504652a9b6087e'}
+            'macos-arm64'=@{name='cargo-tauri-aarch64-apple-darwin.zip';hash='4a27a61b06e688308a5c17333008b6df52fd5780fa7a313a9ce8fb4a80dfb9ac'}
+          }['${{ matrix.platform }}']
+          $archive=Join-Path $tools $asset.name
+          Invoke-WebRequest -Uri "https://github.com/tauri-apps/tauri/releases/download/tauri-cli-v2.12.2/$($asset.name)" -OutFile $archive -ConnectionTimeoutSeconds 30 -OperationTimeoutSeconds 180
+          if ((Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant() -ne $asset.hash) { throw 'Official Tauri CLI archive hash differs.' }
+          $bin=Join-Path $tools 'bin';[IO.Directory]::CreateDirectory($bin)|Out-Null
+          if ($asset.name.EndsWith('.zip')) { [IO.Compression.ZipFile]::ExtractToDirectory($archive,$bin) }
+          else { Assert-Exit (Invoke-Hosted tar @('-xzf',$archive,'-C',$bin) 30 15) 'tauri-cli-extraction' }
+          $tool=@(Get-ChildItem -LiteralPath $bin -File -Recurse -Filter $(if($IsWindows){'cargo-tauri.exe'}else{'cargo-tauri'}))
+          if ($tool.Count -ne 1) { throw 'Official Tauri CLI executable is missing.' }
+          if (-not $IsWindows) { Assert-Exit (Invoke-Hosted chmod @('755',$tool[0].FullName) 10 5) 'tauri-cli-executable-mode' }
+          $tool[0].DirectoryName|Out-File $env:GITHUB_PATH -Append -Encoding utf8
+          $venv=Join-Path $env:GITHUB_WORKSPACE '.ci-work/browser-env'
+          Assert-Exit (Invoke-Hosted uv @('venv','--python','3.14.8',$venv) 90 30) 'browser-environment'
+          $python=Join-Path $venv $(if($IsWindows){'Scripts/python.exe'}else{'bin/python'})
+          Assert-Exit (Invoke-Hosted uv @('pip','install','--python',$python,'playwright==1.63.0','psutil==7.2.2') 180 60) 'browser-tooling'
+          Assert-Exit (Invoke-Hosted $python @('-m','playwright','install','chromium') 180 60) 'headless-browser-engine'
+      - name: Install Linux native desktop driver
+        if: runner.os == 'Linux'
+        run: |
+          Import-Module ./desktop/ci/Hosted.psm1 -Force
+          Initialize-HostedLog 'hosted-desktop-driver'
+          Assert-Exit (Invoke-Hosted cargo @('install','tauri-driver','--version','=2.1.0','--locked','--root',(Join-Path $env:GITHUB_WORKSPACE '.ci-work/tools'),'--jobs','2') 300 120) 'tauri-driver-install'
+      - name: Acquire pinned official CPU runtime and immutable owned model
+        run: ./scripts/prepare_runtime.ps1 -Platform '${{ matrix.platform }}'
+      - name: Native contracts, desktop, browser and installed packages
+        run: ./scripts/hosted_ci.ps1 -Platform '${{ matrix.platform }}' -Target '${{ matrix.target }}'
+      - name: Preserve bounded sanitized stage evidence
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: native-validation
-          path: .ci-work/native-ci/results.json
+          name: validation-${{ matrix.platform }}
+          path: .ci-work/hosted/results.json
           if-no-files-found: warn
           retention-days: 7
+      - name: Upload inspected native artifacts, not a release
+        if: success()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: numera-cha-0.3.0-${{ matrix.platform }}
+          path: .ci-work/artifacts/*
+          if-no-files-found: error
+          retention-days: 14

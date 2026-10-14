@@ -1,4 +1,6 @@
-# Native Windows operation
+# Native operation
+
+Version0.3.0 adds hosted native CLI/MCP and Tauri delivery for Windows x64, Linux x64 and macOS Apple Silicon. Use the inspected [desktop/native artifacts](DESKTOP.md); [MCP setup](MCP.md) is separate. This task builds/tests only on hosted CI. The Windows source-build notes below preserve the earlier development workflow and do not authorize a local build in this delivery.
 
 The replacement application is a Rust executable and library. The existing dashboard remains HTML/CSS/JavaScript. Python is not an application prerequisite. Development/CI verification uses a disposable frozen test-only environment and a temporary Git snapshot of the historic source; neither is a second installed application version.
 
@@ -69,7 +71,7 @@ Rust dependency license files are collected from the locally resolved locked Car
 ./scripts/native_ci.ps1 -Gpu -Browser
 ```
 
-This command is for the integrator's final manually dispatched Windows CI, not an extra local suite. The existing `CI` workflow now dispatches native gates and uses only `workflow_dispatch` and the existing dedicated Windows GPU runner. No service/startup registration or automatic push/PR execution is added. The workflow must exist on the default branch before GitHub permits dispatch.
+This command records the earlier Windows0.2.0 hardware migration workflow. Current0.3.0 delivery uses `scripts/hosted_ci.ps1` through GitHub-hosted native Windows/Linux/macOS jobs, triggered by main pushes, pull requests or manual dispatch. The project-owned self-hosted runner registration and installation were removed; current builds/tests do not run locally. Hosted CPU tiers are not CUDA verification.
 
 Required tiers are native parity, preprocessing, adapters, lifecycle, GPU and CLI tests; source-generated fixture drift, a headless native-dashboard harness, an inspected package, installed executable and launcher checks also run. Build concurrency is two; test threads are one because global log/environment state and GPU execution are exclusive. Missing tiers or pending source-test mappings fail closed. Independent stage failures are collected before reporting. The source oracle compares immutable arithmetic/SDK/tensor fixtures and source test identities/hashes; it never regenerates expected answers from Rust.
 

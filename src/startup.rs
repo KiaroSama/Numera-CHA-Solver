@@ -3,8 +3,10 @@ use std::{
     fs::{self, OpenOptions},
     io::Write,
     path::Path,
-    process::{Command, Stdio},
 };
+
+#[cfg(windows)]
+use std::process::{Command, Stdio};
 
 pub fn publish_credential(path: &Path, token: &str) -> Result<(), Error> {
     let parent = path
@@ -22,16 +24,19 @@ pub fn publish_credential(path: &Path, token: &str) -> Result<(), Error> {
         rand::random::<u64>()
     ));
     let result = (|| {
-        let mut file = OpenOptions::new()
-            .write(true)
-            .create_new(true)
-            .open(&temporary)
-            .map_err(|_| {
-                Error::new(
-                    "credential_permissions",
-                    "Local credential could not be created.",
-                )
-            })?;
+        let mut options = OpenOptions::new();
+        options.write(true).create_new(true);
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::OpenOptionsExt;
+            options.mode(0o600);
+        }
+        let mut file = options.open(&temporary).map_err(|_| {
+            Error::new(
+                "credential_permissions",
+                "Local credential could not be created.",
+            )
+        })?;
         file.write_all(token.as_bytes())
             .and_then(|_| file.sync_all())
             .map_err(|_| {
@@ -211,4 +216,20 @@ pub async fn serve(mut settings: Settings, host: &str, port: u16) -> Result<(), 
     state.readiness.close().await;
     cleanup?;
     result.map_err(|_| Error::new("startup_failed", "Local server execution failed."))
+}
+
+pub async fn serve_listener_with_shutdown(
+    settings: Settings,
+    listener: tokio::net::TcpListener,
+    cancel: tokio_util::sync::CancellationToken,
+) -> Result<(), Error> {
+    let _owner = Ownership::acquire(&settings.data_dir().join(".server-owner.lock"))?;
+    let state = api::state(settings)?;
+    let result = axum::serve(listener, api::router(state.clone()))
+        .with_graceful_shutdown(async move { cancel.cancelled().await })
+        .await;
+    let cleanup = state.tasks.close().await;
+    state.readiness.close().await;
+    cleanup?;
+    result.map_err(|_| Error::new("startup_failed", "Owned desktop server failed."))
 }

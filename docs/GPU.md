@@ -1,6 +1,8 @@
 # GPU execution
 
-Default neural device: CUDA. CPU preprocessing, parsing and browser fixture orchestration are normal and distinct from neural execution. Explicit CPU inference is selected with `--device cpu` or `NUMERA_DEVICE=cpu`; it is logged as a warning.
+CLI/SDK default neural device: CUDA on Windows/Linux, CPU on macOS. Packaged desktop defaults to its bundled CPU runtime unless the owner supplies an explicit device/runtime. CPU preprocessing, parsing and browser fixture orchestration are normal and distinct from neural execution. CPU selection uses `--device cpu` or `NUMERA_DEVICE=cpu` and is explicitly logged; choosing CUDA remains strict, with no silent inference fallback.
+
+GitHub-hosted 0.3.0 jobs acquire reviewed ONNX Runtime1.31.0 CPU archives for each native platform and run the immutable ASCII smoke. Those jobs cannot establish CUDA execution. Their results remain pending until exact-revision CI; the Windows hardware evidence below is historical1.30.0, not a claim about the new runtime or other hardware.
 
 ```bash
 ./bin/numera-cha.exe doctor --smoke tests/fixtures/ocr/ascii-smoke.png

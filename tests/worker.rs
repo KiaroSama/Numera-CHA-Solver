@@ -100,6 +100,24 @@ impl Drop for ProcessHandle {
     }
 }
 
+#[cfg(unix)]
+struct ProcessHandle(i32);
+#[cfg(unix)]
+impl ProcessHandle {
+    fn open(pid: u32) -> Self {
+        Self(pid as i32)
+    }
+    fn exited(&self) {
+        // SAFETY: signal zero only checks the exact owned child PID after its parent awaited reaping.
+        let status = unsafe { libc::kill(self.0, 0) };
+        assert_eq!(status, -1, "owned worker must no longer exist");
+        assert_eq!(
+            std::io::Error::last_os_error().raw_os_error(),
+            Some(libc::ESRCH)
+        );
+    }
+}
+
 #[tokio::test]
 async fn fixture_startup_and_binary_frame_roundtrip_without_engine() {
     use tokio::io::{AsyncReadExt, AsyncWriteExt};
@@ -190,7 +208,6 @@ async fn completed_response_without_caller_ack_cannot_publish_cached_worker() {
         std::task::Poll::Pending
     ));
     let (mut control, pid) = entered(&listener).await;
-    #[cfg(windows)]
     let process = ProcessHandle::open(pid);
     assert_eq!(
         tokio::time::timeout(Duration::from_secs(2), control.read_u8())
@@ -209,7 +226,6 @@ async fn completed_response_without_caller_ack_cannot_publish_cached_worker() {
     .expect("response cached pending caller acknowledgement");
     drop(operation);
     wait_idle(&engine).await;
-    #[cfg(windows)]
     process.exited();
     assert_eq!(engine.worker_pid().await, None);
     let next = engine.clone();
@@ -218,7 +234,6 @@ async fn completed_response_without_caller_ack_cannot_publish_cached_worker() {
             .await
     });
     let (_control, next_pid) = entered(&listener).await;
-    #[cfg(windows)]
     let next_process = ProcessHandle::open(next_pid);
     assert_eq!(
         successor.await.expect("joined").expect("successor")["text"],
@@ -226,7 +241,6 @@ async fn completed_response_without_caller_ack_cannot_publish_cached_worker() {
     );
     wait_idle(&engine).await;
     engine.close().await;
-    #[cfg(windows)]
     next_process.exited();
 }
 
@@ -257,7 +271,6 @@ async fn handshake_and_inference_cancellation_reap_before_successor() {
             }
         };
         let pid = control.read_u32_le().await.expect("pid");
-        #[cfg(windows)]
         let process = ProcessHandle::open(pid);
         #[cfg(not(windows))]
         let _ = pid;
@@ -273,7 +286,6 @@ async fn handshake_and_inference_cancellation_reap_before_successor() {
         task.abort();
         assert!(task.await.expect_err("caller cancellation").is_cancelled());
         wait_idle(&engine).await;
-        #[cfg(windows)]
         process.exited();
         let next = engine.clone();
         let successor = tokio::spawn(async move {
@@ -281,7 +293,6 @@ async fn handshake_and_inference_cancellation_reap_before_successor() {
                 .await
         });
         let (mut successor_control, next_pid) = entered(&listener).await;
-        #[cfg(windows)]
         let next_process = ProcessHandle::open(next_pid);
         if mode == "handshake" {
             successor_control
@@ -314,7 +325,6 @@ async fn handshake_and_inference_cancellation_reap_before_successor() {
         }
         assert_eq!(result.expect("successor result")["text"], "owned");
         engine.close().await;
-        #[cfg(windows)]
         next_process.exited();
         assert_eq!(
             engine
@@ -386,7 +396,6 @@ async fn active_task_shutdown_joins_consumer_and_reaps_inference() {
         .await
         .expect("worker identity deadline")
         .expect("worker identity");
-    #[cfg(windows)]
     let process = ProcessHandle::open(pid);
     assert_eq!(
         tokio::time::timeout(Duration::from_secs(2), control.read_u8())
@@ -406,7 +415,6 @@ async fn active_task_shutdown_joins_consumer_and_reaps_inference() {
         "cancelled"
     );
     assert!(engine.idle().await);
-    #[cfg(windows)]
     process.exited();
     assert!(
         !store
@@ -430,7 +438,6 @@ async fn crashed_worker_is_reported_and_successor_owns_fresh_process() {
                 .await
         });
         let (mut control, pid) = entered(&listener).await;
-        #[cfg(windows)]
         let process = ProcessHandle::open(pid);
         let _ = tokio::time::timeout(Duration::from_secs(2), control.read_u8())
             .await
@@ -440,7 +447,6 @@ async fn crashed_worker_is_reported_and_successor_owns_fresh_process() {
             "worker_failed"
         );
         wait_idle(&engine).await;
-        #[cfg(windows)]
         process.exited();
     }
     engine.close().await;
@@ -473,7 +479,6 @@ async fn owned_worker_deadline_is_expired_at_public_sdk_and_reaped() {
             .await
     });
     let (_control, pid) = entered(&listener).await;
-    #[cfg(windows)]
     let process = ProcessHandle::open(pid);
     let result = tokio::time::timeout(Duration::from_secs(5), task)
         .await
@@ -484,7 +489,6 @@ async fn owned_worker_deadline_is_expired_at_public_sdk_and_reaped() {
     assert_eq!(result.error.expect("expiry error").code, "expired");
     assert!(!result.server_verified);
     wait_idle(&engine).await;
-    #[cfg(windows)]
     process.exited();
     sdk.close().await;
 }
@@ -546,13 +550,11 @@ async fn cancellation_during_verification_never_publishes_late_worker() {
             .await
     });
     let (_control, pid) = entered(&listener).await;
-    #[cfg(windows)]
     let process = ProcessHandle::open(pid);
     assert_eq!(
         successor.await.expect("joined").expect("successor")["text"],
         "owned"
     );
     engine.close().await;
-    #[cfg(windows)]
     process.exited();
 }

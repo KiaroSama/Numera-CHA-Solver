@@ -1,0 +1,9 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "embedded-workspace",
+  "description": "Only the embedded workspace may obtain its owned loopback API connection.",
+  "local": true,
+  "windows": ["main"],
+  "webviews": ["main"],
+  "permissions": ["allow-api-connection"]
+}

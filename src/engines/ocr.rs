@@ -37,7 +37,7 @@ fn worker_executable(settings: &Settings) -> Result<PathBuf, Error> {
     if let Ok(path) = std::env::current_exe()
         && path
             .file_name()
-            .is_some_and(|name| name == "numera-cha.exe")
+            .is_some_and(|name| name == crate::config::worker_binary_name())
     {
         return Ok(path);
     }
@@ -45,20 +45,21 @@ fn worker_executable(settings: &Settings) -> Result<PathBuf, Error> {
         && let Some(directory) = consumer.parent()
     {
         for path in [
-            directory.join("numera-cha.exe"),
-            directory.join("../numera-cha.exe"),
+            directory.join(crate::config::worker_binary_name()),
+            directory
+                .join("..")
+                .join(crate::config::worker_binary_name()),
         ] {
             if path.is_file() {
                 return Ok(path);
             }
         }
     }
-    for relative in [
-        "bin/numera-cha.exe",
-        "target/release/numera-cha.exe",
-        "target/debug/numera-cha.exe",
-    ] {
-        let path = settings.root.join(relative);
+    for relative in ["bin", "target/release", "target/debug"] {
+        let path = settings
+            .root
+            .join(relative)
+            .join(crate::config::worker_binary_name());
         if path.is_file() {
             return Ok(path);
         }

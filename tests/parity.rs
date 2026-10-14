@@ -104,7 +104,9 @@ async fn sdk_matches_generated_source_results() {
     let cases = document["cases"].as_array().unwrap();
     assert!(!cases.is_empty());
     let root = tempfile::tempdir().unwrap();
-    let sdk = Numera::new(Settings::new(root.path().into()));
+    let mut settings = Settings::new(root.path().into());
+    settings.device = "cuda".into(); // Frozen source fixture uses CUDA configuration; no inference in this arithmetic tier.
+    let sdk = Numera::new(settings);
     for case in cases {
         let actual =
             serde_json::to_value(sdk.recognize_value(case["input"].clone(), None).await).unwrap();

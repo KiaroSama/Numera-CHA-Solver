@@ -8,10 +8,19 @@ use std::{fs, io::Cursor};
 fn configuration_bounds_and_secret_safe_debug() {
     let root = tempfile::tempdir().expect("isolated root");
     let settings = Settings::new(root.path().into());
-    assert_eq!(settings.device, "cuda");
+    assert_eq!(
+        settings.device,
+        if cfg!(target_os = "macos") {
+            "cpu"
+        } else {
+            "cuda"
+        }
+    );
     assert_eq!(
         settings.ort_library,
-        root.path().join("data/runtime/onnxruntime.dll")
+        root.path()
+            .join("data/runtime")
+            .join(numera_cha_solver::config::runtime_library_name())
     );
     assert_eq!(settings.model_dir(), root.path().join("data/models"));
     assert_eq!(settings.log_dir(), root.path().join("logs"));

@@ -51,9 +51,9 @@ function Initialize-NativeEnvironment {
     $env:TEMP=$temp; $env:TMP=$temp
 }
 function Copy-NativeRuntime {
-    param([string]$SourceRoot=$script:Root)
+    param([string]$SourceRoot=$script:Root,[ValidateSet('gpu','cpu')][string]$Engine='gpu')
     $destination=Join-Path $script:Root 'data/runtime'
-    $names=@('onnxruntime.dll','onnxruntime_providers_shared.dll','onnxruntime_providers_cuda.dll')
+    $names=if($Engine -eq 'cpu'){@('onnxruntime.dll')}else{@('onnxruntime.dll','onnxruntime_providers_shared.dll','onnxruntime_providers_cuda.dll')}
     $source=Join-Path $SourceRoot 'data/runtime'
     if(-not [IO.File]::Exists((Join-Path $source 'onnxruntime.dll'))){throw 'Approved native ONNX runtime DLLs must be supplied under data/runtime.'}
     foreach($name in $names){

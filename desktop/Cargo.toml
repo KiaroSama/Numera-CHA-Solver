@@ -1,0 +1,27 @@
+[package]
+name = "numera-cha-desktop"
+version = "0.3.0"
+edition = "2024"
+rust-version = "1.99"
+authors = ["KiaroSama <Kiaro.Sama.Dev@gmail.com>"]
+description = "Native desktop shell for the local Numera perception laboratory"
+license-file = "../LICENSE"
+
+[build-dependencies]
+tauri-build = "=2.7.2"
+
+[dependencies]
+numera-cha-solver = { path = ".." }
+serde = { version = "=1.0.229", features = ["derive"] }
+tauri = "=2.12.3"
+tokio = { version = "=1.53.3", features = ["rt-multi-thread", "net", "io-util", "time"] }
+tokio-util = { version = "=0.7.20", features = ["rt"] }
+
+[dev-dependencies]
+tempfile = "=3.27.0"
+
+[features]
+custom-protocol = ["tauri/custom-protocol"]
+
+[lints.rust]
+unsafe_op_in_unsafe_fn = "deny"

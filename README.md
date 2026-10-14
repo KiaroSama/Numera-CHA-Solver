@@ -4,22 +4,30 @@
 
 <img src="assets/brand/logo.png" width="320" alt="Numera blue and cyan circular logo">
 
-[![License: Proprietary](https://img.shields.io/badge/License-Proprietary-2ea44f?style=flat-square)](LICENSE) [![Version: 0.2.0](https://img.shields.io/badge/Version-0.2.0-0d6efd?style=flat-square)](Cargo.toml) [![Language: Rust](https://img.shields.io/badge/Language-Rust-ce422b?style=flat-square)](Cargo.toml) [![Rust: 1.99](https://img.shields.io/badge/Rust-1.99-ce422b?style=flat-square)](Cargo.toml) [![OS: Windows 11](https://img.shields.io/badge/OS-Windows%2011-2563eb?style=flat-square)](docs/QUICKSTART.fa.md) [![Inference: ONNX Runtime](https://img.shields.io/badge/Inference-ONNX%20Runtime-2563eb?style=flat-square)](docs/MODELS.md) [![Device: CUDA or explicit CPU](https://img.shields.io/badge/Device-CUDA%20or%20explicit%20CPU-2563eb?style=flat-square)](docs/GPU.md) [![API: Axum](https://img.shields.io/badge/API-Axum-2563eb?style=flat-square)](docs/ARCHITECTURE.md) [![Storage: SQLite](https://img.shields.io/badge/Storage-SQLite-2563eb?style=flat-square)](docs/ARCHITECTURE.md) [![Dependencies: Cargo locked](https://img.shields.io/badge/Dependencies-Cargo%20locked-008080?style=flat-square)](Cargo.lock) [![Dashboard: local HTML](https://img.shields.io/badge/Dashboard-local%20HTML-2563eb?style=flat-square)](docs/QUICKSTART.fa.md) [![Documentation: English and Persian](https://img.shields.io/badge/Docs-English%20%7C%20Persian-0369a1?style=flat-square)](docs/QUICKSTART.fa.md) [![Support donations](https://img.shields.io/badge/Support-donations-d04a9a)](#donate)
+[![License: Source available](https://img.shields.io/badge/License-Source%20available-2ea44f?style=flat-square)](LICENSE) [![Version: 0.3.0](https://img.shields.io/badge/Version-0.3.0-0d6efd?style=flat-square)](Cargo.toml) [![Language: Rust](https://img.shields.io/badge/Language-Rust-ce422b?style=flat-square)](Cargo.toml) [![Rust: 1.99](https://img.shields.io/badge/Rust-1.99-ce422b?style=flat-square)](Cargo.toml) [![Targets: Windows Linux macOS](https://img.shields.io/badge/Targets-Windows%20%7C%20Linux%20%7C%20macOS-2563eb?style=flat-square)](docs/DESKTOP.md) [![Inference: ONNX Runtime](https://img.shields.io/badge/Inference-ONNX%20Runtime-2563eb?style=flat-square)](docs/MODELS.md) [![Device: CUDA or explicit CPU](https://img.shields.io/badge/Device-CUDA%20or%20explicit%20CPU-2563eb?style=flat-square)](docs/GPU.md) [![API: Axum](https://img.shields.io/badge/API-Axum-2563eb?style=flat-square)](docs/ARCHITECTURE.md) [![Storage: SQLite](https://img.shields.io/badge/Storage-SQLite-2563eb?style=flat-square)](docs/ARCHITECTURE.md) [![Dependencies: Cargo locked](https://img.shields.io/badge/Dependencies-Cargo%20locked-008080?style=flat-square)](Cargo.lock) [![Dashboard: local HTML](https://img.shields.io/badge/Dashboard-local%20HTML-2563eb?style=flat-square)](docs/QUICKSTART.fa.md) [![Documentation: English and Persian](https://img.shields.io/badge/Docs-English%20%7C%20Persian-0369a1?style=flat-square)](docs/QUICKSTART.fa.md) [![Support donations](https://img.shields.io/badge/Support-donations-d04a9a)](#donate)
 
 </div>
 
-**Private local perception and owner-controlled verification laboratory—not a universal CAPTCHA solver.**
+**Local perception and accessible human review—not a universal CAPTCHA solver.**
 
-Rust 0.2.0 passed final native verification on `43c272e`: 43 native tests and all 16 build/device/browser/package/launcher/rollback stages. The previous application source and environments are retired; inspected disposable project caches and duplicate build outputs were removed after verification. One current native application remains, with models, user data and operational logs preserved. Exact commit-bound evidence is in [Validation](reports/VALIDATION.md).
+Version 0.3.0 adds native MCP, revision-bound manual review and Tauri delivery targets for Windows x64, Linux x64 and Apple Silicon macOS. Build/runtime/package validation is pending exact-revision GitHub-hosted CI; authored support is not execution evidence. The owner's [custom noncommercial network share-alike license](docs/LICENSING.md) is source-available, not GNU AGPL or OSI-approved open source. Unconditional voluntary donations remain permitted.
+
+Historical Windows 0.2.0 passed final verification on `43c272e`: 43 native tests and all 16 build/device/browser/package/launcher/rollback stages. That evidence does not certify 0.3.0 or other platforms. Models, task state, configuration and operational logs remain separate from disposable build artifacts. [Exact historical evidence](reports/VALIDATION.md).
 
 Available: restricted arithmetic, actual local text-line OCR, typed async SDK, JSON CLI, authenticated loopback API, durable cancellable tasks, model inventory/acquisition/verification and local evidence dashboard. No paid-service hidden fallback, browser stealth, target impersonation or third-party protection bypass.
 
 ## Start
 
-PowerShell7:
+Extract the inspected [hosted native/desktop artifact](docs/DESKTOP.md) for your platform. Builds and tests for this delivery run only on GitHub-hosted CI. Windows PowerShell7 example:
 
 ```powershell
-./scripts/setup.ps1
+./bin/numera-cha.exe --device cpu recognize --text "12 * 3 = ?"
+```
+
+Linux/macOS:
+
+```bash
+./bin/numera-cha --device cpu recognize --text "12 * 3 = ?"
 ```
 
 ```powershell
@@ -36,7 +44,31 @@ PowerShell7:
 
 Dashboard: `http://127.0.0.1:8765`. Connect with the locally generated credential in `data/api-token.txt`; never publish or attach its value. Stop with `./scripts/stop.ps1`.
 
-Neural inference defaults to CUDA. Set `NUMERA_DLL_DIRECTORY` to compatible CUDA/cuDNN DLLs if needed. CPU inference is explicit: `./bin/numera-cha.exe --device cpu recognize --image <licensed-image>`.
+CLI/SDK defaults remain CUDA on Windows/Linux and CPU on macOS; the desktop defaults to its bundled CPU runtime unless explicitly configured. Set `NUMERA_DLL_DIRECTORY` to compatible CUDA/cuDNN DLLs when selecting CUDA. Hosted runners provide actual CPU evidence, not GPU evidence. Explicit CPU: `./bin/numera-cha.exe --device cpu recognize --image <licensed-image>`.
+
+## Agent MCP and human review
+
+Start your selected local server with `./bin/numera-cha-solver-mcp.exe serve --port 1583` (on Linux/macOS omit `.exe`). Configure the same root/port for the bridge. Merge this entry into Claude Desktop's `claude_desktop_config.json`; preserve existing servers:
+
+```json
+{
+  "mcpServers": {
+    "Numera-CHA-Solver-MCP": {
+      "command": "G:\\Program Files\\Portable\\Scripts\\Numera CHA-Solver\\bin\\numera-cha-solver-mcp.exe",
+      "args": ["bridge"],
+      "env": {
+        "NUMERA_ROOT": "G:\\Program Files\\Portable\\Scripts\\Numera CHA-Solver",
+        "NUMERA_MCP_PORT": "1583",
+        "NUMERA_DEVICE": "cpu"
+      }
+    }
+  }
+}
+```
+
+Replace the example installation path with your actual archive location. No token belongs in this public snippet; the bridge reads the owner-protected local credential. Native tools provide licensed local recognition and pending review/status/cancellation. The person corrects/confirms in the local UI; agents cannot confirm or submit to a site, and `server_verified` stays separate.
+
+[Complete MCP configuration, ports and troubleshooting](docs/MCP.md) · [Portable usage skill](skills/numera-cha-solver/SKILL.md) · [Client packaging](plugins/README.md). Plugin compatibility and native installation are separate; a manifest alone is not proof a client has been exercised.
 
 ## SDK
 
@@ -108,11 +140,11 @@ Real first-party PP-OCRv6small weights read the owned synthetic `NUMERA 123` sam
 
 UTF8 diagnostic files live under `logs`, resolved from project root. One per execution: `<script>_YYYY-MM-DD_HH-mm-ss_UTC.log`; UTC entries `[timestamp UTC] [LEVEL] [COMPONENT] Message`. INFO/WARNING/ERROR/DEBUG supported; `--debug` enables verbose operational metadata. Logging initialization falls back safely to stderr. Native logs sanitize quoted/nested fields before writing; runtime errors expose stable messages, not raw sensitive exception payloads. Logs rotate at 2 MB with two backups per run; real operational runs are not deleted automatically. Credentials, authorization, cookies, response tokens, signed URLs and raw inputs are not logged. Attach only sanitized relevant logs, never credentials/raw private assets.
 
-## Development and manual CI
+## Development and hosted CI
 
-Native dependencies are pinned by `Cargo.lock`; exact `ort` prerelease is an explicit reviewed exception. ONNX/CUDA native DLLs are external libraries, not a Python application dependency. The dedicated Windows repositoryrunner starts manually, has no service/startupregistration, and runs only a manualworkflow. Deterministic/model/browser/packagechecks and their limitations are documented in [Testing](docs/TESTING.md). No staticgreenpassingbadge substitutes for exactSHAevidence.
+Native dependencies are pinned by `Cargo.lock`; exact `ort` prerelease is an owner-approved reviewed exception. The three-platform workflow runs on GitHub-hosted runners for main pushes, pull requests and manual dispatch. It uses two compiler jobs, one test thread, actual CPU inference, Windows frozen-source/launcher coverage, headless browser review tests and inspected native/desktop packages. Build/cache/temp paths remain job-contained; the old project self-hosted runner is removed. [Testing and named limits](docs/TESTING.md). No badge substitutes for exact-revision evidence.
 
-Originalcode is proprietary, matching the user's requested license. Third-party weights/dependencies retain their grants; see [LICENSE](LICENSE) and [third-party notices](THIRD_PARTY_NOTICES.md).
+Original code uses the [custom noncommercial network share-alike license](LICENSE). Third-party weights/dependencies retain their own grants; read [licensing boundaries](docs/LICENSING.md) and [third-party notices](THIRD_PARTY_NOTICES.md).
 
 ## Donate
 

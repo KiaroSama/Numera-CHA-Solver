@@ -3,11 +3,7 @@ use std::{path::PathBuf, time::Duration};
 
 #[tokio::test]
 async fn owned_real_gpu_then_cpu_answer_and_shape_parity() {
-    assert_eq!(
-        std::env::var("NUMERA_TEST_GPU").as_deref(),
-        Ok("1"),
-        "Required GPU tier must be selected; no skipped pass."
-    );
+    let gpu_selected = std::env::var("NUMERA_TEST_GPU").as_deref() == Ok("1");
     let root = PathBuf::from(
         std::env::var_os("NUMERA_RUNTIME_ROOT").expect("Owned runtime/model root required."),
     );
@@ -33,6 +29,22 @@ async fn owned_real_gpu_then_cpu_answer_and_shape_parity() {
         allowed_characters: String::new(),
         revision: String::new(),
     };
+    if !gpu_selected {
+        settings.device = "cpu".into();
+        let sdk = Numera::new(settings);
+        let result = tokio::time::timeout(Duration::from_secs(60), sdk.recognize(input, None))
+            .await
+            .unwrap();
+        sdk.close().await;
+        assert_eq!(result.answer.as_deref(), Some("NUMERA 123"));
+        assert_eq!(result.device.as_deref(), Some("cpu"));
+        assert_eq!(
+            result.evidence["input_shape"],
+            serde_json::json!([1, 3, 48, 320])
+        );
+        assert!(!result.server_verified);
+        return;
+    }
     let sdk = Numera::new(settings.clone());
     let gpu = tokio::time::timeout(Duration::from_secs(60), sdk.recognize(input.clone(), None))
         .await

@@ -22,7 +22,7 @@ try{
         try{[IO.File]::Copy((Join-Path $root 'target/release/numera-cha.exe'),$temporary,$false);[IO.File]::Move($temporary,(Join-Path $bin 'numera-cha.exe'),$true)}finally{if([IO.File]::Exists($temporary)){[IO.File]::Delete($temporary)}}
     }
     if(-not $RuntimeSourceRoot){$RuntimeSourceRoot=$root}
-    Copy-NativeRuntime -SourceRoot $RuntimeSourceRoot
+    Copy-NativeRuntime -SourceRoot $RuntimeSourceRoot -Engine $Engine
     Write-RunLog INFO setup 'Native application ready. No global tools installed; models are acquired only with models fetch. CPU use remains explicit.'
 }catch{if($code -eq 0){$code=1};Write-RunLog ERROR setup $_.Exception.Message}
 finally{Write-RunLog INFO cleanup "Setup finished exit_code=$code."}

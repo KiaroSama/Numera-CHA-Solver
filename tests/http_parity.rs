@@ -9,6 +9,7 @@ async fn http_matches_source_schema_security_and_large_input_contracts() {
     let root = tempfile::tempdir().unwrap();
     let mut settings = Settings::new(root.path().into());
     settings.api_token = "owned-oracle-only".into();
+    settings.device = "cuda".into(); // Frozen source fixture configuration; no neural inference in this tier.
     let state = api::state(settings).unwrap();
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
     let address = listener.local_addr().unwrap();

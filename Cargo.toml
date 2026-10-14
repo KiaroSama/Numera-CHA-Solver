@@ -1,12 +1,17 @@
 [package]
 name = "numera-cha-solver"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2024"
 rust-version = "1.99"
 authors = ["KiaroSama <Kiaro.Sama.Dev@gmail.com>"]
 description = "Local perception and owner-controlled verification laboratory"
 license-file = "LICENSE"
 repository = "https://github.com/KiaroSama/Numera-CHA-Solver"
+
+[workspace]
+members = ["desktop"]
+default-members = ["."]
+resolver = "3"
 
 [lib]
 name = "numera_cha_solver"
@@ -16,17 +21,23 @@ path = "src/lib.rs"
 name = "numera-cha"
 path = "src/main.rs"
 
+[[bin]]
+name = "numera-cha-solver-mcp"
+path = "src/bin/numera-cha-solver-mcp.rs"
+
 [dependencies]
+rmcp = { version = "=3.5.1", default-features = false, features = ["server", "client", "macros", "schemars", "transport-io", "transport-streamable-http-server", "transport-streamable-http-client-reqwest", "reqwest"] }
+tokio-util = { version = "=0.7.20", features = ["rt"] }
 serde = { version = "=1.0.229", features = ["derive"] }
-serde_json = "=1.0.151"
+serde_json = "=1.0.154"
 regex = "=1.13.1"
 axum = "=0.8.9"
-tokio = { version = "=1.53.2", features = ["rt-multi-thread", "macros", "net", "io-util", "process", "sync", "time", "signal", "fs"] }
+tokio = { version = "=1.53.3", features = ["rt-multi-thread", "macros", "net", "io-util", "process", "sync", "time", "signal", "fs", "io-std"] }
 clap = { version = "=4.6.7", features = ["derive"] }
 rusqlite = { version = "=0.40.2", features = ["bundled"] }
 reqwest = { version = "=0.13.5", default-features = false, features = ["rustls", "stream"] }
 image = { version = "=0.25.10", default-features = false, features = ["png", "jpeg", "webp", "bmp"] }
-sha2 = "=0.11.0"
+sha2 = "=0.11.1"
 base64 = "=0.23.1"
 chrono = "=0.4.45"
 rand = "=0.10.3"
@@ -34,6 +45,7 @@ ort = { version = "=2.0.0-rc.13", default-features = false, features = ["std", "
 windows-sys = { version = "=0.61.2", features = ["Win32_Foundation", "Win32_System_LibraryLoader", "Win32_System_Threading", "Win32_Security", "Win32_Security_Authorization", "Win32_Storage_FileSystem", "Win32_Networking_WinSock"] }
 
 [dev-dependencies]
+libc = "=0.2.190"
 tempfile = "=3.27.0"
 
 [profile.release]

@@ -30,6 +30,7 @@ pub struct AppState {
     pub sdk: Numera,
     pub tasks: Arc<TaskService>,
     pub readiness: Readiness,
+    pub reviews: crate::review::ReviewStore,
     sessions: Arc<Mutex<HashMap<String, Instant>>>,
 }
 #[derive(Deserialize)]
@@ -131,11 +132,22 @@ async fn boundary(State(state): State<AppState>, mut request: Request, next: Nex
             &request_id,
         );
     }
+    let desktop_origin = state.settings.desktop_origin.as_deref();
+    let origin_header = request
+        .headers()
+        .get(header::ORIGIN)
+        .and_then(|v| v.to_str().ok())
+        .map(str::to_owned);
+    let is_desktop = origin_header.as_deref().is_some_and(|origin| {
+        desktop_origin == Some(origin)
+            && matches!(origin, "tauri://localhost" | "http://tauri.localhost")
+    });
     if let Some(origin) = request
         .headers()
         .get(header::ORIGIN)
         .and_then(|v| v.to_str().ok())
         && origin != format!("http://{host}")
+        && !is_desktop
     {
         return boundary_error(
             StatusCode::FORBIDDEN,
@@ -157,6 +169,23 @@ async fn boundary(State(state): State<AppState>, mut request: Request, next: Nex
             "Request body exceeds its limit.",
             &request_id,
         );
+    }
+    if request.method() == axum::http::Method::OPTIONS && is_desktop {
+        return (
+            StatusCode::NO_CONTENT,
+            [
+                (
+                    "access-control-allow-origin",
+                    origin_header.as_deref().unwrap_or(""),
+                ),
+                ("access-control-allow-methods", "GET,POST,OPTIONS"),
+                (
+                    "access-control-allow-headers",
+                    "authorization,content-type,idempotency-key",
+                ),
+            ],
+        )
+            .into_response();
     }
     let mut unauthorized = false;
     if request.uri().path().starts_with("/v1/") {
@@ -243,6 +272,12 @@ async fn boundary(State(state): State<AppState>, mut request: Request, next: Nex
     response
         .headers_mut()
         .insert("x-request-id", request_id.parse().unwrap());
+    if is_desktop {
+        response.headers_mut().insert(
+            "access-control-allow-origin",
+            origin_header.unwrap().parse().unwrap(),
+        );
+    }
     response
 }
 pub fn state(settings: Settings) -> Result<AppState, Error> {
@@ -252,6 +287,10 @@ pub fn state(settings: Settings) -> Result<AppState, Error> {
         settings.result_ttl,
     )?);
     Ok(AppState {
+        reviews: crate::review::ReviewStore::new(
+            &settings.data_dir().join("reviews.sqlite3"),
+            settings.result_ttl,
+        )?,
         readiness: Readiness::new(settings.clone()),
         tasks: TaskService::new(sdk.clone(), store),
         sdk,
@@ -274,6 +313,16 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/tasks", get(task_list).post(create_task))
         .route("/v1/tasks/{identifier}", get(task))
         .route("/v1/tasks/{identifier}/cancel", post(cancel))
+        .route("/v1/reviews", post(crate::review_api::create))
+        .route("/v1/reviews/{identifier}", get(crate::review_api::get))
+        .route(
+            "/v1/reviews/{identifier}/confirm",
+            post(crate::review_api::confirm),
+        )
+        .route(
+            "/v1/reviews/{identifier}/cancel",
+            post(crate::review_api::cancel),
+        )
         .fallback(static_file)
         .layer(DefaultBodyLimit::max(11_190_000))
         .layer(middleware::from_fn_with_state(state.clone(), boundary))

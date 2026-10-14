@@ -1,28 +1,23 @@
 # Testing and evidence
 
-Confirmed seams: Rust SDK/CLI, authenticated HTTP/tasks, real model/device, owned dashboard and installed distribution. Synthetic lifecycle workers never count as OCR accuracy.
+Confirmed seams: native SDK/CLI, authenticated HTTP/tasks/review, real model/device, MCP HTTP/stdio bridge, owned dashboard, desktop and installed distribution. Synthetic workers prove ownership behavior only, never OCR accuracy.
 
-## Native verification
+## Hosted-only delivery validation
 
-The final integrated pass belongs to manually dispatched Windows CI after all code/configuration/documentation changes. No automatic push/PR runs code on the user's machine. The dedicated project-contained runner has no service/startup registration and stops after its owned job.
+Version0.3.0 is built/tested on GitHub-hosted Windows x64, Ubuntu24.04 x64 and Apple Silicon macOS. Main pushes, pull requests and manual dispatch trigger the native matrix; no local/self-hosted runner is used. The owner's current task explicitly excludes local builds and runtime tests. Source formatting/config syntax inspection does not count as execution evidence.
 
-```powershell
-./scripts/native_ci.ps1 -Gpu -Browser
-```
-
-Use locally only for an explicitly selected run or recorded CI-unavailable fallback. Development uses compile/format checks and one narrowly scoped tracer only when the next edit needs its result. Native libtest has no universal per-case kill timeout: async/process tests use explicit bounds and the captured outer runner provides wall/idle/tree-cleanup ceilings. Two compiler jobs, one test thread and one GPU operation avoid shared-resource oversubscription. CI compiles the standalone synthetic Rust worker once before the worker regressions; direct worker-test invocations require `NUMERA_FIXTURE_WORKER_EXECUTABLE` pointing to that compiled fixture. Focused worker checks through `scripts/native_check.ps1` prepare it automatically.
+Each job uses two compiler workers, one test thread and one model operation. Native tests have their own async/process deadlines; the captured outer command owner supplies wall/idle/tree cleanup. Stable libtest has no universal per-case kill timeout. Job wall limit is45min; each stage records exit status and duration. Genuine timeouts/failures block package upload, not waived by retries or disabled assertions.
 
 ## Required tiers
 
-- Source-generated JSON and binary conformance: arithmetic, SDK, HTTP status/body/security headers, geometry, owner assessment, CTC, Pillow preprocessing and persisted request digests. Only named nondeterministic request IDs are normalized.
-- Native regression: input/config bounds, local files, immutable models, live/crashed download ownership, redaction, startup/credential safety, task idempotency/TTL/restart/overload, readiness and worker cancellation/reaping/successors.
-- Actual device: immutable owned ASCII image on CUDA then explicitly selected CPU; exact answer and tensor-shape parity, real CUDA operator profiling. No skipped GPU pass.
-- Owned dashboard and distribution: isolated headless browser; responsive/reduced-motion/auth/arithmetic; exact archive allowlist/hash/license texts; installed CLI/launchers in a path with spaces; copied-state rollback into the source runtime.
+- Source-generated JSON/binary conformance: arithmetic, SDK, HTTP status/body/security headers, geometry, owner assessment, CTC, preprocessing and request digests. Expectations remain generated from the historical Python source, not target translations. Windows additionally regenerates a temporary frozen historical source snapshot and verifies drift/rollback; no historical application is delivered.
+- Native lifecycle/negative cases: bounded config/input/files/model integrity, download ownership/crash, redaction, credentials/socket/root collision, task idempotency/TTL/restart/overload, decoder and worker cancellation/reap/successor. The standalone worker fixture is compiled once in CI and supplied through `NUMERA_FIXTURE_WORKER_EXECUTABLE`.
+- New public boundaries: MCP initialize/list/call/auth/host/origin/input and bridge failure/protocol/cleanup; manual correction/confirm/cancel/expiry/stale terminal state; native runtime names and POSIX credential modes. Unsupported external input is rejected and human confirmation is not an agent tool.
+- Actual device: official CPU ONNX Runtime1.31.0 and immutable owned ASCII image on every hosted OS. Exact answer/input-shape and `server_verified=false` asserted. Hosted CPU evidence is not a skipped CUDA pass; legacy CUDA tests remain a separate explicitly selected hardware tier.
+- Browser/distribution: isolated headless dashboard auth/arithmetic/manual review/mobile/reduced-motion on each OS; native Linux installed desktop WebDriver/Xvfb smoke; Windows launcher ownership/source rollback; native package/source/license/hash/private inclusion checks. Windows/macOS native GUI interaction and trusted signing/notarization are not claimed from headless browser/build tests.
 
-`tests/fixtures/parity/source-tests.json` maps the discovered source functions to native/parity tests. A mapping names implemented coverage, not a successful execution: the original `awaiting_final_ci` generation markers are historical metadata, not current pass/fail receipts. Final execution evidence is bound to revision `43c272e7288bb75196b62e443f703a29baea811e` and CI37802044609 in [Validation](../reports/VALIDATION.md); all mapped applicable native tiers passed that run. Future changes need their own exact-revision evidence. Pending mappings, missing tiers, fixture drift and assertion failures block replacement. The owner-approved removal of the Python-only synchronous SDK API is explicitly recorded, not silently skipped.
+## Evidence interpretation
 
-Expected fixtures are generated by `scripts/migration_oracle.py` using the existing locked source environment. Native results never generate their own expected answers. After source retirement, `scripts/source_oracle.ps1` restores the exact historic Git source into temporary project state with frozen dependencies, runs generation/rollback and removes the snapshot. `NUMERA_ORACLE_PYTHON` optionally selects an existing matching test interpreter; otherwise the wrapper restores a disposable project-contained environment with Python 3.14.8. Native application execution never requires it. No permanent second application version is kept.
+The 45 historical source function dispositions in `tests/fixtures/parity/source-tests.json` map to implemented native coverage; the original generation markers are historical metadata. They are not a pass receipt for later changes. [Validation](../reports/VALIDATION.md) records exact-revision execution evidence. Test counts, timings, compiler results and synthetic recognition do not measure real CAPTCHA accuracy, cross-version performance improvements or full Rust line coverage.
 
-## Limits
-
-Current native migration status is in [Validation](../reports/VALIDATION.md). Historical Python CI counts/coverage do not certify Rust. Actual focused checks establish only their exercised paths. No licensed labeled real CAPTCHA dataset, owner live origins or production traffic were supplied; real accuracy, multilingual accuracy and provider acceptance remain unmeasured. Windows is the only requested product platform.
+Required real labeled CAPTCHA/audio/provider fixtures are unavailable; no live provider acceptance or new accuracy claim is made. Models/user data/operational logs/shared tools survive cleanup. Disposable hosted runner work/cache is job-contained, and project-owned old self-hosted installation/registration is removed separately after inspection.

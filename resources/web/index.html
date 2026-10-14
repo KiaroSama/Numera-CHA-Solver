@@ -4,17 +4,17 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Numera / Perception Lab</title>
-  <link rel="stylesheet" href="/app.css">
-  <script src="/app.js" defer></script>
+  <link rel="stylesheet" href="app.css">
+  <script src="app.js" defer></script>
 </head>
 <body>
 <a class="skip" href="#main">Skip to workspace</a>
 <aside class="rail">
-  <a href="#workspace" class="brand"><img src="/logo.png" width="44" height="44" alt="Numera circular blue and cyan logo"><span>NUMERA<small>PERCEPTION LAB</small></span></a>
+  <a href="#workspace" class="brand"><img src="logo.png" width="44" height="44" alt="Numera circular blue and cyan logo"><span>NUMERA<small>PERCEPTION LAB</small></span></a>
   <div class="rail-label">LOCAL WORKSPACE</div>
   <nav aria-label="Workspace navigation"><a href="#workspace" class="selected">Recognition</a><a href="#coverage">Coverage catalog</a><a href="#tasks">Task history</a><a href="#runtime">Model &amp; runtime</a></nav>
   <div class="rail-note"><span class="dot"></span> Local-first / private<br><small>No external inference.<br>No live third-party automation.</small></div>
-  <footer>CHA-Solver <span>v0.2.0</span></footer>
+  <footer>CHA-Solver <span>v0.3.0</span></footer>
 </aside>
 <div class="shell">
   <header><div class="breadcrumb">Workspace <span>/</span> Recognition</div><div class="header-actions"><span class="pill">LOOPBACK ONLY</span><button id="connect" class="quiet">Connect</button></div></header>
@@ -35,7 +35,7 @@
     <section id="runtime" class="panel runtime-panel"><div class="panel-title"><div><p class="eyebrow">EXECUTION ENVIRONMENT</p><h2>Model &amp; runtime</h2></div><button id="refresh" class="quiet">Refresh status</button></div><div id="model-status" class="runtime-details"><p class="muted">Connect to inspect actual local model availability.</p></div></section>
     <section id="coverage" class="panel"><div class="panel-title"><div><p class="eyebrow">HONEST COVERAGE</p><h2>Requested catalog</h2></div><label class="filter-label" for="filter">Filter <input id="filter" type="search" placeholder="Provider or subtype"></label></div><p class="hint">Registry entries are not support claims. Expand a family to inspect subtype-level blockers.</p><div id="coverage-list"><p class="muted">Connect to load the coverage catalog.</p></div></section>
     <section id="tasks" class="panel"><div class="panel-title"><div><p class="eyebrow">BOUNDED &amp; DURABLE</p><h2>Task history</h2></div><button id="refresh-tasks" class="quiet">Refresh tasks</button></div><div id="task-list"><p class="muted">No task history loaded.</p></div></section>
-    <footer class="page-footer">Inference stays local. Capabilities stay explicit.<span>Numera CHA-Solver / 0.2.0</span></footer>
+    <footer class="page-footer">Inference stays local. Capabilities stay explicit.<span>Numera CHA-Solver / 0.3.0</span></footer>
   </main>
 </div>
 <dialog id="auth-dialog" aria-labelledby="auth-title"><form id="auth-form"><h2 id="auth-title">Connect to your local instance</h2><p>Paste the credential from <code>data/api-token.txt</code>. It is exchanged for an HTTP-only local session and is not saved in browser storage.</p><label for="api-token">Local API credential</label><input id="api-token" type="password" required autocomplete="off"><p id="auth-error" role="alert"></p><div class="dialog-actions"><button type="button" id="close-auth" class="quiet">Cancel</button><button type="submit" class="primary">Connect</button></div></form></dialog>
