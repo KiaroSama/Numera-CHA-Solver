@@ -103,12 +103,22 @@ class OwnedTree:
             try:
                 if not process.is_running() or process.pid == self.parent.pid or process.create_time() < self.parent_created or process.uids().real != os.getuid():
                     continue
+                known = self.members.get(process.pid)
+                if known and process.create_time() == known[1]:
+                    continue  # An owned identity needs no restricted environment read after exec or exit.
+                if process.status() in (psutil.STATUS_ZOMBIE, psutil.STATUS_DEAD):
+                    continue  # Ended unknown processes cannot spawn descendants; never signal them.
                 if process.environ().get(OWNER_TAG) == self.tag:
                     self.remember(process)
             except (psutil.NoSuchProcess, psutil.ZombieProcess):
                 continue
             except psutil.AccessDenied as error:
-                raise RuntimeError("Owned descendant discovery cannot inspect a new same-user process; refusing an unverified run.") from error
+                try:
+                    if not process.is_running() or process.status() in (psutil.STATUS_ZOMBIE, psutil.STATUS_DEAD):
+                        continue  # Exit may race the preceding environment inspection.
+                except (psutil.NoSuchProcess, psutil.ZombieProcess):
+                    continue
+                raise RuntimeError("Owned descendant discovery cannot inspect a new live same-user process; refusing an unverified run.") from error
         self.record.write_text(json.dumps({"root_pid": self.process.pid,
             "members": [{"pid": p.pid, "created": created} for p, created in self.members.values()]}), encoding="utf-8")
 

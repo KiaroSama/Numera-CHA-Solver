@@ -46,6 +46,11 @@ def main():
     if not args.work or os.name == "nt":
         raise RuntimeError("POSIX owner regression requires an owned hosted work path.")
     args.work.mkdir(parents=True, exist_ok=False)
+    import importlib.util
+    contract = importlib.util.spec_from_file_location("numera_discovery_contract", Path(__file__).with_name("owner_discovery_contract.py"))
+    module = importlib.util.module_from_spec(contract)
+    contract.loader.exec_module(module)
+    module.verify(args.work)
     owner = Path(__file__).with_name("run_owned.py")
     for mode, expected in (("success", 0), ("idle", 124), ("orphan", 1), ("detached", 1), ("detached-live", 124)):
         capture = args.work / f"{mode}.txt"

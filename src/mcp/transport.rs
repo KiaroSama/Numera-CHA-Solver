@@ -35,10 +35,10 @@ async fn boundary(State(state): State<Boundary>, request: Request, next: Next) -
     if host != format!("127.0.0.1:{}", state.port) && host != format!("localhost:{}", state.port) {
         return StatusCode::FORBIDDEN.into_response();
     }
-    if let Some(origin) = request.headers().get(header::ORIGIN) {
-        if origin.to_str().ok() != Some(format!("http://{host}").as_str()) {
-            return StatusCode::FORBIDDEN.into_response();
-        }
+    if let Some(origin) = request.headers().get(header::ORIGIN)
+        && origin.to_str().ok() != Some(format!("http://{host}").as_str())
+    {
+        return StatusCode::FORBIDDEN.into_response();
     }
     let token = request
         .headers()

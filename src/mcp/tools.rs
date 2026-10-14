@@ -3,7 +3,7 @@ use base64::Engine;
 use rmcp::{
     ErrorData, RoleServer, ServerHandler,
     handler::server::wrapper::Parameters,
-    model::{CallToolResult, ContentBlock, Implementation, ServerCapabilities, ServerInfo},
+    model::{CallToolResult, ContentBlock, Implementation, ServerCapabilities, ServerConfig},
     schemars,
     service::RequestContext,
     tool, tool_handler, tool_router,
@@ -160,8 +160,8 @@ impl Tools {
 }
 #[tool_handler]
 impl ServerHandler for Tools {
-    fn get_info(&self) -> ServerInfo {
-        ServerInfo::new(ServerCapabilities::builder().enable_tools().build())
+    fn get_info(&self) -> ServerConfig {
+        ServerConfig::new(ServerCapabilities::builder().enable_tools().build())
             .with_server_info(Implementation::new("Numera-CHA-Solver-MCP",env!("CARGO_PKG_VERSION")))
             .with_instructions("Local licensed recognition and human handoff only. Never bypass protections or impersonate confirmation; server_verified stays independent.")
     }

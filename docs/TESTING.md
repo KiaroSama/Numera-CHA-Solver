@@ -8,7 +8,7 @@ Version0.3.0 is built/tested on GitHub-hosted Windows x64, Ubuntu24.04 x64 and A
 
 Each job first exercises duplicate executable discovery and fail-closed dependency notice selection (unknown version, mismatched license/revision and altered bytes). The discovery placeholders are never executed. Packaging verifies all omitted notice texts and includes unchanged preferred source for every MPL-covered dependency; missing or mismatched catalog entries block delivery.
 
-Each job uses two compiler workers, one test thread and one model operation. Native tests have their own async/process deadlines; the captured outer command owner supplies wall/idle/tree cleanup. Stable libtest has no universal per-case kill timeout. Job wall limit is45min; each stage records exit status and duration. Genuine timeouts/failures block package upload, not waived by retries or disabled assertions.
+Each job uses two compiler workers, one test thread and one model operation. Native tests have their own async/process deadlines; the captured outer command owner supplies wall/idle/tree cleanup. Stable libtest has no universal per-case kill timeout. Job wall limit is45min; each stage records exit status and duration. Genuine timeouts/failures block package upload, not waived by retries or disabled assertions. Native suite summaries and bounded redacted failure sections are surfaced in CI logs; a missing result capture fails validation. POSIX discovery does not read an already-owned PID/create-time identity's environment again after exec/exit and excludes unknown ended processes, but a live unknown same-user process with inaccessible ownership evidence still blocks the run. No OS security settings are weakened.
 
 ## Required tiers
 

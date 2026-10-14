@@ -98,9 +98,18 @@ try {
     $null=Stage 'clippy-all-native-and-desktop' cargo @('clippy','--locked','--workspace','--all-targets','--jobs','2','--','-D','warnings') 1200 180
     $testCapture=Join-Path $work 'native-tests.txt'
     $tests=Stage 'all-native-and-desktop-tests' cargo @('test','--locked','--workspace','--all-targets','--no-fail-fast','--jobs','2','--','--test-threads=1') 600 120 $testCapture
-    if ($tests -eq 0) {
+    if (-not [IO.File]::Exists($testCapture)) { throw 'Native suite result capture is missing; validation cannot be claimed.' }
+    if ([IO.File]::Exists($testCapture)) {
         $output=[IO.File]::ReadAllText($testCapture,[Text.Encoding]::UTF8)
-        if ($output -match '[1-9][0-9]* ignored;' -or $output -notmatch 'test result: ok\.') { throw 'Native suite skipped a required case or provided no test results.' }
+        if ($tests -eq 0 -and ($output -match '[1-9][0-9]* ignored;' -or $output -notmatch 'test result: ok\.')) { throw 'Native suite skipped a required case or provided no test results.' }
+        foreach ($summary in [regex]::Matches($output,'(?m)^test result:.*$')) {
+            Write-HostedLog $(if($tests -eq 0){'INFO'}else{'ERROR'}) native-tests $summary.Value
+        }
+        if ($tests -ne 0) {
+            foreach ($section in [regex]::Matches($output,'(?ms)^failures:.*?(?=^test result:|\z)')) {
+                Write-HostedLog ERROR native-tests $section.Value.Substring(0,[Math]::Min($section.Value.Length,8192))
+            }
+        }
     }
     $null=Stage 'native-headless-browser' $browserPython @((Join-Path $PSScriptRoot 'native_browser.py'),'--executable',(Join-Path $root "target/debug/numera-cha$suffix"),'--work',(Join-Path $work 'browser')) 120 45
     if ($IsWindows) {

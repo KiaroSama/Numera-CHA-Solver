@@ -83,6 +83,7 @@ async fn authenticated_protocol_tools_and_human_boundary() {
             .name,
         "Numera-CHA-Solver-MCP"
     );
+    eprintln!("MCP checkpoint: authenticated initialize and boundary rejection passed.");
     let catalog = peer.list_tools(None).await.unwrap();
     assert!(catalog.tools.iter().any(|t| t.name == "recognize"));
     assert!(
@@ -105,6 +106,7 @@ async fn authenticated_protocol_tools_and_human_boundary() {
     let value: Value = response.structured_content.unwrap();
     assert_eq!(value["answer"], "36");
     assert_eq!(value["server_verified"], false);
+    eprintln!("MCP checkpoint: tool catalog and arithmetic contract passed.");
     use base64::Engine;
     let large = base64::engine::general_purpose::STANDARD.encode(vec![0u8; 3_200_000]);
     let large_result = peer
@@ -122,6 +124,7 @@ async fn authenticated_protocol_tools_and_human_boundary() {
         large_result.structured_content.unwrap()["outcome"],
         "failed"
     );
+    eprintln!("MCP checkpoint: valid request above4MiB reached bounded decoding.");
     let oversized = reqwest::Client::builder()
         .no_proxy()
         .timeout(Duration::from_secs(5))
@@ -145,6 +148,7 @@ async fn authenticated_protocol_tools_and_human_boundary() {
         )
         .await;
     assert!(invalid.is_err());
+    eprintln!("MCP checkpoint: oversized body and unsupported input rejected.");
     peer.close().await.unwrap();
     cancel.cancel();
     tokio::time::timeout(Duration::from_secs(5), server)
