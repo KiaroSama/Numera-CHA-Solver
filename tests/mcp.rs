@@ -146,8 +146,23 @@ async fn authenticated_protocol_tools_and_human_boundary() {
                     .clone(),
             ),
         )
+        .await
+        .expect("SDK parameter rejection is a tool error result");
+    assert_eq!(invalid.is_error, Some(true));
+    assert!(invalid.structured_content.is_none());
+    assert!(
+        serde_json::to_value(&invalid.content)
+            .unwrap()
+            .to_string()
+            .contains("unknown field `url`")
+    );
+    let unsupported = peer
+        .call_tool(
+            CallToolRequestParams::new("recognize")
+                .with_arguments(json!({"kind":"browser"}).as_object().unwrap().clone()),
+        )
         .await;
-    assert!(invalid.is_err());
+    assert!(unsupported.is_err());
     eprintln!("MCP checkpoint: oversized body and unsupported input rejected.");
     peer.close().await.unwrap();
     cancel.cancel();

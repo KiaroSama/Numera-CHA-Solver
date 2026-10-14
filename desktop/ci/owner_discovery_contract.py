@@ -26,6 +26,7 @@ def verify(work):
     tree.parent = parent
     tree.parent_created = 99.0
     tree.members = {known.pid: (known, 100.0)}
+    tree.inspection_failures = []
     tree.process = SimpleNamespace(pid=known.pid)
     tree.tag = "owned-discovery-fixture"
     tree.record = record
@@ -45,6 +46,7 @@ def verify(work):
         ended.create_time.return_value = 101.0
         ended.uids.return_value = SimpleNamespace(real=os.getuid())
         ended.status.return_value = psutil.STATUS_ZOMBIE
+        ended.parent.return_value = None
         snapshot([ended])
         ended.environ.assert_not_called()
         assert ended.pid not in tree.members
@@ -59,6 +61,7 @@ def verify(work):
         denied.uids.return_value = SimpleNamespace(real=os.getuid())
         denied.status.return_value = psutil.STATUS_RUNNING
         denied.environ.side_effect = psutil.AccessDenied(denied.pid)
+        denied.parent.return_value = None
         try:
             snapshot([denied])
         except RuntimeError as error:
@@ -66,5 +69,60 @@ def verify(work):
         else:
             raise AssertionError("Live unknown inaccessible process must fail closed.")
         assert denied.pid not in tree.members
+        late = mock.Mock(pid=known.pid + 3)
+        late.is_running.return_value = True
+        late.create_time.return_value = 102.0
+        late.uids.return_value = SimpleNamespace(real=os.getuid())
+        late.status.return_value = psutil.STATUS_RUNNING
+        late.children.return_value = []
+        late.parent.return_value = known
+        late.environ.side_effect = psutil.AccessDenied(late.pid)
+        snapshot([late])
+        late.environ.assert_not_called()
+        assert tree.members[late.pid][1] == 102.0
+        tree.members.pop(late.pid)
+        late.parent.side_effect = [None, known]
+        snapshot([late])
+        late.environ.assert_called_once()
+        assert late.pid in tree.members
+        tree.members.pop(late.pid)
+        reused_parent = mock.Mock(pid=known.pid)
+        reused_parent.is_running.return_value = True
+        reused_parent.create_time.return_value = 103.0
+        reused_parent.parent.return_value = None
+        late.parent.side_effect = None
+        late.parent.return_value = reused_parent
+        assert not tree.attribute(late), "Reused parent PID cannot confer ownership."
+        assert late.pid not in tree.members
+        reused_parent.parent.side_effect = psutil.NoSuchProcess(reused_parent.pid)
+        late.environ.reset_mock()
+        late.environ.side_effect = None
+        late.environ.return_value = {owner.OWNER_TAG: tree.tag}
+        snapshot([late])
+        late.environ.assert_called_once()
+        assert late.pid in tree.members, "A vanished ancestor must not hide a live tagged candidate."
+        tree.members.pop(late.pid)
+        known.status.return_value = psutil.STATUS_ZOMBIE
+        assert not tree.executing(), "An ended identity is not an executing leak."
+        tree.process = mock.Mock(pid=known.pid + 20)
+        with mock.patch.object(owner.os, "waitpid", return_value=(known.pid, 0)) as wait:
+            tree.reap_ended()
+            wait.assert_called_once_with(known.pid, os.WNOHANG)
+            tree.process.poll.assert_called_once()
+        inaccessible = mock.Mock(pid=known.pid + 30)
+        inaccessible.is_running.return_value = True
+        inaccessible.create_time.return_value = 104.0
+        inaccessible.status.side_effect = psutil.AccessDenied(inaccessible.pid)
+        known.status.return_value = psutil.STATUS_RUNNING
+        tree.members[inaccessible.pid] = (inaccessible, 104.0)
+        with mock.patch.object(tree, "snapshot"), mock.patch.object(tree, "reap_ended"), mock.patch.object(tree, "live", side_effect=[list([known, inaccessible]), list([known, inaccessible]), []]):
+            try:
+                tree.stop()
+            except RuntimeError as error:
+                assert "known children reaped" in str(error)
+            else:
+                raise AssertionError("Unavailable owned status must remain a cleanup failure.")
+        known.kill.assert_called_once()
+        inaccessible.kill.assert_called_once()
     finally:
         record.unlink(missing_ok=True)

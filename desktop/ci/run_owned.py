@@ -61,6 +61,7 @@ class OwnedTree:
         self.parent = psutil.Process()
         self.parent_created = self.parent.create_time()
         self.members = {}
+        self.inspection_failures = []
         self.remember(psutil.Process(process.pid))
         self.started = self.members[process.pid][1]
         if psutil.Process(process.pid).environ().get(OWNER_TAG) != tag:
@@ -88,6 +89,72 @@ class OwnedTree:
                 continue
         return live
 
+    def executing(self, cleanup=False):
+        active = []
+        for process in self.live():
+            try:
+                if process.status() not in (psutil.STATUS_ZOMBIE, psutil.STATUS_DEAD):
+                    active.append(process)
+            except (psutil.NoSuchProcess, psutil.ZombieProcess):
+                pass
+            except psutil.Error as error:
+                if not cleanup:
+                    raise
+                self.inspection_failures.append(error)
+                active.append(process)  # Unknown status is not ended; identity-checked cleanup must continue.
+        return active
+
+    def attribute(self, process):
+        chain = []
+        seen = set()
+        current = process
+        for _ in range(64):
+            try:
+                if not current.is_running() or current.pid in seen:
+                    return False
+                seen.add(current.pid)
+                created = current.create_time()
+                known = self.members.get(current.pid)
+                adopted = sys.platform == "linux" and current.pid == self.parent.pid and created == self.parent_created
+                if (known and known[1] == created) or adopted:
+                    if not process.is_running():
+                        return False
+                    for descendant in chain:
+                        self.remember(descendant)
+                    return True
+                chain.append(current)
+                current = current.parent()
+                if current is None:
+                    return False
+            except (psutil.NoSuchProcess, psutil.ZombieProcess):
+                return False  # A vanished ancestor does not prove the original candidate ended.
+        raise RuntimeError("Owned ancestor discovery exceeded its depth bound.")
+
+    def reap_ended(self, cleanup=False):
+        # Popen owns the root wait status; positive-PID waits cannot consume it.
+        self.process.poll()
+        for process in self.live():
+            if process.pid == self.process.pid:
+                continue
+            try:
+                if process.status() in (psutil.STATUS_ZOMBIE, psutil.STATUS_DEAD):
+                    os.waitpid(process.pid, os.WNOHANG)
+            except (ChildProcessError, psutil.NoSuchProcess, psutil.ZombieProcess):
+                pass  # ECHILD is not proof of removal; live() still verifies disappearance.
+            except psutil.Error as error:
+                if not cleanup:
+                    raise
+                self.inspection_failures.append(error)
+
+    def diagnostic(self, process, outcome):
+        fields = {"pid": process.pid, "attribution": outcome}
+        for name in ("create_time", "ppid", "status"):
+            try:
+                fields[name] = getattr(process, name)()
+            except psutil.Error:
+                fields[name] = "unavailable"
+        sys.stderr.write("Owned discovery: " + json.dumps(fields) + "\n")
+
     def snapshot(self):
         # Preserve identities while parents exist, then recover escaped/reparented processes by a per-command tag.
         for process in list(self.live()):
@@ -108,6 +175,8 @@ class OwnedTree:
                     continue  # An owned identity needs no restricted environment read after exec or exit.
                 if process.status() in (psutil.STATUS_ZOMBIE, psutil.STATUS_DEAD):
                     continue  # Ended unknown processes cannot spawn descendants; never signal them.
+                if self.attribute(process):
+                    continue  # The child may have been born after the initial recursive walk.
                 if process.environ().get(OWNER_TAG) == self.tag:
                     self.remember(process)
             except (psutil.NoSuchProcess, psutil.ZombieProcess):
@@ -116,8 +185,11 @@ class OwnedTree:
                 try:
                     if not process.is_running() or process.status() in (psutil.STATUS_ZOMBIE, psutil.STATUS_DEAD):
                         continue  # Exit may race the preceding environment inspection.
+                    if self.attribute(process):
+                        continue  # Refresh ancestry/adoption after the denied observation.
                 except (psutil.NoSuchProcess, psutil.ZombieProcess):
                     continue
+                self.diagnostic(process, "live-unattributed-denied")
                 raise RuntimeError("Owned descendant discovery cannot inspect a new live same-user process; refusing an unverified run.") from error
         self.record.write_text(json.dumps({"root_pid": self.process.pid,
             "members": [{"pid": p.pid, "created": created} for p, created in self.members.values()]}), encoding="utf-8")
@@ -130,36 +202,39 @@ class OwnedTree:
         except Exception as error:
             discovery_failure = error
         # Freeze discovered parents before killing, so they cannot create an unobserved child during teardown.
-        for process in reversed(self.live()):
+        for process in reversed(self.executing(cleanup=True)):
             try:
                 process.send_signal(signal.SIGSTOP)
             except psutil.NoSuchProcess:
                 pass
+            except psutil.Error as error:
+                discovery_failure = error
         try:
             self.snapshot()
         except Exception as error:
             discovery_failure = error
         while True:
-            for process in reversed(self.live()):
+            for process in reversed(self.executing(cleanup=True)):
                 try:
                     process.kill()  # psutil checks PID + creation time before signalling.
                 except psutil.NoSuchProcess:
                     pass
+                except psutil.Error as error:
+                    discovery_failure = error
             if self.process.poll() is None:
-                self.process.wait(timeout=max(0.01, deadline - time.monotonic()))
-            if sys.platform == "linux":
                 try:
-                    while os.waitpid(-1, os.WNOHANG)[0]:
-                        pass
-                except ChildProcessError:
-                    pass
+                    self.process.wait(timeout=max(0.01, deadline - time.monotonic()))
+                except subprocess.TimeoutExpired as error:
+                    discovery_failure = error
+            self.reap_ended(cleanup=True)
             try:
                 self.snapshot()
             except Exception as error:
                 discovery_failure = error
             if not self.live():
-                if discovery_failure:
-                    raise RuntimeError("Owned discovery was incomplete; known children reaped but run remains failed.") from discovery_failure
+                if discovery_failure or self.inspection_failures:
+                    cause = discovery_failure or self.inspection_failures[0]
+                    raise RuntimeError("Owned discovery was incomplete; known children reaped but run remains failed.") from cause
                 return
             if time.monotonic() >= deadline:
                 raise RuntimeError("Owned descendants survived verified PID/create-time cleanup.")
@@ -253,7 +328,10 @@ def main():
                     time.sleep(0.02)
                 code = process.returncode
                 tree.snapshot()
-                if tree.live():
+                tree.reap_ended()
+                if tree.executing():
+                    for descendant in tree.executing():
+                        tree.diagnostic(descendant, "executing-after-root-exit")
                     failure = "Owned command exited with surviving descendants, including detached sessions."
             else:
                 code = 124

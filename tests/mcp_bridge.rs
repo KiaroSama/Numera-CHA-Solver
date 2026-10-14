@@ -110,14 +110,13 @@ async fn observe(
         .run(Request::from_parts(parts, Body::from(bytes)))
         .await;
     if response.status().is_success() {
-        if bridge_init {
-            if let Some(id) = response
+        if bridge_init
+            && let Some(id) = response
                 .headers()
                 .get("mcp-session-id")
                 .and_then(|v| v.to_str().ok())
-            {
-                let _ = events.try_send(WireEvent::Opened(id.to_owned()));
-            }
+        {
+            let _ = events.try_send(WireEvent::Opened(id.to_owned()));
         }
         if message["method"] == "notifications/cancelled" {
             let _ = events.try_send(WireEvent::Cancelled(message["params"]["requestId"].clone()));
