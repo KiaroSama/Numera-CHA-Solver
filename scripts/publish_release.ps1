@@ -49,6 +49,13 @@ try {
     if(-not $directory.PSIsContainer -or ($directory.Attributes -band [IO.FileAttributes]::ReparsePoint)){
         throw 'Expected an ordinary release artifact directory.'
     }
+    $unsafeEntry=[regex]::new('(^/|\\|(^|/)\.\.(/|$)|(^|/)(\.ai|\.specify|specs|\.claude|\.codex|\.cursor|\.kiro|\.agents|graphify-out|\.codebase-memory|plans|\.git|\.ignoreme|secrets\.md|explain-AI\.md|reference\.md|CLAUDE\.md|AGENTS\.md|\.env[^/]*|api-token\.txt|mcp-token\.txt|server\.json)(/|$)|\.(sqlite3|onnx)$)',[Text.RegularExpressions.RegexOptions]::IgnoreCase,[TimeSpan]::FromSeconds(1))
+    foreach($sample in @('../outside','bin\escape','nested/secrets.md','data/tasks.sqlite3','weights.onnx')){
+        if(-not $unsafeEntry.IsMatch($sample)){throw 'Release exclusion contract did not reject an unsafe path.'}
+    }
+    foreach($sample in @('LICENSE','source/REVISION.txt','data/runtime/onnxruntime.dll')){
+        if($unsafeEntry.IsMatch($sample)){throw 'Release exclusion contract rejected a required package path.'}
+    }
     $platforms=@('windows-x64','linux-x64','macos-arm64')
     $assets=[Collections.Generic.List[string]]::new();$hashes=[Collections.Generic.List[string]]::new()
     foreach($platform in $platforms){
@@ -68,7 +75,7 @@ try {
                 $entries=@{};[long]$total=0
                 foreach($entry in $zip.Entries){
                     $path=$entry.FullName
-                    if($path -match '(^/|\\|(^|/)\.\.(/|$)|(^|/)(\.ai|\.specify|specs|\.claude|\.codex|\.cursor|\.kiro|\.agents|graphify-out|\.codebase-memory|plans|\.git|\.ignoreme|secrets\.md|explain-AI\.md|reference\.md|CLAUDE\.md|AGENTS\.md|\.env[^/]*|api-token\.txt|mcp-token\.txt|server\.json)(/|$)|\.(sqlite3|onnx)$' -or $entries.ContainsKey($path)){
+                    if($unsafeEntry.IsMatch($path) -or $entries.ContainsKey($path)){
                         throw 'Release archive contains an unsafe, duplicate or protected entry.'
                     }
                     $total+=$entry.Length
