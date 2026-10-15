@@ -25,6 +25,7 @@ def verify(work):
     tree = owner.OwnedTree.__new__(owner.OwnedTree)
     tree.parent = parent
     tree.parent_created = 99.0
+    tree.deadline = 1.0
     tree.members = {known.pid: (known, 100.0)}
     tree.inspection_failures = []
     tree.process = SimpleNamespace(pid=known.pid)
@@ -50,7 +51,7 @@ def verify(work):
         snapshot([ended])
         ended.environ.assert_not_called()
         assert ended.pid not in tree.members
-        ended.status.side_effect = [psutil.STATUS_RUNNING, psutil.STATUS_ZOMBIE]
+        ended.status.side_effect = [psutil.STATUS_RUNNING, psutil.STATUS_ZOMBIE, psutil.STATUS_ZOMBIE]
         ended.environ.side_effect = psutil.AccessDenied(ended.pid)
         snapshot([ended])
         ended.environ.assert_called_once()
@@ -75,6 +76,7 @@ def verify(work):
         late.create_time.return_value = 102.0
         late.uids.return_value = SimpleNamespace(real=os.getuid())
         late.status.return_value = psutil.STATUS_RUNNING
+        late.ppid.return_value = 1
         late.children.return_value = []
         late.parent.return_value = known
         late.environ.side_effect = psutil.AccessDenied(late.pid)
@@ -103,6 +105,65 @@ def verify(work):
         late.environ.assert_called_once()
         assert late.pid in tree.members, "A vanished ancestor must not hide a live tagged candidate."
         tree.members.pop(late.pid)
+        with mock.patch.object(owner.sys, "platform", "darwin"), mock.patch.object(owner.time, "monotonic", return_value=0.0), mock.patch.object(owner.time, "sleep") as pause:
+            late.status.side_effect = [psutil.STATUS_RUNNING, psutil.STATUS_IDLE, psutil.STATUS_IDLE,
+                psutil.STATUS_RUNNING, psutil.STATUS_RUNNING, psutil.STATUS_RUNNING]
+            late.environ.side_effect = [psutil.AccessDenied(late.pid), {owner.OWNER_TAG: tree.tag}]
+            snapshot([late])
+            assert late.pid in tree.members, "Initialized tagged identity must still be attributed."
+            pause.assert_called_once_with(0.01)
+            pause.reset_mock()
+            tree.members.pop(late.pid)
+            late.status.side_effect = [psutil.STATUS_RUNNING, psutil.STATUS_IDLE, psutil.STATUS_IDLE,
+                psutil.STATUS_RUNNING, psutil.STATUS_RUNNING, psutil.STATUS_RUNNING]
+            late.environ.side_effect = psutil.AccessDenied(late.pid)
+            try:
+                snapshot([late])
+            except RuntimeError as error:
+                assert "new live same-user process" in str(error)
+            else:
+                raise AssertionError("Initialization cannot waive an inaccessible live identity.")
+            assert late.pid not in tree.members
+            pause.assert_called_once_with(0.01)
+            pause.reset_mock()
+            late.status.side_effect = [psutil.STATUS_RUNNING, psutil.STATUS_IDLE, psutil.STATUS_IDLE,
+                psutil.STATUS_RUNNING, psutil.STATUS_RUNNING, psutil.STATUS_RUNNING]
+            late.environ.side_effect = [psutil.AccessDenied(late.pid), {}]
+            snapshot([late])
+            assert late.pid not in tree.members, "Readable unrelated newborn is not owned."
+            pause.assert_called_once_with(0.01)
+            pause.reset_mock()
+            late.status.side_effect = None
+            late.status.return_value = psutil.STATUS_RUNNING
+            assert not tree.settle_newborn(late)
+            pause.assert_not_called()
+            late.status.return_value = psutil.STATUS_IDLE
+            with mock.patch.object(owner.time, "monotonic", side_effect=[0.0, 0.0, 1.0]):
+                try:
+                    tree.settle_newborn(late)
+                except RuntimeError as error:
+                    assert "observation budget" in str(error)
+                else:
+                    raise AssertionError("A process stuck in creation must fail closed.")
+            pause.assert_called_once_with(0.01)
+            pause.reset_mock()
+            tree.deadline = 0.005
+            with mock.patch.object(owner.time, "monotonic", side_effect=[0.0, 0.0, 0.005]):
+                try:
+                    tree.settle_newborn(late)
+                except RuntimeError:
+                    pass
+                else:
+                    raise AssertionError("Initialization cannot extend the command deadline.")
+            pause.assert_called_once_with(0.005)
+            late.create_time.side_effect = [102.0, 103.0]
+            try:
+                tree.settle_newborn(late)
+            except psutil.NoSuchProcess:
+                pass
+            else:
+                raise AssertionError("A reused PID cannot settle the old identity.")
+            late.create_time.side_effect = None
         known.status.return_value = psutil.STATUS_ZOMBIE
         assert not tree.executing(), "An ended identity is not an executing leak."
         tree.process = mock.Mock(pid=known.pid + 20)

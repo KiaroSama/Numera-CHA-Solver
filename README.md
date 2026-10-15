@@ -142,7 +142,7 @@ UTF8 diagnostic files live under `logs`, resolved from project root. One per exe
 
 ## Development and hosted CI
 
-Native dependencies are pinned by `Cargo.lock`; exact `ort` prerelease is an owner-approved reviewed exception. The three-platform workflow runs on GitHub-hosted runners for main pushes, pull requests and manual dispatch. It uses two compiler jobs, one test thread, actual CPU inference, Windows frozen-source/launcher coverage, headless browser review tests and inspected native/desktop packages. Build/cache/temp paths remain job-contained; the old project self-hosted runner is removed. [Testing and named limits](docs/TESTING.md). No badge substitutes for exact-revision evidence.
+Native dependencies are pinned by `Cargo.lock`; exact `ort` prerelease is an owner-approved reviewed exception. The three-platform workflow runs on GitHub-hosted runners only by manual dispatch; pushes, pull requests and tags do not start CI. It uses two compiler jobs, one test thread, actual CPU inference, Windows frozen-source/launcher coverage, headless browser review tests and inspected native/desktop packages. Build/cache/temp paths remain job-contained; the old project self-hosted runner is removed. [Testing and named limits](docs/TESTING.md). No badge substitutes for exact-revision evidence.
 
 Original code uses the [custom noncommercial network share-alike license](LICENSE). Third-party weights/dependencies retain their own grants; read [licensing boundaries](docs/LICENSING.md) and [third-party notices](THIRD_PARTY_NOTICES.md).
 

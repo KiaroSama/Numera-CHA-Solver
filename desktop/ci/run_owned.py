@@ -54,7 +54,8 @@ def reap_group(process):
 
 
 class OwnedTree:
-    def __init__(self, process, tag, record):
+    def __init__(self, process, tag, record, deadline):
+        self.deadline = deadline
         self.process = process
         self.tag = tag
         self.record = record
@@ -146,6 +147,21 @@ class OwnedTree:
                     raise
                 self.inspection_failures.append(error)
 
+    def settle_newborn(self, process):
+        if sys.platform != "darwin" or process.status() != psutil.STATUS_IDLE:
+            return False
+        created = process.create_time()
+        deadline = min(self.deadline, time.monotonic() + 1)
+        while process.is_running() and process.create_time() == created:
+            if process.status() != psutil.STATUS_IDLE:
+                return True
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise RuntimeError("Darwin process creation remained unresolved within its observation budget.")
+            # Darwin SIDL is fork initialization; ownership is rechecked, never inferred from idle.
+            time.sleep(min(0.01, remaining))
+        raise psutil.NoSuchProcess(process.pid)
+
     def diagnostic(self, process, outcome):
         fields = {"pid": process.pid, "attribution": outcome}
         for name in ("create_time", "ppid", "status"):
@@ -183,12 +199,19 @@ class OwnedTree:
                 continue
             except psutil.AccessDenied as error:
                 try:
+                    settled = self.settle_newborn(process)
                     if not process.is_running() or process.status() in (psutil.STATUS_ZOMBIE, psutil.STATUS_DEAD):
                         continue  # Exit may race the preceding environment inspection.
                     if self.attribute(process):
                         continue  # Refresh ancestry/adoption after the denied observation.
+                    if settled:
+                        if process.environ().get(OWNER_TAG) == self.tag:
+                            self.remember(process)
+                        continue
                 except (psutil.NoSuchProcess, psutil.ZombieProcess):
                     continue
+                except psutil.AccessDenied:
+                    pass  # Initialization is not ownership; a live inaccessible process still fails.
                 self.diagnostic(process, "live-unattributed-denied")
                 raise RuntimeError("Owned descendant discovery cannot inspect a new live same-user process; refusing an unverified run.") from error
         self.record.write_text(json.dumps({"root_pid": self.process.pid,
@@ -290,7 +313,7 @@ def main():
         os.close(read_gate)
         read_gate = None
         record = args.work / f"owner-{process.pid}.json"
-        tree = OwnedTree(process, tag, record)
+        tree = OwnedTree(process, tag, record, started + args.wall)
         tree.snapshot()
         os.write(write_gate, b"1")
         os.close(write_gate)

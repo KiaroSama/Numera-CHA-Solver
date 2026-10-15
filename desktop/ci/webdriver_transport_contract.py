@@ -31,6 +31,7 @@ def main():
         listener.listen(1)
         listener.settimeout(2)
         driver = native_driver.Driver(listener.getsockname()[1])
+        driver.session = "controlled"
 
         def serve():
             try:
@@ -46,7 +47,7 @@ def main():
                             assert len(request) <= 8192, "Unexpected request size."
                         header, payload = bytes(request).split(b"\r\n\r\n", 1)
                         lines = header.decode("ascii").split("\r\n")
-                        assert lines[0] == "POST /execute/sync HTTP/1.1"
+                        assert lines[0] == "POST /session/controlled/execute/sync HTTP/1.1"
                         headers = dict(line.lower().split(": ", 1) for line in lines[1:])
                         assert headers["connection"] == "keep-alive", "Close must not reach the upstream pool."
                         length = int(headers["content-length"])
@@ -93,6 +94,8 @@ def main():
             thread.join(timeout=3)
             if thread.is_alive():
                 raise RuntimeError("Owned transport fixture thread survived cleanup.")
+            if failures:
+                raise AssertionError("Owned transport server contract failed.") from failures[0]
     print("Native transport keepalive, client close, UTF-8, HTTP/tool errors, size, malformed JSON and no-retry contracts passed.")
 
 
