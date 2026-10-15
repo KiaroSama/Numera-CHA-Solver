@@ -1,6 +1,7 @@
 """Real packaged Linux desktop under Xvfb; stdlib W3C WebDriver client, no renderer mock."""
 
 import argparse
+import http.client
 import json
 import os
 import signal
@@ -8,8 +9,6 @@ import socket
 import subprocess
 import sys
 import time
-import urllib.error
-import urllib.request
 from pathlib import Path
 import importlib.util
 
@@ -22,16 +21,25 @@ group_alive, reap_group = owned_process.group_alive, owned_process.reap_group
 
 class Driver:
     def __init__(self, port):
-        self.origin = f"http://127.0.0.1:{port}"
+        self.port = port
         self.session = None
-        self.http = urllib.request.build_opener(urllib.request.ProxyHandler({}))
 
     def request(self, method, path, body=None):
         payload = None if body is None else json.dumps(body).encode("utf-8")
-        request = urllib.request.Request(self.origin + path, data=payload, method=method,
-            headers={"Content-Type": "application/json"})
-        with self.http.open(request, timeout=10) as response:
-            value = json.loads(response.read(1024 * 1024))["value"]
+        connection = http.client.HTTPConnection("127.0.0.1", self.port, timeout=10)
+        try:
+            # urllib forces close; tauri-driver forwards it into its separate upstream pool.
+            connection.request(method, path, body=payload,
+                headers={"Content-Type": "application/json", "Connection": "keep-alive"})
+            with connection.getresponse() as response:
+                data = response.read(1024 * 1024 + 1)
+                if len(data) > 1024 * 1024:
+                    raise RuntimeError("Native WebDriver response exceeded its size limit.")
+                if not 200 <= response.status < 300:
+                    raise RuntimeError("Native WebDriver HTTP request failed.")
+                value = json.loads(data)["value"]
+        finally:
+            connection.close()
         if isinstance(value, dict) and "error" in value:
             raise RuntimeError("Native WebDriver command failed.")
         return value
@@ -100,7 +108,7 @@ def main():
                     with socket.create_connection(("127.0.0.1", native_port), timeout=0.2):
                         pass
                     return driver.request("GET", "/status") is not None
-                except (OSError, urllib.error.URLError):
+                except (OSError, http.client.HTTPException):
                     return False
             driver.wait(ready, "driver ports")
             capabilities = {"capabilities": {"alwaysMatch": {
@@ -156,7 +164,7 @@ def main():
             if driver.session:
                 try:
                     driver.request("DELETE", f"/session/{driver.session}")
-                except (OSError, urllib.error.URLError, RuntimeError):
+                except (OSError, http.client.HTTPException, RuntimeError):
                     pass  # Window may already have ended the session; outer process owner still reaps every descendant.
             if owner is not None:
                 if group_alive(owner.pid):

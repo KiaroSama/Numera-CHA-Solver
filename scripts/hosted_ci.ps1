@@ -86,6 +86,9 @@ try {
     if (-not $IsWindows) {
         Required 'posix-owned-process-regression' $python @('-I',(Join-Path $root 'desktop/ci/owner_contract.py'),'--work',(Join-Path $work 'owner-contract')) 45 15
     }
+    if ($Platform -eq 'linux-x64') {
+        Required 'native-webdriver-transport-contracts' $python @('-I',(Join-Path $root 'desktop/ci/webdriver_transport_contract.py')) 30 15
+    }
     Required 'format' cargo @('fmt','--all','--','--check') 60 30
     Required 'locked-workspace-dependencies' cargo @('fetch','--locked') 300 120
     Required 'native-debug-build' cargo @('build','--locked','-p','numera-cha-solver','--bins','--jobs','2') 600 180
