@@ -123,12 +123,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let pid_atom = atom("_NET_WM_PID");
         let protocols_atom = atom("WM_PROTOCOLS");
         let delete_atom = atom("WM_DELETE_WINDOW");
-        if [pid_atom, protocols_atom, delete_atom].contains(&0) {
+        let title_atom = atom("_NET_WM_NAME");
+        let utf8_atom = atom("UTF8_STRING");
+        if [pid_atom, protocols_atom, delete_atom, title_atom, utf8_atom].contains(&0) {
             return Err("Native window close protocol is unavailable.".into());
         }
         let mut queue = VecDeque::from([XDefaultRootWindow(display.0)]);
         let mut visited = 0;
         let mut matches = Vec::new();
+        let mut owned_count = 0;
         while let Some(window) = queue.pop_front() {
             visited += 1;
             if visited > 4096 {
@@ -160,9 +163,38 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 XFree(data.cast());
             }
             if owned {
+                owned_count += 1;
+                let mut title = ptr::null_mut();
+                let result = XGetWindowProperty(
+                    display.0,
+                    window,
+                    title_atom,
+                    0,
+                    128,
+                    0,
+                    utf8_atom,
+                    &mut actual,
+                    &mut format,
+                    &mut count,
+                    &mut remaining,
+                    &mut title,
+                );
+                // GTK's invisible group leader shares the PID and delete protocol.
+                let main_window = result == 0
+                    && actual == utf8_atom
+                    && format == 8
+                    && remaining == 0
+                    && count <= 512
+                    && !title.is_null()
+                    && std::slice::from_raw_parts(title, count as usize)
+                        == b"Numera / Perception Lab";
+                if !title.is_null() {
+                    XFree(title.cast());
+                }
                 let mut protocols = ptr::null_mut();
                 let mut size = 0;
-                if XGetWMProtocols(display.0, window, &mut protocols, &mut size) != 0 {
+                if main_window && XGetWMProtocols(display.0, window, &mut protocols, &mut size) != 0
+                {
                     if !protocols.is_null()
                         && (0..=128).contains(&size)
                         && std::slice::from_raw_parts(protocols, size as usize)
@@ -196,7 +228,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
         if matches.len() != 1 {
-            return Err("Expected exactly one closeable owned native window.".into());
+            eprintln!(
+                "Native window selection: owned={owned_count} main_matches={}",
+                matches.len()
+            );
+            return Err(
+                "Expected exactly one closeable owned main window with the approved title.".into(),
+            );
         }
         check()?;
         let window = matches[0];
