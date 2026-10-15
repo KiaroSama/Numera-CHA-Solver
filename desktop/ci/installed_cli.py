@@ -62,6 +62,13 @@ def main():
     success = False
     try:
         assert (root / "source" / "REVISION.txt").is_file()
+        for relative in ("plugin.json", ".claude-plugin/plugin.json", ".codex-plugin/plugin.json", ".cursor-plugin/plugin.json"):
+            metadata = json.loads((root / relative).read_text(encoding="utf-8"))
+            assert metadata["name"] == "numera-cha-solver" and metadata["version"] == "0.3.0"
+        for relative in ("skills/numera-cha-solver/SKILL.md", "assets/brand/logo.png", "docs/QUICKSTART.fa.md", "docs/TESTING.md", "reports/VALIDATION.md", "CONTEXT.md", "tests/fixtures/ocr/ascii-smoke.png"):
+            assert (root / relative).is_file(), "Documented package payload is missing."
+        if os.name == "nt":
+            assert (root / "run.ps1").is_file()
         assert not list(root.rglob("*.onnx")), "Weights unexpectedly shipped."
         assert not list(root.rglob(".ci-oracle-env")), "Historic oracle environment unexpectedly shipped."
         result = json.loads(run(executable, ["--device", "cpu", "recognize", "--text", "7+5"], 0))

@@ -97,7 +97,12 @@ try {
                     $entry=$entries[$item.path]
                     if($entry.Length -ne $item.size -or (Get-EntryHash $entry) -cne $item.sha256){throw 'Release manifest entry bytes differ.'}
                 }
-                foreach($required in @('LICENSE','THIRD_PARTY_NOTICES.md','licenses/dependencies.json',"source/numera-cha-$version-source-$sha.zip",'source/REVISION.txt')){
+                $requiredFiles=@('LICENSE','THIRD_PARTY_NOTICES.md','licenses/dependencies.json',"source/numera-cha-$version-source-$sha.zip",'source/REVISION.txt')
+                if($kind -ceq 'cli-agent'){
+                    $requiredFiles+=@('plugin.json','.claude-plugin/plugin.json','.codex-plugin/plugin.json','.cursor-plugin/plugin.json','skills/numera-cha-solver/SKILL.md','assets/brand/logo.png','docs/QUICKSTART.fa.md','docs/TESTING.md','reports/VALIDATION.md','CONTEXT.md','tests/fixtures/ocr/ascii-smoke.png')
+                    if($platform -ceq 'windows-x64'){$requiredFiles+='run.ps1'}
+                }
+                foreach($required in $requiredFiles){
                     if(-not $entries.ContainsKey($required)){throw 'Release matching source or independent notices are missing.'}
                 }
             } finally {$zip.Dispose()}

@@ -49,7 +49,17 @@ try {
     [IO.Directory]::CreateDirectory($fixture)|Out-Null
     [IO.File]::WriteAllText((Join-Path $fixture 'alloc-BSD-3-Clause.txt'),'altered notice',[Text.UTF8Encoding]::new($false))
     Expect-Failure {Get-DependencyFallback $dependency $work} 'notice bytes differ'
-    Write-HostedLog INFO verification 'Duplicate PATH selection and unknown-version, license, revision and byte-integrity notice gates passed.'
+    $portable=[IO.File]::ReadAllText((Join-Path $root 'plugin.json'),[Text.Encoding]::UTF8)|ConvertFrom-Json
+    if($portable.'$schema' -cne 'https://agent-plugins.org/schemas/1.0.0/plugin.schema.json' -or $portable.name -cne 'numera-cha-solver' -or $portable.version -cne '0.3.0'){throw 'Portable plugin identity/schema differs.'}
+    $allowed=@('$schema','name','version','description','author','homepage','repository','license','keywords','extensions')
+    if(@($portable.PSObject.Properties.Name|Where-Object {$_ -cnotin $allowed}).Count){throw 'Portable plugin contains an unsupported field.'}
+    foreach($relative in @('.claude-plugin/plugin.json','.codex-plugin/plugin.json','.cursor-plugin/plugin.json')){
+        $native=[IO.File]::ReadAllText((Join-Path $root $relative),[Text.Encoding]::UTF8)|ConvertFrom-Json
+        if($native.name -cne $portable.name -or $native.version -cne $portable.version -or $native.skills -cne './skills/'){throw 'Native plugin payload differs.'}
+    }
+    $null=Assert-RegularFile (Join-Path $root 'skills/numera-cha-solver/SKILL.md')
+    $null=Assert-RegularFile (Join-Path $root 'run.ps1')
+    Write-HostedLog INFO verification 'Duplicate PATH, fail-closed notices and original plugin structure contracts passed.'
 } catch { $code=1;Write-HostedLog ERROR verification $_.Exception.Message }
 finally {
     $env:PATH=$savedPath

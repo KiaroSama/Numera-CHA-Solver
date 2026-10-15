@@ -2,7 +2,7 @@
 
 The canonical original instruction is [numera-cha-solver](../skills/numera-cha-solver/SKILL.md). It describes licensed local inputs, live capability inspection, bounded recognition, manual review and honest blockers. Instructions never supply a token, install a binary or authorize an external action.
 
-Compatibility metadata lives in the project-root `plugin.json`, `.claude-plugin/plugin.json`, `.codex-plugin/plugin.json`, and `.cursor-plugin/plugin.json`. Native plugin discovery varies with the client/version; these are compatibility payloads, not proof that every client was exercised. Each manifest references the same `skills/` directory instead of duplicating instructions.
+The CLI/agent archive includes the project-root `plugin.json`, `.claude-plugin/plugin.json`, `.codex-plugin/plugin.json`, and `.cursor-plugin/plugin.json`, beside the same canonical `skills/` payload. The portable root manifest targets Agent Plugins1.0.0 with its required schema identifier and fixed `skills/` discovery; the other manifests retain client-native compatibility metadata. Native discovery varies with client/version. Hosted structure/archive checks are not proof that each client was installed or exercised.
 
 For clients supporting Agent Skills, copy only `skills/numera-cha-solver/` into that client's documented skill directory with the owner's approval. Clients without native plugin support can use the standalone instruction. Do not overwrite modified client configuration or install these instructions automatically.
 

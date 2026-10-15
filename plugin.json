@@ -1,9 +1,9 @@
 {
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "numera-cha-solver",
   "version": "0.3.0",
   "description": "Licensed local recognition and explicit human review; native MCP configuration is separate.",
   "author": {"name": "KiaroSama"},
   "repository": "https://github.com/KiaroSama/Numera-CHA-Solver",
-  "license": "LicenseRef-Noncommercial-Network-ShareAlike-1.0",
-  "skills": "./skills/"
+  "license": "LicenseRef-Noncommercial-Network-ShareAlike-1.0"
 }

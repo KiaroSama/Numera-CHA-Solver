@@ -30,7 +30,7 @@ Setup stages only the approved existing local ONNX Runtime libraries:
 
 They live in `data/runtime`, together with ONNX Runtime license and third-party notices. If absent there, setup requires an explicitly supplied approved native runtime source; the prior Python environment fallback is retired. `-RuntimeSourceRoot <path>` selects another explicitly supplied local project runtime source. No native runtime download, model acquisition, Python installation or CUDA installation happens automatically. CUDA dependencies remain at the configured `NUMERA_DLL_DIRECTORY` or saved runtime configuration path. Missing runtime/license files block staging instead of inventing readiness.
 
-For an extracted native package, `setup.ps1 -Yes` checks the included executable/runtime without invoking Cargo or Python. A package does not include source for rebuilding; replace it with a newly inspected package while preserving data/models/configuration. Do not overlay an active executable.
+For an extracted native package, `setup.ps1 -Yes` checks the included executable/runtime without invoking Cargo or Python. The hosted package includes a matching source ZIP for inspection; it is not an unpacked source checkout and setup does not rebuild it. Replace it with a newly inspected package while preserving data/models/configuration. Do not overlay an active executable.
 
 ## Start, stop and diagnose
 
@@ -71,7 +71,7 @@ Rust dependency license files are collected from the locally resolved locked Car
 ./scripts/native_ci.ps1 -Gpu -Browser
 ```
 
-This command records the earlier Windows0.2.0 hardware migration workflow. Current0.3.0 delivery uses `scripts/hosted_ci.ps1` through GitHub-hosted native Windows/Linux/macOS jobs, triggered by main pushes, pull requests or manual dispatch. The project-owned self-hosted runner registration and installation were removed; current builds/tests do not run locally. Hosted CPU tiers are not CUDA verification.
+This command records the earlier Windows0.2.0 hardware migration workflow. Current0.3.0 delivery uses `scripts/hosted_ci.ps1` through GitHub-hosted native Windows/Linux/macOS jobs, triggered only by manual dispatch. Pushes, pull requests and tags never start CI. The project-owned self-hosted runner registration and installation were removed; current builds/tests do not run locally. Hosted CPU tiers are not CUDA verification.
 
 Required tiers are native parity, preprocessing, adapters, lifecycle, GPU and CLI tests; source-generated fixture drift, a headless native-dashboard harness, an inspected package, installed executable and launcher checks also run. Build concurrency is two; test threads are one because global log/environment state and GPU execution are exclusive. Missing tiers or pending source-test mappings fail closed. Independent stage failures are collected before reporting. The source oracle compares immutable arithmetic/SDK/tensor fixtures and source test identities/hashes; it never regenerates expected answers from Rust.
 

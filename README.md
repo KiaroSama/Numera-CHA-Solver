@@ -10,7 +10,7 @@
 
 **Local perception and accessible human review—not a universal CAPTCHA solver.**
 
-Version 0.3.0 adds native MCP, revision-bound manual review and Tauri delivery targets for Windows x64, Linux x64 and Apple Silicon macOS. Build/runtime/package validation is pending exact-revision GitHub-hosted CI; authored support is not execution evidence. The owner's [custom noncommercial network share-alike license](docs/LICENSING.md) is source-available, not GNU AGPL or OSI-approved open source. Unconditional voluntary donations remain permitted.
+Version 0.3.0 adds native MCP, revision-bound manual review and Tauri delivery targets for Windows x64, Linux x64 and Apple Silicon macOS. Release assets are published only after exact-revision GitHub-hosted build/runtime/package validation; authored support alone is not execution evidence. [Commit-bound validation](reports/VALIDATION.md). The owner's [custom noncommercial network share-alike license](docs/LICENSING.md) is source-available, not GNU AGPL or OSI-approved open source. Unconditional voluntary donations remain permitted.
 
 Historical Windows 0.2.0 passed final verification on `43c272e`: 43 native tests and all 16 build/device/browser/package/launcher/rollback stages. That evidence does not certify 0.3.0 or other platforms. Models, task state, configuration and operational logs remain separate from disposable build artifacts. [Exact historical evidence](reports/VALIDATION.md).
 
