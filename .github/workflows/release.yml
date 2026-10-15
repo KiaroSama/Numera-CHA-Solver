@@ -1,0 +1,50 @@
+name: Release
+on:
+  workflow_dispatch:
+    inputs:
+      verified_run_id:
+        description: Successful CI run for the exact current main commit
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: numera-release
+  cancel-in-progress: false
+jobs:
+  promote:
+    name: Promote verified native artifacts
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      actions: read
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Verify exact successful source run before downloading
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERIFIED_RUN_ID: ${{ inputs.verified_run_id }}
+        run: |
+          if($env:VERIFIED_RUN_ID -notmatch '^[0-9]+$'){throw 'Expected a numeric validation run ID.'}
+          $run=gh api "repos/$env:GITHUB_REPOSITORY/actions/runs/$env:VERIFIED_RUN_ID"|ConvertFrom-Json
+          if($LASTEXITCODE -ne 0 -or $run.head_sha -cne $env:GITHUB_SHA -or $run.conclusion -cne 'success' -or $run.event -cne 'workflow_dispatch' -or $run.path -cne '.github/workflows/ci.yml'){
+            throw 'Validation must be a successful manual CI run on this exact source.'
+          }
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: numera-cha-0.3.0-*
+          path: .ci-work/release
+          github-token: ${{ github.token }}
+          run-id: ${{ inputs.verified_run_id }}
+      - name: Verify every asset and publish without rebuilding
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERIFIED_RUN_ID: ${{ inputs.verified_run_id }}
+        run: ./scripts/publish_release.ps1 -Artifacts (Join-Path $env:GITHUB_WORKSPACE '.ci-work/release') -Publish -VerifiedRunId $env:VERIFIED_RUN_ID

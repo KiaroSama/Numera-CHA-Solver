@@ -102,6 +102,8 @@ async fn stale_download_marker_and_crashed_live_download_owner_recover_without_n
             Err(error) => panic!("Owned download control failed: {error}"),
         }
     };
+    // BSD accepts can inherit O_NONBLOCK; the bounded handshake requires blocking I/O.
+    stream.set_nonblocking(false).unwrap();
     stream
         .set_read_timeout(Some(Duration::from_secs(3)))
         .unwrap();
@@ -127,4 +129,167 @@ async fn stale_download_marker_and_crashed_live_download_owner_recover_without_n
             .code,
         "offline_boundary"
     );
+}
+
+#[tokio::test]
+async fn cancelled_and_expired_downloads_release_the_exact_lease() {
+    use std::sync::{
+        Arc,
+        atomic::{AtomicBool, Ordering},
+    };
+    struct Dropped(Arc<AtomicBool>);
+    impl Drop for Dropped {
+        fn drop(&mut self) {
+            self.0.store(true, Ordering::SeqCst);
+        }
+    }
+    for cancel in [true, false] {
+        let root = tempfile::tempdir().unwrap();
+        let mut settings = Settings::new(root.path().into());
+        settings.deadline_seconds = 1.0;
+        let registry = ModelRegistry::new(settings);
+        let lease = registry
+            .directory("ppocr-v6-small")
+            .unwrap()
+            .join(".download.lock");
+        let dropped = Arc::new(AtomicBool::new(false));
+        let flag = dropped.clone();
+        let (entered, ready) = tokio::sync::oneshot::channel();
+        let entered = std::sync::Mutex::new(Some(entered));
+        let mut task = tokio::spawn(async move {
+            registry
+                .fetch_with("ppocr-v6-small", move |_, _, _| {
+                    let guard = Dropped(flag.clone());
+                    let entered = entered.lock().unwrap().take().unwrap();
+                    async move {
+                        let _guard = guard;
+                        entered.send(()).unwrap();
+                        std::future::pending::<Result<(), Error>>().await
+                    }
+                })
+                .await
+        });
+        if !matches!(
+            tokio::time::timeout(Duration::from_secs(3), ready).await,
+            Ok(Ok(()))
+        ) {
+            task.abort();
+            let _ = task.await;
+            panic!("Owned download did not enter its controlled transport.");
+        }
+        if cancel {
+            task.abort();
+        }
+        let result = match tokio::time::timeout(Duration::from_secs(3), &mut task).await {
+            Ok(result) => result,
+            Err(_) => {
+                task.abort();
+                let _ = task.await;
+                panic!("Owned download did not stop within its budget.");
+            }
+        };
+        if cancel {
+            assert!(result.unwrap_err().is_cancelled());
+        } else {
+            assert_eq!(result.unwrap().unwrap_err().code, "expired");
+        }
+        assert!(dropped.load(Ordering::SeqCst));
+        let mut owner = numera_cha_solver::ownership::Ownership::acquire(&lease).unwrap();
+        owner.close();
+        let registry = ModelRegistry::new(Settings::new(root.path().into()));
+        assert_eq!(
+            registry
+                .fetch_with("ppocr-v6-small", |_, _, _| async {
+                    Err(Error::new(
+                        "offline_boundary",
+                        "Owned successor reached transport.",
+                    ))
+                })
+                .await
+                .unwrap_err()
+                .code,
+            "offline_boundary"
+        );
+    }
+}
+
+#[tokio::test]
+async fn successful_transport_cannot_bypass_missing_or_corrupt_asset_verification() {
+    for corrupt in [false, true] {
+        let root = tempfile::tempdir().unwrap();
+        let registry = ModelRegistry::new(Settings::new(root.path().into()));
+        let result = registry
+            .fetch_with("ppocr-v6-small", move |_, path, _| async move {
+                if corrupt {
+                    tokio::fs::write(path, b"owned corrupt fixture")
+                        .await
+                        .unwrap();
+                }
+                Ok(())
+            })
+            .await
+            .unwrap();
+        assert_eq!(
+            result["availability"],
+            if corrupt {
+                "model_corrupt"
+            } else {
+                "model_missing"
+            }
+        );
+        assert!(!result["failures"].as_array().unwrap().is_empty());
+        let lease = registry
+            .directory("ppocr-v6-small")
+            .unwrap()
+            .join(".download.lock");
+        assert!(numera_cha_solver::ownership::Ownership::acquire(&lease).is_ok());
+    }
+}
+
+#[tokio::test]
+async fn directory_lock_refuses_transport_without_deleting_user_content() {
+    use std::sync::atomic::{AtomicUsize, Ordering};
+    let root = tempfile::tempdir().unwrap();
+    let registry = ModelRegistry::new(Settings::new(root.path().into()));
+    let lock = registry
+        .directory("ppocr-v6-small")
+        .unwrap()
+        .join(".download.lock");
+    std::fs::create_dir_all(&lock).unwrap();
+    let sentinel = lock.join("retained.txt");
+    std::fs::write(&sentinel, b"owned sentinel").unwrap();
+    let calls = AtomicUsize::new(0);
+    let result = registry
+        .fetch_with("ppocr-v6-small", |_, _, _| {
+            calls.fetch_add(1, Ordering::SeqCst);
+            async { Ok(()) }
+        })
+        .await;
+    assert_eq!(result.unwrap_err().code, "download_failed");
+    assert_eq!(calls.load(Ordering::SeqCst), 0);
+    assert_eq!(std::fs::read(sentinel).unwrap(), b"owned sentinel");
+}
+
+#[cfg(unix)]
+#[tokio::test]
+async fn symlink_lock_cannot_modify_its_external_target() {
+    use std::sync::atomic::{AtomicUsize, Ordering};
+    let root = tempfile::tempdir().unwrap();
+    let target = tempfile::tempdir().unwrap();
+    let sentinel = target.path().join("retained.txt");
+    std::fs::write(&sentinel, b"owned external sentinel").unwrap();
+    let registry = ModelRegistry::new(Settings::new(root.path().into()));
+    let directory = registry.directory("ppocr-v6-small").unwrap();
+    std::fs::create_dir_all(&directory).unwrap();
+    std::os::unix::fs::symlink(&sentinel, directory.join(".download.lock")).unwrap();
+    let calls = AtomicUsize::new(0);
+    let result = registry
+        .fetch_with("ppocr-v6-small", |_, _, _| {
+            calls.fetch_add(1, Ordering::SeqCst);
+            async { Ok(()) }
+        })
+        .await;
+    assert_eq!(result.unwrap_err().code, "download_failed");
+    assert_eq!(calls.load(Ordering::SeqCst), 0);
+    assert_eq!(std::fs::read(sentinel).unwrap(), b"owned external sentinel");
 }

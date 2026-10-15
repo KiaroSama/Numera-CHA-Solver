@@ -6,6 +6,7 @@ import os
 import signal
 import socket
 import subprocess
+import sys
 import time
 import urllib.error
 import urllib.request
@@ -70,6 +71,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--executable", type=Path, required=True)
     parser.add_argument("--driver", type=Path, required=True)
+    parser.add_argument("--native-close", type=Path, required=True)
     parser.add_argument("--work", type=Path, required=True)
     args = parser.parse_args()
     if os.name == "nt" or os.environ.get("RUNNER_ENVIRONMENT") != "github-hosted":
@@ -118,12 +120,28 @@ def main():
             driver.wait(lambda: driver.script("return document.querySelector('#result').textContent.includes('Review confirmed. No answer was submitted to a website.')"), "explicit confirmation")
             assert driver.script("return document.querySelector('#result').textContent.includes('Server verified: no')")
             assert driver.script("return document.querySelector('#review-answer').value === '37' && document.querySelector('#review-answer').disabled")
-            # Request actual app close, not forced process death; a session deletion follows only as driver cleanup.
-            try:
-                driver.command("DELETE", "/window")
-            except (OSError, urllib.error.URLError):
-                pass  # Closing the only window can close the driver transport before its response.
+            # WebKit closePage does not close the GTK window or exercise Tauri's exit event.
+            executable = args.executable.resolve()
+            applications = []
+            for process in owned_process.psutil.Process(owner.pid).children(recursive=True):
+                try:
+                    if Path(process.exe()).resolve() == executable:
+                        applications.append(process)
+                except (owned_process.psutil.NoSuchProcess, owned_process.psutil.ZombieProcess):
+                    pass
+            if len(applications) != 1:
+                raise RuntimeError("Expected exactly one owned packaged desktop process.")
+            application = applications[0]
+            birth = Path(f"/proc/{application.pid}/stat").read_text(encoding="utf-8").rsplit(") ", 1)[1].split()[19]
+            if not application.is_running():
+                raise RuntimeError("Owned desktop process ended before native close.")
+            subprocess.run([str(args.native_close), str(application.pid), str(executable), birth],
+                stdin=subprocess.DEVNULL, stdout=log, stderr=log, timeout=5, check=True)
             driver.wait(lambda: any("Desktop API and owned tasks drained." in p.read_text(encoding="utf-8") for p in (args.work / "logs").glob("*.log")), "owned application drain")
+            application.wait(timeout=5)
+            if application.is_running() and application.status() not in (
+                    owned_process.psutil.STATUS_ZOMBIE, owned_process.psutil.STATUS_DEAD):
+                raise RuntimeError("Owned desktop remained executing after its native close.")
             print("Packaged Linux native IPC/arithmetic/human-review/close passed.")
         except Exception:
             log.flush()

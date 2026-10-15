@@ -18,7 +18,7 @@ Available: restricted arithmetic, actual local text-line OCR, typed async SDK, J
 
 ## Start
 
-Extract the inspected [hosted native/desktop artifact](docs/DESKTOP.md) for your platform. Builds and tests for this delivery run only on GitHub-hosted CI. Windows PowerShell7 example:
+Download your platform's verified package from [GitHub Releases](https://github.com/KiaroSama/Numera-CHA-Solver/releases), check `SHA256SUMS.txt`, then follow the [native/desktop guide](docs/DESKTOP.md). New releases use the exact successful hosted artifacts; macOS/Linux binaries are not delivered as chat attachments. Builds and tests for this delivery run only on GitHub-hosted CI. Windows PowerShell7 example:
 
 ```powershell
 ./bin/numera-cha.exe --device cpu recognize --text "12 * 3 = ?"

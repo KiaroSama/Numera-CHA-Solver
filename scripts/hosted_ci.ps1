@@ -123,7 +123,9 @@ try {
         $deb=@(Get-ChildItem -LiteralPath (Join-Path $root 'target/release/bundle/deb') -File -Filter '*.deb')
         if ($deb.Count -ne 1) { throw 'Linux native installer discovery failed.' }
         Required 'linux-install-inspected-desktop' sudo @('-n','dpkg','-i',$deb[0].FullName) 60 30
-        Required 'linux-packaged-native-webdriver' xvfb-run @('-a',$python,'-I',(Join-Path $root 'desktop/ci/desktop_webdriver.py'),'--executable','/usr/bin/numera-cha-desktop','--driver',(Join-Path $root '.ci-work/tools/bin/tauri-driver'),'--work',(Join-Path $work 'desktop-webdriver')) 120 30
+        $nativeClose=Join-Path $work 'close-native-window'
+        Required 'linux-native-close-fixture' rustc @((Join-Path $root 'desktop/ci/close_native_window.rs'),'--edition=2024','--crate-type=bin','-l','X11','-o',$nativeClose) 30 15
+        Required 'linux-packaged-native-webdriver' xvfb-run @('-a',$python,'-I',(Join-Path $root 'desktop/ci/desktop_webdriver.py'),'--executable','/usr/bin/numera-cha-desktop','--driver',(Join-Path $root '.ci-work/tools/bin/tauri-driver'),'--native-close',$nativeClose,'--work',(Join-Path $work 'desktop-webdriver')) 120 30
     }
     Required 'final-native-distributions' $pwsh @('-NoLogo','-NoProfile','-NonInteractive','-File',(Join-Path $PSScriptRoot 'package_hosted.ps1'),'-Phase','Archives','-Platform',$Platform,'-Target',$Target) 180 60
     $installed=Join-Path $work 'installed native sample'

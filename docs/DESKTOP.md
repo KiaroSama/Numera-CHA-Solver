@@ -1,6 +1,6 @@
 # Native desktop delivery
 
-Download the **matching inspected CI artifacts**, verify `SHA256SUMS.txt`, and read the included license and third-party notices before installing. Version0.3.0 uses a Tauri2.12.3 Rust shell around the existing Numera workspace; no new JavaScript framework or visual redesign.
+Download your platform from [GitHub Releases](https://github.com/KiaroSama/Numera-CHA-Solver/releases), verify `SHA256SUMS.txt`, and read the included license and third-party notices before installing. A version is published only after all required native checks pass; an authored or failing version is not a release. Version0.3.0 uses a Tauri2.12.3 Rust shell around the existing Numera workspace; no new JavaScript framework or visual redesign.
 
 ## Packages
 
@@ -11,7 +11,7 @@ Download the **matching inspected CI artifacts**, verify `SHA256SUMS.txt`, and r
 | `numera-cha-desktop-0.3.0-macos-arm64.zip` | Apple Silicon | Ad-hoc signed `.app` archive, macOS11 or later. Runtime aliases are ad-hoc signed too; hardened-runtime distribution is not enabled for this initial ad-hoc package. No Apple identity, notarization or Gatekeeper approval claim. Intel macOS is not included. |
 | `numera-cha-0.3.0-<platform>.zip` | Matching architecture | Native CLI and `numera-cha-solver-mcp`, CPU ONNX Runtime1.31.0, original authored connector guidance/config examples, matching source and independent notices. |
 
-Initial packages do **not** have trusted publisher signing. OS trust warnings are expected. Inspect provenance and obtain an approved signed distribution where your organization requires one; do not disable system-wide security controls. No release is published automatically: CI uploads bounded artifacts only, and publication remains an owner-reviewed gate.
+Initial packages do **not** have trusted publisher signing. OS trust warnings are expected. Inspect provenance and obtain an approved signed distribution where your organization requires one; do not disable system-wide security controls. The owner's release policy promotes the exact inspected artifacts after the complete manually initiated native matrix succeeds and its exact source is integrated into the default branch. A separate manual promotion reuses that successful run's assets without rebuilding. No push, pull request or tag starts CI automatically. Existing versions/assets are never overwritten; a new version is required for a new release. Checksums and matching source are retained with the release, while disposable hosted work and temporary local inspection downloads are not retained. macOS/Linux binaries are linked on GitHub, not sent as chat attachments.
 
 The supplied `package-manifest.json` records the source commit, platform, signing limitation and per-file SHA256/size. Every artifact includes the same revision's source archive. Runtime and Rust dependencies retain their independent licenses; the owner's custom noncommercial network share-alike license is not GNU AGPL or OSI open source.
 
