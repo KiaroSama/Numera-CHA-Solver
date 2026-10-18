@@ -234,9 +234,11 @@ async fn verify(args: &Args) -> Result<()> {
         let source = args.runtime_root.join(&relative);
         regular(&source)?;
         let bytes = fs::read(&source)?;
-        if asset["size"].as_u64() != Some(bytes.len() as u64)
-            || asset["sha256"] != format!("{:x}", Sha256::digest(&bytes))
-        {
+        let digest = Sha256::digest(&bytes)
+            .iter()
+            .map(|byte| format!("{byte:02x}"))
+            .collect::<String>();
+        if asset["size"].as_u64() != Some(bytes.len() as u64) || asset["sha256"] != digest {
             return Err("Pinned model size/digest differs.".into());
         }
         let target = work.join(relative);
