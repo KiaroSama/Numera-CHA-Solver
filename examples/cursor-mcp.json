@@ -1,12 +1,13 @@
 {
   "mcpServers": {
     "Numera-CHA-Solver-MCP": {
-      "command": "G:\\Program Files\\Portable\\Scripts\\Numera CHA-Solver\\bin\\numera-cha-solver-mcp.exe",
+      "type": "stdio",
+      "command": "${env:NUMERA_MCP_COMMAND}",
       "args": ["bridge"],
       "env": {
-        "NUMERA_ROOT": "G:\\Program Files\\Portable\\Scripts\\Numera CHA-Solver",
+        "NUMERA_ROOT": "${env:NUMERA_ROOT}",
         "NUMERA_MCP_PORT": "1583",
-        "NUMERA_DEVICE": "cpu"
+        "NUMERA_DEVICE": "${env:NUMERA_DEVICE}"
       }
     }
   }

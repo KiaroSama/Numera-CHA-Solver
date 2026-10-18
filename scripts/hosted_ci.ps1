@@ -71,7 +71,7 @@ try {
     $suffix=if($IsWindows){'.exe'}else{''};$pwsh=Get-HostedCommand pwsh
     $python=Get-HostedCommand python
     $browserPython=Join-Path $root $(if($IsWindows){'.ci-work/browser-env/Scripts/python.exe'}else{'.ci-work/browser-env/bin/python'})
-    $expected=@('parity','preprocessing','adapters','lifecycle','gpu','cli','http_parity','core_contracts','startup','worker','task_regressions','downloads','decode','mcp','mcp_bridge','review','platform')
+    $expected=@('parity','preprocessing','adapters','lifecycle','gpu','cli','http_parity','core_contracts','startup','worker','task_regressions','downloads','decode','mcp','mcp_bridge','review','platform','client_payload','native_webdriver')
     $actual=@(Get-ChildItem -LiteralPath (Join-Path $root 'tests') -File -Filter '*.rs'|ForEach-Object {$_.BaseName})
     if (@(Compare-Object ($expected|Sort-Object) ($actual|Sort-Object)).Count) { throw 'Native test coverage inventory differs; map the new tier explicitly instead of omitting it.' }
     $utf8=[Text.UTF8Encoding]::new($false,$true)
@@ -86,12 +86,10 @@ try {
     if (-not $IsWindows) {
         Required 'posix-owned-process-regression' $python @('-I',(Join-Path $root 'desktop/ci/owner_contract.py'),'--work',(Join-Path $work 'owner-contract')) 45 15
     }
-    if ($Platform -eq 'linux-x64') {
-        Required 'native-webdriver-transport-contracts' $python @('-I',(Join-Path $root 'desktop/ci/webdriver_transport_contract.py')) 30 15
-    }
     Required 'format' cargo @('fmt','--all','--','--check') 60 30
     Required 'locked-workspace-dependencies' cargo @('fetch','--locked') 300 120
     Required 'native-debug-build' cargo @('build','--locked','-p','numera-cha-solver','--bins','--jobs','2') 600 180
+    Required 'native-ci-consumers-build' cargo @('build','--locked','-p','numera-cha-solver','--examples','--jobs','2') 600 180
     $fixture=Join-Path $work "worker-fixture$suffix"
     Required 'synthetic-native-worker-once' rustc @((Join-Path $root 'tests/fixtures/worker.rs'),'--edition=2024','--crate-type=bin','-o',$fixture) 60 30
     $env:NUMERA_FIXTURE_WORKER_EXECUTABLE=$fixture;$env:NUMERA_WORKER_EXECUTABLE=$null
@@ -128,13 +126,13 @@ try {
         Required 'linux-install-inspected-desktop' sudo @('-n','dpkg','-i',$deb[0].FullName) 60 30
         $nativeClose=Join-Path $work 'close-native-window'
         Required 'linux-native-close-fixture' rustc @((Join-Path $root 'desktop/ci/close_native_window.rs'),'--edition=2024','--crate-type=bin','-l','X11','-o',$nativeClose) 30 15
-        Required 'linux-packaged-native-webdriver' xvfb-run @('-a',$python,'-I',(Join-Path $root 'desktop/ci/desktop_webdriver.py'),'--executable','/usr/bin/numera-cha-desktop','--driver',(Join-Path $root '.ci-work/tools/bin/tauri-driver'),'--native-close',$nativeClose,'--work',(Join-Path $work 'desktop-webdriver')) 120 30
+        Required 'linux-packaged-native-webdriver' xvfb-run @('-a',(Join-Path $root 'target/debug/examples/native_webdriver'),'--executable','/usr/bin/numera-cha-desktop','--driver',(Join-Path $root '.ci-work/tools/bin/tauri-driver'),'--native-close',$nativeClose,'--work',(Join-Path $work 'desktop-webdriver')) 120 30
     }
     Required 'final-native-distributions' $pwsh @('-NoLogo','-NoProfile','-NonInteractive','-File',(Join-Path $PSScriptRoot 'package_hosted.ps1'),'-Phase','Archives','-Platform',$Platform,'-Target',$Target) 180 60
     $installed=Join-Path $work 'installed native sample'
     [IO.Compression.ZipFile]::ExtractToDirectory((Join-Path $root ".ci-work/artifacts/numera-cha-0.3.0-$Platform.zip"),$installed)
     if (-not $IsWindows) { foreach ($file in (Get-ChildItem -LiteralPath (Join-Path $installed 'bin') -File)) { [IO.File]::SetUnixFileMode($file.FullName,[IO.UnixFileMode]::UserRead -bor [IO.UnixFileMode]::UserWrite -bor [IO.UnixFileMode]::UserExecute -bor [IO.UnixFileMode]::GroupRead -bor [IO.UnixFileMode]::GroupExecute -bor [IO.UnixFileMode]::OtherRead -bor [IO.UnixFileMode]::OtherExecute) } }
-    $null=Stage 'installed-cli-connector-and-real-cpu-ocr' $python @('-I',(Join-Path $root 'desktop/ci/installed_cli.py'),'--root',$installed,'--runtime-root',$env:NUMERA_RUNTIME_ROOT,'--image',(Join-Path $root 'tests/fixtures/ocr/ascii-smoke.png'),'--work',(Join-Path $work 'installed OCR private state')) 60 45
+    $null=Stage 'installed-cli-connector-and-real-cpu-ocr' (Join-Path $root "target/debug/examples/installed_release$suffix") @('--root',$installed,'--runtime-root',$env:NUMERA_RUNTIME_ROOT,'--image',(Join-Path $root 'tests/fixtures/ocr/ascii-smoke.png'),'--work',(Join-Path $work 'installed OCR private state')) 60 45
     if ($IsWindows) {
         $saved=$env:NUMERA_ROOT;$savedOrt=$env:NUMERA_ORT_LIBRARY;$savedDevice=$env:NUMERA_DEVICE
         try {

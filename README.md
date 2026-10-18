@@ -54,10 +54,10 @@ Start your selected local server with `./bin/numera-cha-solver-mcp.exe serve --p
 {
   "mcpServers": {
     "Numera-CHA-Solver-MCP": {
-      "command": "G:\\Program Files\\Portable\\Scripts\\Numera CHA-Solver\\bin\\numera-cha-solver-mcp.exe",
+      "command": "/absolute/path/to/numera-cha-solver/bin/numera-cha-solver-mcp",
       "args": ["bridge"],
       "env": {
-        "NUMERA_ROOT": "G:\\Program Files\\Portable\\Scripts\\Numera CHA-Solver",
+        "NUMERA_ROOT": "/absolute/path/to/numera-cha-solver",
         "NUMERA_MCP_PORT": "1583",
         "NUMERA_DEVICE": "cpu"
       }
@@ -66,7 +66,7 @@ Start your selected local server with `./bin/numera-cha-solver-mcp.exe serve --p
 }
 ```
 
-Replace the example installation path with your actual archive location. No token belongs in this public snippet; the bridge reads the owner-protected local credential. Native tools provide licensed local recognition and pending review/status/cancellation. The person corrects/confirms in the local UI; agents cannot confirm or submit to a site, and `server_verified` stays separate.
+Replace both placeholder paths with your actual installation. `cpu` matches the distributed CPU runtime; for a verified NVIDIA installation, select `cuda` with matching GPU libraries in **the server process as well as the bridge** ([CUDA setup](docs/MCP.md#cuda-instead-of-the-cpu-package-default)). Changing only bridge configuration does not change a running server. No token belongs in this public snippet; the bridge reads the owner-protected local credential. Native tools provide licensed local recognition and pending review/status/cancellation. The person corrects/confirms in the local UI; agents cannot confirm or submit to a site, and `server_verified` stays separate.
 
 [Complete MCP configuration, ports and troubleshooting](docs/MCP.md) · [Portable usage skill](skills/numera-cha-solver/SKILL.md) · [Client packaging](plugins/README.md). Plugin compatibility and native installation are separate; a manifest alone is not proof a client has been exercised.
 

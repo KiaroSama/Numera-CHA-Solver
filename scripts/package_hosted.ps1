@@ -124,6 +124,7 @@ try {
             $sourceDirectory=Join-Path $root $directory
             foreach ($file in (Get-ChildItem -LiteralPath $sourceDirectory -File -Recurse -Force)) {
                 $relative=[IO.Path]::GetRelativePath($root,$file.FullName).Replace('\','/')
+                if ($relative.StartsWith('examples/') -and $file.Extension -eq '.rs') { continue } # Hosted validation source belongs in the matching source archive, not the runtime instruction payload.
                 if ($relative -match $protected -or $file.Extension -notin @('.html','.css','.js','.png','.svg','.ico','.webp','.jpg','.woff','.woff2','.md','.json','.toml','.yml','.yaml')) { throw 'Authored asset inclusion requires explicit review.' }
                 Add-File $file.FullName (Join-Path $stage $relative)
             }
