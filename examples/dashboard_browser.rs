@@ -132,6 +132,11 @@ fn child(executable: &Path, args: &[String], work: &Path) -> Result<Child> {
         .stdout(Stdio::null())
         .stderr(Stdio::null())
         .kill_on_drop(true);
+    #[cfg(unix)]
+    command.env(
+        "TMPDIR",
+        std::env::var_os("RUNNER_TEMP").ok_or("Hosted browser temporary root missing.")?,
+    );
     #[cfg(windows)]
     command.creation_flags(0x08000000);
     Ok(command.spawn()?)

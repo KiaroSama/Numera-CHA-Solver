@@ -71,6 +71,12 @@ if($Phase -eq 'Initialize') {
   if($LASTEXITCODE -ne 0){throw 'Keychain search list could not be preserved.'}
   [IO.File]::WriteAllText((Join-Path $private 'keychains.json'),($previous|ConvertTo-Json),[Text.UTF8Encoding]::new($false))
   Invoke-SigningTool security (@('list-keychains','-d','user','-s',$keychain)+$previous)
+  # Validate the native signing contract before the expensive application build.
+  $probe=Join-Path $private 'signing-probe'
+  [IO.File]::Copy($env:NUMERA_CI_OWNER_BINARY,$probe,$false)
+  [IO.File]::SetUnixFileMode($probe,[IO.UnixFileMode]::UserRead -bor [IO.UnixFileMode]::UserWrite -bor [IO.UnixFileMode]::UserExecute)
+  Invoke-SigningTool codesign @('--force','--sign',$pin.thumbprint,'--keychain',$keychain,'--timestamp=none',$probe)
+  Invoke-SigningTool codesign @('--verify','--strict','-R',('certificate leaf = H"'+$pin.thumbprint+'"'),$probe)
  }
  'Protected signing identity initialized; no public trust installed.'
 } elseif($Phase -eq 'Native') {

@@ -184,7 +184,10 @@ pub fn tagged(pid: Pid, tag: &str) -> io::Result<bool> {
             if matches!(error.raw_os_error(), Some(1 | 5 | 13 | 22) | Some(0)) {
                 io::Error::new(
                     io::ErrorKind::PermissionDenied,
-                    "Darwin process arguments unavailable.",
+                    format!(
+                        "Darwin process arguments unavailable pid={pid} errno={:?}.",
+                        error.raw_os_error()
+                    ),
                 )
             } else {
                 error
