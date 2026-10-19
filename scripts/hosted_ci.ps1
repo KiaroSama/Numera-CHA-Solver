@@ -78,7 +78,14 @@ try {
             }
         }
     }
-    $null=Stage 'native-headless-browser' (Join-Path $root "target/debug/examples/dashboard_browser$suffix") @('--executable',(Join-Path $root "target/debug/numera-cha$suffix"),'--driver',$env:NUMERA_BROWSER_DRIVER,'--browser',$env:NUMERA_BROWSER_EXECUTABLE,'--work',(Join-Path $work 'browser')) 120 45
+    $browserStatus=Stage 'native-headless-browser' (Join-Path $root "target/debug/examples/dashboard_browser$suffix") @('--executable',(Join-Path $root "target/debug/numera-cha$suffix"),'--driver',$env:NUMERA_BROWSER_DRIVER,'--browser',$env:NUMERA_BROWSER_EXECUTABLE,'--work',(Join-Path $work 'browser')) 120 45
+    if($browserStatus -ne 0){
+        $diagnostic=Join-Path $work 'browser/chromedriver-startup.log'
+        if([IO.File]::Exists($diagnostic)){
+            $reader=[IO.StreamReader]::new($diagnostic,[Text.Encoding]::UTF8)
+            try{$buffer=[char[]]::new(16384);$count=$reader.ReadBlock($buffer,0,$buffer.Length);Write-HostedLog ERROR browser-startup ([string]::new($buffer,0,$count))}finally{$reader.Dispose()}
+        }
+    }
     if ($IsWindows) {
         $null=Stage 'windows-owned-launcher-tree' $pwsh @('-NoLogo','-NoProfile','-NonInteractive','-File',(Join-Path $root 'tests/launcher_ownership.ps1')) 90 30
     }

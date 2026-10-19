@@ -253,7 +253,13 @@ impl Tree {
                         }
                     }
                     return Err(format!(
-                        "Owned discovery cannot inspect new live same-user process pid={pid}; refusing an unverified run."
+                        "Owned discovery cannot inspect new live same-user process pid={pid} parent={} birth={} state={:?} owner={} root={} members={:?}; refusing an unverified run.",
+                        current.parent,
+                        current.birth.encode(),
+                        current.state,
+                        self.owner.pid,
+                        self.root.pid,
+                        self.members.keys().collect::<Vec<_>>()
                     ));
                 }
                 Err(_) => return Err("Owned environment discovery failed.".into()),

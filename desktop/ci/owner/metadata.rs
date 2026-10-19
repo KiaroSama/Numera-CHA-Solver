@@ -2,7 +2,13 @@
 use super::policy::{Birth, Identity, OWNER_TAG, Pid, State};
 use std::io;
 /// libproc maps a failed syscall to zero and leaves errno set; zero alone is not ESRCH.
-pub fn bsd_info_result(pid: Pid, returned: i32, expected: usize, errno: i32) -> io::Result<bool> {
+pub fn proc_info_result(
+    pid: Pid,
+    flavor: i32,
+    returned: i32,
+    expected: usize,
+    errno: i32,
+) -> io::Result<bool> {
     if returned <= 0 && errno == 3 {
         return Ok(false);
     }
@@ -17,7 +23,7 @@ pub fn bsd_info_result(pid: Pid, returned: i32, expected: usize, errno: i32) -> 
     Err(io::Error::new(
         kind,
         format!(
-            "proc_pidinfo pid={pid} flavor=3 argument=1 returned={returned} expected={expected} errno={errno} kind={kind:?}"
+            "proc_pidinfo pid={pid} flavor={flavor} argument=1 returned={returned} expected={expected} errno={errno} kind={kind:?}"
         ),
     ))
 }

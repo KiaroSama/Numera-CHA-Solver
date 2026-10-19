@@ -68,6 +68,10 @@ public static class NumeraPinnedAuthenticode {
             return result;
         }
         public void End() { Need(Empty, "Unexpected trailing Authenticode DER fields."); }
+        public void CertificatePadding() {
+            Need(end-offset <= 7, "Excess certificate alignment padding.");
+            while (offset < end) Need(data[offset++] == 0, "Nonzero certificate alignment padding.");
+        }
     }
     static byte[] ImageDigest(SignedCms cms) {
         Need(cms.ContentInfo.ContentType.Value == "1.3.6.1.4.1.311.2.1.4", "CMS does not contain Authenticode indirect data.");
@@ -119,7 +123,7 @@ public static class NumeraPinnedAuthenticode {
         var encoded=new byte[signedLength-8];
         Buffer.BlockCopy(bytes, certificate+8, encoded, 0, encoded.Length);
         // Require one complete DER SignedData value, not an accepted prefix with appended bytes.
-        var envelope=new Der(encoded); envelope.Read(0x30).Bytes(); envelope.End();
+        var envelope=new Der(encoded); envelope.Read(0x30).Bytes(); envelope.CertificatePadding();
         var cms=new SignedCms(); cms.Decode(encoded);
         Need(cms.SignerInfos.Count == 1, "Exactly one pinned Authenticode signer is required.");
         var signer=cms.SignerInfos[0].Certificate;

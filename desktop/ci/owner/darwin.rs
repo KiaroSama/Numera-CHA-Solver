@@ -1,4 +1,4 @@
-use super::super::metadata::{bsd_info_result, procargs_environment, tagged_bytes};
+use super::super::metadata::{proc_info_result, procargs_environment, tagged_bytes};
 use super::super::policy::{Birth, Identity, Pid, State};
 use std::{
     ffi::c_void,
@@ -7,14 +7,15 @@ use std::{
     ptr,
 };
 
-// Apple's proc_bsdinfo ABI, including exact microseconds (not ps/whole-second timestamps).
+// Short BSD metadata and kernel generation IDs do not require full BSD-info privileges.
 #[repr(C)]
-struct BsdInfo {
-    flags: u32,
-    status: u32,
-    xstatus: u32,
+struct ShortInfo {
     pid: u32,
     ppid: u32,
+    pgid: u32,
+    status: u32,
+    comm: [u8; 16],
+    flags: u32,
     uid: u32,
     gid: u32,
     ruid: u32,
@@ -22,18 +23,17 @@ struct BsdInfo {
     svuid: u32,
     svgid: u32,
     reserved: u32,
-    comm: [u8; 16],
-    name: [u8; 32],
-    nfiles: u32,
-    pgid: u32,
-    jobc: u32,
-    tdev: u32,
-    tpgid: u32,
-    nice: i32,
-    start_seconds: u64,
-    start_microseconds: u64,
 }
-const _: () = assert!(size_of::<BsdInfo>() == 136);
+#[repr(C)]
+struct UniqueInfo {
+    uuid: [u8; 16],
+    unique: u64,
+    parent_unique: u64,
+    version: i32,
+    original_parent_version: i32,
+    reserved: [u64; 2],
+}
+const _: () = assert!(size_of::<ShortInfo>() == 64 && size_of::<UniqueInfo>() == 56);
 #[link(name = "proc")]
 unsafe extern "C" {
     fn proc_pidinfo(pid: i32, flavor: i32, argument: u64, buffer: *mut c_void, size: i32) -> i32;
@@ -54,7 +54,6 @@ pub fn enable_reaping() -> io::Result<()> {
     Ok(())
 }
 pub fn list() -> io::Result<Vec<Pid>> {
-    // Enumerate real-UID peers directly: full BSD info intentionally denies other users.
     // SAFETY: getuid has no arguments; null/zero requests the PROC_RUID_ONLY byte count.
     let uid = unsafe { super::getuid() };
     let bytes = unsafe { proc_listpids(5, uid, ptr::null_mut(), 0) };
@@ -94,33 +93,42 @@ pub fn list() -> io::Result<Vec<Pid>> {
         "Process enumeration did not settle within its bound.",
     ))
 }
-pub fn identity(pid: Pid) -> io::Result<Option<Identity>> {
-    let mut info = MaybeUninit::<BsdInfo>::zeroed();
-    // SAFETY: Darwin __error returns this thread's writable errno slot; reset avoids stale diagnostics.
-    unsafe {
+fn info<T>(pid: Pid, flavor: i32) -> io::Result<Option<T>> {
+    let mut info = MaybeUninit::<T>::zeroed();
+    // SAFETY: __error returns this thread's writable errno slot. Each caller selects the matching repr(C) ABI.
+    let (actual, errno) = unsafe {
         *__error() = 0;
-    }
-    // SAFETY: kernel receives exact repr(C) buffer size; assume_init occurs only after full write.
-    let actual = unsafe {
-        proc_pidinfo(
+        let actual = proc_pidinfo(
             pid,
-            3,
-            1, // PROC_PIDTBSDINFO arg=1 includes zombies in exact identity inspection.
+            flavor,
+            1,
             info.as_mut_ptr().cast(),
-            size_of::<BsdInfo>() as i32,
-        )
+            size_of::<T>() as i32,
+        );
+        (actual, *__error())
     };
-    // SAFETY: read errno immediately after libproc, before formatting/allocation can overwrite it.
-    let errno = unsafe { *__error() };
-    if !bsd_info_result(pid, actual, size_of::<BsdInfo>(), errno)? {
+    if !proc_info_result(pid, flavor, actual, size_of::<T>(), errno)? {
         return Ok(None);
     }
-    // SAFETY: successful call returned the complete BsdInfo buffer.
-    let info = unsafe { info.assume_init() };
-    if info.pid != pid as u32 || info.start_microseconds >= 1_000_000 {
-        return Err(io::Error::other("Invalid BSD process identity."));
+    // SAFETY: successful call wrote the complete ABI record, containing only integer/byte fields.
+    Ok(Some(unsafe { info.assume_init() }))
+}
+pub fn identity(pid: Pid) -> io::Result<Option<Identity>> {
+    let Some(before) = info::<UniqueInfo>(pid, 17)? else {
+        return Ok(None);
+    };
+    let Some(short) = info::<ShortInfo>(pid, 13)? else {
+        return Ok(None);
+    };
+    let Some(after) = info::<UniqueInfo>(pid, 17)? else {
+        return Ok(None);
+    };
+    if short.pid != pid as u32 || before.unique == 0 || before.unique != after.unique {
+        return Err(io::Error::other(
+            "Darwin process identity changed during metadata inspection.",
+        ));
     }
-    let state = match info.status {
+    let state = match short.status {
         1 => State::Idle,
         5 => State::Ended,
         2..=4 => State::Running,
@@ -128,16 +136,17 @@ pub fn identity(pid: Pid) -> io::Result<Option<Identity>> {
     };
     Ok(Some(Identity {
         pid,
-        birth: Birth(info.start_seconds, info.start_microseconds),
-        parent: info.ppid as Pid,
-        uid: info.ruid,
+        // Kernel monotonic birth generation survives exec and distinguishes PID reuse exactly.
+        birth: Birth(after.unique, 0),
+        parent: short.ppid as Pid,
+        uid: short.ruid,
         state,
     }))
 }
 pub fn tagged(pid: Pid, tag: &str) -> io::Result<bool> {
     let mut argmax = 0_i32;
     let mut length = size_of::<i32>();
-    let mut mib = [1, 8]; // CTL_KERN, KERN_ARGMAX.
+    let mut mib = [1, 8];
     // SAFETY: output points to initialized i32; MIB length and output length match their allocations.
     if unsafe {
         sysctl(
@@ -157,7 +166,7 @@ pub fn tagged(pid: Pid, tag: &str) -> io::Result<bool> {
     }
     let mut bytes = vec![0_u8; argmax as usize];
     let mut length = bytes.len();
-    let mut mib = [1, 49, pid]; // CTL_KERN, KERN_PROCARGS2, pid.
+    let mut mib = [1, 49, pid];
     // SAFETY: output capacity and writable length are valid; no new data is passed.
     if unsafe {
         sysctl(
@@ -171,7 +180,6 @@ pub fn tagged(pid: Pid, tag: &str) -> io::Result<bool> {
     } < 0
     {
         let error = io::Error::last_os_error();
-        // A live fork-initializing process may return EINVAL/EIO, not merely EACCES.
         return Err(
             if matches!(error.raw_os_error(), Some(1 | 5 | 13 | 22) | Some(0)) {
                 io::Error::new(

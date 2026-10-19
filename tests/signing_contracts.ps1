@@ -29,6 +29,9 @@ OpenSSL @('dgst','-sha256','-verify',(Join-Path $work 'wrong-public.pem'),'-sign
 if($IsWindows){
  $binary=Join-Path $root 'target/release/numera-cha.exe'
  & (Join-Path $root 'scripts/verify_windows_signature.ps1') -Path $binary
+ $wrongPinRejected=$false
+ try{[NumeraPinnedAuthenticode]::Verify($binary,('0'*64),('0'*40))}catch{$wrongPinRejected=$true}
+ if(-not $wrongPinRejected){throw 'An unapproved native signer pin was accepted.'}
  $tampered=Join-Path $work 'altered.exe';[IO.File]::Copy($binary,$tampered,$false)
  $stream=[IO.File]::Open($tampered,[IO.FileMode]::Open,[IO.FileAccess]::ReadWrite)
  try{$stream.Position=128;$byte=$stream.ReadByte();$stream.Position=128;$stream.WriteByte($byte -bxor 1)}finally{$stream.Dispose()}
