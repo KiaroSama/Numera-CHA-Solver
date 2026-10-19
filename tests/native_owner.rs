@@ -104,6 +104,19 @@ fn setup() -> (Tree, Fake) {
     )
 }
 #[test]
+fn darwin_libproc_zero_is_not_disappearance_without_explicit_esrch() {
+    assert!(metadata::bsd_info_result(949, 136, 136, 0).unwrap());
+    assert!(!metadata::bsd_info_result(949, 0, 136, 3).unwrap());
+    for (returned, errno) in [(0, 0), (0, 1), (0, 13), (64, 0)] {
+        let error = metadata::bsd_info_result(949, returned, 136, errno).unwrap_err();
+        let diagnostic = error.to_string();
+        assert!(diagnostic.contains("pid=949"));
+        assert!(diagnostic.contains(&format!("returned={returned}")));
+        assert!(diagnostic.contains(&format!("errno={errno}")));
+        assert!(diagnostic.contains("expected=136"));
+    }
+}
+#[test]
 fn exact_os_metadata_and_complete_stream_redaction_preserve_boundaries() {
     // Fields3..22: state, ppid,17 intervening fields, exact start ticks.
     let stat = concat!(

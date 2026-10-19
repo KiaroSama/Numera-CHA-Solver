@@ -50,6 +50,16 @@ pub fn identifier(value: &str) -> Result<String, Failure> {
     Ok(encoded)
 }
 
+pub fn session_failure(status: u16, bytes: &[u8]) -> String {
+    let document: Value = serde_json::from_slice(bytes).unwrap_or(Value::Null);
+    let error = document["value"]["error"].as_str().unwrap_or("unknown");
+    let message = document["value"]["message"]
+        .as_str()
+        .unwrap_or("No W3C startup diagnostic.");
+    let safe = numera_cha_solver::logging::redact(&format!("HTTP {status}: {error}: {message}"));
+    safe.chars().take(4096).collect()
+}
+
 pub async fn request(
     port: u16,
     method: &str,
@@ -90,6 +100,13 @@ pub async fn request(
             bytes.extend_from_slice(&chunk);
         }
         if !status.is_success() {
+            if path == "/session" {
+                numera_cha_solver::logging::event(
+                    "ERROR",
+                    "webdriver-session",
+                    &session_failure(status.as_u16(), &bytes),
+                );
+            }
             return Err(Failure::Http);
         }
         let document: Value = serde_json::from_slice(&bytes).map_err(|_| Failure::MalformedJson)?;

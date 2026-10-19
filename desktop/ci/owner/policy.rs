@@ -306,5 +306,5 @@ fn inspect<S: Source>(source: &mut S, pid: Pid) -> Result<Option<Identity>> {
     }
     source
         .identity(pid)
-        .map_err(|_| format!("Process identity inspection unavailable pid={pid}."))
+        .map_err(|error| format!("Process identity inspection unavailable pid={pid}: {error}"))
 }

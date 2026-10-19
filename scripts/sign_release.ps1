@@ -64,7 +64,7 @@ if($Phase -eq 'Initialize') {
  if((Get-Item -LiteralPath $Path).Attributes -band [IO.FileAttributes]::ReparsePoint){throw 'Linked signing inputs are refused.'}
  if($IsWindows){
   $certificate=Get-Certificate
-  try{$null=Set-AuthenticodeSignature -LiteralPath $Path -Certificate $certificate -HashAlgorithm SHA256 -IncludeChain EndCertOnly}finally{
+  try{$null=Set-AuthenticodeSignature -LiteralPath $Path -Certificate $certificate -HashAlgorithm SHA256 -IncludeChain Signer}finally{
    $key=[Security.Cryptography.X509Certificates.RSACertificateExtensions]::GetRSAPrivateKey($certificate)
    try{if($key -is [Security.Cryptography.RSACng]){$key.Key.Delete()}elseif($key -is [Security.Cryptography.RSACryptoServiceProvider]){$key.PersistKeyInCsp=$false}}finally{if($key){$key.Dispose()};$certificate.Dispose()}
   }

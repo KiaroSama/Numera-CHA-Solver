@@ -1,5 +1,5 @@
-use super::super::metadata::{procargs_environment, tagged_bytes};
-use super::super::policy::{Birth, Identity, Pid, State, vanished};
+use super::super::metadata::{bsd_info_result, procargs_environment, tagged_bytes};
+use super::super::policy::{Birth, Identity, Pid, State};
 use std::{
     ffi::c_void,
     io,
@@ -40,6 +40,7 @@ unsafe extern "C" {
     fn proc_listpids(kind: u32, info: u32, buffer: *mut c_void, size: i32) -> i32;
 }
 unsafe extern "C" {
+    fn __error() -> *mut i32;
     fn sysctl(
         name: *mut i32,
         count: u32,
@@ -95,6 +96,10 @@ pub fn list() -> io::Result<Vec<Pid>> {
 }
 pub fn identity(pid: Pid) -> io::Result<Option<Identity>> {
     let mut info = MaybeUninit::<BsdInfo>::zeroed();
+    // SAFETY: Darwin __error returns this thread's writable errno slot; reset avoids stale diagnostics.
+    unsafe {
+        *__error() = 0;
+    }
     // SAFETY: kernel receives exact repr(C) buffer size; assume_init occurs only after full write.
     let actual = unsafe {
         proc_pidinfo(
@@ -105,16 +110,10 @@ pub fn identity(pid: Pid) -> io::Result<Option<Identity>> {
             size_of::<BsdInfo>() as i32,
         )
     };
-    if actual <= 0 {
-        let error = io::Error::last_os_error();
-        return if vanished(&error) {
-            Ok(None)
-        } else {
-            Err(error)
-        };
-    }
-    if actual as usize != size_of::<BsdInfo>() {
-        return Err(io::Error::other("Truncated BSD process identity."));
+    // SAFETY: read errno immediately after libproc, before formatting/allocation can overwrite it.
+    let errno = unsafe { *__error() };
+    if !bsd_info_result(pid, actual, size_of::<BsdInfo>(), errno)? {
+        return Ok(None);
     }
     // SAFETY: successful call returned the complete BsdInfo buffer.
     let info = unsafe { info.assume_init() };

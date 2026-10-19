@@ -8,6 +8,7 @@ use serde_json::{Value, json};
 use std::{
     error::Error,
     fs,
+    io::Read,
     net::TcpListener,
     path::{Path, PathBuf},
     process::Stdio,
@@ -296,6 +297,10 @@ async fn verify(args: Args) -> Result<()> {
         &[
             format!("--port={driver_port}"),
             "--allowed-ips=127.0.0.1".into(),
+            format!(
+                "--log-path={}",
+                work.join("chromedriver-startup.log").display()
+            ),
         ],
         &work,
     ) {
@@ -328,6 +333,17 @@ async fn verify(args: Args) -> Result<()> {
     let server_cleanup = stop(&mut server).await;
     driver_cleanup?;
     server_cleanup?;
+    if result.is_err() {
+        let mut diagnostic = String::new();
+        if let Ok(file) = fs::File::open(work.join("chromedriver-startup.log")) {
+            match file.take(16 * 1024).read_to_string(&mut diagnostic) {
+                Ok(_) => logging::event("ERROR", "chromedriver-startup", &diagnostic),
+                Err(_) => {
+                    logging::event("ERROR", "chromedriver-startup", "Startup log unreadable.")
+                }
+            }
+        }
+    }
     result?;
     logging::event(
         "INFO",

@@ -148,6 +148,22 @@ async fn actual_webdriver_transport_is_bounded_utf8_keepalive_closed_and_never_r
             Err(Failure::InvalidEnvelope)
         );
     }
+    let diagnostic = webdriver_client::session_failure(
+        500,
+        br#"{"value":{"error":"session not created","message":"Chrome exited; token=controlled-private https://controlled.invalid/path","stacktrace":"excluded"}}"#,
+    );
+    assert!(diagnostic.contains("HTTP 500: session not created: Chrome exited"));
+    assert!(!diagnostic.contains("controlled-private"));
+    assert!(!diagnostic.contains("controlled.invalid"));
+    assert!(!diagnostic.contains("excluded"));
+    assert!(
+        webdriver_client::session_failure(500, b"not-json").contains("No W3C startup diagnostic")
+    );
+    let oversized = serde_json::to_vec(&json!({"value":{"message":"x".repeat(8192)}})).unwrap();
+    assert_eq!(
+        webdriver_client::session_failure(500, &oversized).len(),
+        4096
+    );
     let answer = json!({"answer": "فارسی"});
     let cases = vec![
         Case {
