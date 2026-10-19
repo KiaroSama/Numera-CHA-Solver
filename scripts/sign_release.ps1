@@ -57,9 +57,11 @@ if($Phase -eq 'Initialize') {
   Invoke-SigningTool security @('create-keychain','-p','',$keychain)
   Invoke-SigningTool security @('set-keychain-settings','-lut','21600',$keychain)
   Invoke-SigningTool security @('unlock-keychain','-p','',$keychain)
-  # A password-free import container remains inside the private ephemeral runner directory.
-  Invoke-SigningTool openssl @('pkcs12','-export','-inkey',(Join-Path $private 'private.pem'),'-in',(Join-Path $public 'publisher-cert.pem'),'-out',(Join-Path $private 'import.p12'),'-passout','pass:')
-  Invoke-SigningTool security @('import',(Join-Path $private 'import.p12'),'-f','pkcs12','-t','agg','-k',$keychain,'-P','','-T','/usr/bin/codesign')
+  # Native PEM-sequence import avoids PKCS#12 encryption compatibility and password arguments.
+  $bundle=Join-Path $private 'identity.pem'
+  [IO.File]::WriteAllText($bundle,([IO.File]::ReadAllText((Join-Path $private 'private.pem'),[Text.Encoding]::UTF8)+"`n"+[IO.File]::ReadAllText((Join-Path $public 'publisher-cert.pem'),[Text.Encoding]::UTF8)),[Text.UTF8Encoding]::new($false))
+  [IO.File]::SetUnixFileMode($bundle,[IO.UnixFileMode]::UserRead -bor [IO.UnixFileMode]::UserWrite)
+  Invoke-SigningTool security @('import',$bundle,'-f','pemseq','-t','agg','-k',$keychain,'-T','/usr/bin/codesign')
   Invoke-SigningTool security @('set-key-partition-list','-S','apple-tool:,apple:','-s','-k','',$keychain)
   $previous=@(& security list-keychains -d user|ForEach-Object {$_.Trim().Trim('"')})
   if($LASTEXITCODE -ne 0){throw 'Keychain search list could not be preserved.'}
@@ -68,6 +70,7 @@ if($Phase -eq 'Initialize') {
  }
  'Protected signing identity initialized; no public trust installed.'
 } elseif($Phase -eq 'Native') {
+ Write-Output "Native signing requested: $([IO.Path]::GetFileName($Path))"
  if(-not $Path -or (-not [IO.File]::Exists($Path) -and -not ($IsMacOS -and [IO.Directory]::Exists($Path) -and $Path.EndsWith('.app')))){throw 'A native file or macOS application bundle is required.'}
  if((Get-Item -LiteralPath $Path).Attributes -band [IO.FileAttributes]::ReparsePoint){throw 'Linked signing inputs are refused.'}
  if($IsWindows){
@@ -77,6 +80,7 @@ if($Phase -eq 'Initialize') {
    try{if($key -is [Security.Cryptography.RSACng]){$key.Key.Delete()}elseif($key -is [Security.Cryptography.RSACryptoServiceProvider]){$key.PersistKeyInCsp=$false}}finally{if($key){$key.Dispose()};$certificate.Dispose()}
   }
   Test-WindowsSignature $Path
+  Write-Output "Pinned native signature verified: $([IO.Path]::GetFileName($Path))"
  } elseif($IsMacOS){
   Invoke-SigningTool codesign @('--force','--sign',$pin.thumbprint,'--keychain',(Join-Path $private 'publisher.keychain-db'),'--timestamp=none',$Path)
   Invoke-SigningTool codesign @('--verify','--strict','-R',('certificate leaf = H"'+$pin.thumbprint+'"'),$Path)

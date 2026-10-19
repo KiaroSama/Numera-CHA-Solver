@@ -113,7 +113,7 @@ public static class NumeraPinnedAuthenticode {
         Range(bytes, 0, headers);
         Need(headers >= optional+optionalSize+count*40 && checksum+4 <= security && security+8 <= headers, "Invalid PE header layout.");
         int certificate=Position(U32(bytes, security)), certificateSize=Position(U32(bytes, security+4));
-        Need(certificate >= headers && certificate % 8 == 0 && certificateSize >= 8 && certificateSize % 8 == 0, "Invalid aligned PE certificate table.");
+        Need(certificate >= headers && certificate % 8 == 0 && certificateSize >= 8 && certificateSize % 8 == 0, "Invalid aligned PE certificate table: file="+file.Name+" offset="+certificate+" size="+certificateSize+" headers="+headers);
         Range(bytes, certificate, certificateSize);
         Need((long)certificate+certificateSize == bytes.LongLength, "Certificate table must terminate the release PE file.");
         int signedLength=Position(U32(bytes, certificate));

@@ -29,6 +29,13 @@ if(-not $IsWindows){
   }
  }
 }
+if($Platform -eq 'linux-x64'){
+ $sandbox='/opt/google/chrome/chrome-sandbox'
+ $null=Assert-RegularFile $sandbox
+ $mode=[IO.File]::GetUnixFileMode($sandbox)
+ if(-not ($mode -band [IO.UnixFileMode]::SetUser) -or ($mode -band ([IO.UnixFileMode]::GroupWrite -bor [IO.UnixFileMode]::OtherWrite))){throw 'The preinstalled Chrome sandbox helper is not safely configured.'}
+ "CHROME_DEVEL_SANDBOX=$sandbox"|Out-File $env:GITHUB_ENV -Append -Encoding utf8
+}
 foreach($file in @($browser,$driver)){$null=Assert-RegularFile $file}
 "NUMERA_BROWSER_EXECUTABLE=$browser"|Out-File $env:GITHUB_ENV -Append -Encoding utf8
 "NUMERA_BROWSER_DRIVER=$driver"|Out-File $env:GITHUB_ENV -Append -Encoding utf8

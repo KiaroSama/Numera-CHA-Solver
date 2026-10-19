@@ -331,7 +331,7 @@ async fn verify(args: Args) -> Result<()> {
     let result=timeout(Duration::from_secs(90),async {
         ready(&mut server,server_port,"/health/live").await?;
         ready(&mut browser_driver,driver_port,"/status").await?;
-        let created=webdriver_client::request(driver_port,"POST","/session",Some(&json!({"capabilities":{"alwaysMatch":{"browserName":"chrome","goog:chromeOptions":{"binary":browser,"args":["--headless=new","--disable-background-networking","--no-first-run","--no-default-browser-check",format!("--user-data-dir={profile}")]}}}})),IO).await?;
+        let created=webdriver_client::request(driver_port,"POST","/session",Some(&json!({"capabilities":{"alwaysMatch":{"browserName":"chrome","goog:chromeOptions":{"binary":browser,"args":["--headless=new","--remote-debugging-pipe","--disable-background-networking","--no-first-run","--no-default-browser-check",format!("--user-data-dir={profile}")]}}}})),IO).await?;
         let id=webdriver_client::identifier(created["sessionId"].as_str().ok_or("Missing Chrome session identity.")?)?;
         session=Some(id.clone());
         scenario(&Driver{port:driver_port,session:id},server_port,&work).await
