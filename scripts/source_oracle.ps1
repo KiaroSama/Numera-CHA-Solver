@@ -30,7 +30,10 @@ try{
         $code=Invoke-BoundedCommand $python @((Join-Path $PSScriptRoot 'migration_oracle.py'),'--output',$Work) -WallSeconds 90 -IdleSeconds 30
     }else{
         if(-not $Executable){throw 'Native rollback executable is required.'}
-        $code=Invoke-BoundedCommand $python @((Join-Path $PSScriptRoot 'native_rollback.py'),'--executable',$Executable,'--work',$Work) -WallSeconds 90 -IdleSeconds 30
+        $suffix=if($IsWindows){'.exe'}else{''}
+        $controller=Join-Path $root "target/debug/examples/hosted_rollback$suffix"
+        if(-not [IO.File]::Exists($controller)){throw 'Hosted native rollback controller is missing; compile CI examples first.'}
+        $code=Invoke-BoundedCommand $controller @('--python',$python,'--executable',$Executable,'--work',$Work) -WallSeconds 90 -IdleSeconds 30
     }
     if($code -ne 0){throw 'Pinned source verification failed.'}
 }catch{if($code -eq 0){$code=1};Write-RunLog ERROR oracle $_.Exception.Message}
