@@ -1,13 +1,12 @@
-//! Hosted native rollback controller; Python remains the independent source witness.
+//! Hosted installed CLI/HTTP persistence and restart validation.
 use clap::Parser;
-use numera_cha_solver::logging;
+use numera_cha_solver::{core::contracts::Input, logging, store::TaskStore, tasks::request_digest};
 use reqwest::{Client, Method, redirect};
 use rusqlite::{Connection, params};
 use serde_json::{Value, json};
 use std::{
     error::Error,
     ffi::OsStr,
-    fs,
     path::{Path, PathBuf},
     process::Stdio,
     time::Duration,
@@ -25,12 +24,9 @@ struct Args {
     #[arg(long)]
     executable: PathBuf,
     #[arg(long)]
-    python: PathBuf,
-    #[arg(long)]
     work: PathBuf,
 }
 struct Controller {
-    root: PathBuf,
     work: PathBuf,
     deadline: Instant,
 }
@@ -90,21 +86,6 @@ impl Controller {
             stop(&mut child).await?;
         }
         result.map_err(|_| "Rollback child deadline exhausted.")?
-    }
-    async fn witness(&self, python: &Path, operation: &str) -> Result<()> {
-        let script = self.root.join("scripts/native_rollback.py");
-        self.run(
-            python,
-            &[
-                script.as_os_str(),
-                OsStr::new("--operation"),
-                OsStr::new(operation),
-                OsStr::new("--work"),
-                self.work.as_os_str(),
-            ],
-        )
-        .await?;
-        Ok(())
     }
     async fn request(
         &self,
@@ -183,7 +164,7 @@ impl Controller {
                 &client,
                 port,
                 "/v1/tasks",
-                Some(json!({"kind":"text","text":"7+5"})),
+                Some(json!({"kind":"text","text":"12 * 3 = ?"})),
             )
             .await?;
         let id = task["id"]
@@ -205,14 +186,14 @@ impl Controller {
         .await
         .map_err(|_| "Native durable result deadline exhausted.")??;
         if task["result"] != expected["source"] {
-            return Err("Native HTTP differs from historical result.".into());
+            return Err("Installed HTTP differs from immutable contract fixture.".into());
         }
         let repeated = self
             .request(
                 &client,
                 port,
                 "/v1/tasks",
-                Some(json!({"kind":"text","text":"7+5"})),
+                Some(json!({"kind":"text","text":"12 * 3 = ?"})),
             )
             .await?;
         if repeated["id"] != id {
@@ -243,9 +224,7 @@ async fn verify(args: Args) -> Result<()> {
         return Err("Rollback state must be fresh and isolated inside hosted work.".into());
     }
     let executable = args.executable.canonicalize()?;
-    let python = args.python.canonicalize()?;
     let controller = Controller {
-        root,
         work,
         deadline: Instant::now() + Duration::from_secs(80),
     };
@@ -254,27 +233,43 @@ async fn verify(args: Args) -> Result<()> {
         "hosted-rollback",
         false,
     );
-    controller.witness(&python, "seed").await?;
-    let expected: Value =
-        serde_json::from_slice(&fs::read(controller.work.join("source-witness.json"))?)?;
+    let fixture: Value = serde_json::from_str(include_str!("../tests/fixtures/parity/sdk.json"))?;
+    let case = fixture["cases"]
+        .as_array()
+        .ok_or("SDK fixture cases missing.")?
+        .iter()
+        .find(|case| case["name"] == "sdk-00")
+        .ok_or("Installed arithmetic fixture missing.")?;
+    let input = Input::from_value(case["input"].clone())?;
+    let digest = request_digest(&input);
+    let expected = json!({"source": case["expected"], "digest":digest});
+    let database_path = controller.work.join("data/tasks.sqlite3");
+    let source_id = {
+        let store = TaskStore::new(&database_path, 60)?;
+        let task = store.create("persisted-fixture", &digest, 120.0)?;
+        let id = task["id"]
+            .as_str()
+            .ok_or("Missing persisted identity.")?
+            .to_owned();
+        if !store.finish(&id, expected["source"].clone())? {
+            return Err("Persisted fixture could not finish.".into());
+        }
+        id
+    };
     let actual = controller
         .run(
             &executable,
             &[
                 OsStr::new("recognize"),
                 OsStr::new("--text"),
-                OsStr::new("7+5"),
+                OsStr::new("12 * 3 = ?"),
             ],
         )
         .await?;
     if serde_json::from_slice::<Value>(&actual)? != expected["source"] {
-        return Err("Native CLI differs from historical result.".into());
+        return Err("Installed CLI differs from immutable contract fixture.".into());
     }
     let native = controller.native(&executable, &expected).await?;
-    fs::write(
-        controller.work.join("native-witness.json"),
-        serde_json::to_vec(&native)?,
-    )?;
     {
         let database = Connection::open(controller.work.join("data/tasks.sqlite3"))?;
         database.busy_timeout(Duration::from_secs(2))?;
@@ -295,13 +290,29 @@ async fn verify(args: Args) -> Result<()> {
             ],
         )?;
     }
-    controller.witness(&python, "check").await?;
+    let restored = TaskStore::new(&database_path, 60)?;
+    if restored.get("copied-unfinished")?["result"]["error"]["code"] != "interrupted" {
+        return Err("Unfinished task was replayed instead of interrupted.".into());
+    }
+    for (id, key) in [
+        (source_id.as_str(), "persisted-fixture"),
+        (
+            native["id"].as_str().ok_or("Missing native identity.")?,
+            "native-rollback-fixture",
+        ),
+    ] {
+        if restored.get(id)?["result"] != expected["source"]
+            || restored.create(key, &digest, 120.0)?["id"] != id
+        {
+            return Err("Persisted result or idempotency changed after restart.".into());
+        }
+    }
     logging::event(
         "INFO",
         "rollback",
-        "Copied-state historical/native parity and owned cleanup passed.",
+        "Installed persistence, restart and owned cleanup passed.",
     );
-    println!("Copied-state source/native rollback verified.");
+    println!("Installed native persistence and restart verified.");
     Ok(())
 }
 #[tokio::main]

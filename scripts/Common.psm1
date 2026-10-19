@@ -23,11 +23,6 @@ function Write-RunLog([ValidateSet('INFO','WARNING','ERROR','DEBUG')][string]$Le
     if($script:LogPath){try{[IO.File]::AppendAllText($script:LogPath,$line+[Environment]::NewLine,[Text.UTF8Encoding]::new($false))}catch{$script:LogPath=$null;[Console]::Error.WriteLine('Writing diagnostic log failed; stderr fallback active.')}}
 }
 function Get-ProjectRoot { $script:Root }
-function Get-ProjectPython {
-    $python=if($env:NUMERA_ORACLE_PYTHON){$env:NUMERA_ORACLE_PYTHON}else{Join-Path $script:Root '.ci-oracle-env/Scripts/python.exe'}
-    if(-not [IO.File]::Exists($python)){throw 'Source-oracle environment is missing. It is needed only during migration verification.'}
-    $python
-}
 function Get-NativeExecutable {
     foreach($relative in @('bin/numera-cha.exe','target/release/numera-cha.exe','target/debug/numera-cha.exe')){
         $path=Join-Path $script:Root $relative
@@ -161,4 +156,4 @@ function Invoke-BoundedCommand {
     }
     return $exitCode
 }
-Export-ModuleMember -Function Initialize-RunLog,Write-RunLog,Get-ProjectRoot,Get-ProjectPython,Get-NativeExecutable,Get-RustTool,Initialize-NativeEnvironment,Copy-NativeRuntime,Invoke-BoundedCommand
+Export-ModuleMember -Function Initialize-RunLog,Write-RunLog,Get-ProjectRoot,Get-NativeExecutable,Get-RustTool,Initialize-NativeEnvironment,Copy-NativeRuntime,Invoke-BoundedCommand

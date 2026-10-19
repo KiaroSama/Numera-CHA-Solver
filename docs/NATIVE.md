@@ -2,11 +2,11 @@
 
 Version0.3.0 adds hosted native CLI/MCP and Tauri delivery for Windows x64, Linux x64 and macOS Apple Silicon. Use the inspected [desktop/native artifacts](DESKTOP.md); [MCP setup](MCP.md) is separate. This task builds/tests only on hosted CI. The Windows source-build notes below preserve the earlier development workflow and do not authorize a local build in this delivery.
 
-The replacement application is a Rust executable and library. The existing dashboard remains HTML/CSS/JavaScript. Python is not an application prerequisite. Development/CI verification uses a disposable frozen test-only environment and a temporary Git snapshot of the historic source; neither is a second installed application version.
+The replacement application is a Rust executable and library. The existing dashboard remains HTML/CSS/JavaScript. Python is not an application prerequisite. Current CI executes native contracts and immutable generated fixtures; historical Python source restoration and its frozen environment are retired.
 
 ## Intentional Python SDK retirement
 
-Version 0.2.0 exposes a Rust crate only. Embedded consumers must install the actual `numera-cha.exe` beside their executable or in the configured root's `bin`, or set `NUMERA_WORKER_EXECUTABLE` to that approved binary. The SDK never assumes an arbitrary embedding executable implements the private worker protocol. The owner explicitly approved removal of Python imports and the synchronous running-event-loop wrapper; CLI/HTTP contracts and the static web dashboard are preserved. Temporary Python oracle/browser tools are verification tooling, not a production compatibility layer.
+Version 0.2.0 exposes a Rust crate only. Embedded consumers must install the actual `numera-cha.exe` beside their executable or in the configured root's `bin`, or set `NUMERA_WORKER_EXECUTABLE` to that approved binary. The SDK never assumes an arbitrary embedding executable implements the private worker protocol. The owner explicitly approved removal of Python imports and the synchronous running-event-loop wrapper; CLI/HTTP contracts and the static web dashboard are preserved. Remaining Python browser/process-supervision tools are verification tooling, not a production compatibility layer.
 
 ## Build or install
 
@@ -65,14 +65,10 @@ The archive includes exactly one native executable, reviewed static resources, p
 
 Rust dependency license files are collected from the locally resolved locked Cargo packages, not downloaded by the packaging script. Missing texts block publication. The presence of a license file is not a legal compatibility audit; retained notices must be reviewed before distribution.
 
-## Migration verification and retirement
+## Native verification and retired migration tooling
 
-```powershell
-./scripts/native_ci.ps1 -Gpu -Browser
-```
+Current delivery uses `scripts/hosted_ci.ps1` through manual GitHub-hosted Windows/Linux/macOS jobs. Builds and general suites do not run locally. The old migration CI runner, executed Python oracle and frozen source-environment restoration are retired at the owner's request; Git history retains their source without making it an ongoing test dependency.
 
-This command records the earlier Windows0.2.0 hardware migration workflow. Current0.3.0 delivery uses `scripts/hosted_ci.ps1` through GitHub-hosted native Windows/Linux/macOS jobs, triggered only by manual dispatch. Pushes, pull requests and tags never start CI. The project-owned self-hosted runner registration and installation were removed; current builds/tests do not run locally. Hosted CPU tiers are not CUDA verification.
+Existing generated arithmetic/SDK/HTTP/geometry/CTC/tensor/digest fixtures remain unchanged. Rust tests execute their contracts; `tests/fixture_inventory.rs` checks immutable hashes and every mapped native target. Installed CLI/HTTP persistence, idempotency and interrupted-task recovery run through `examples/hosted_rollback.rs`, without Python or a claim of live cross-language rollback. The Windows installed start/stop/contender/credential-redaction test remains in `tests/installed_launchers.ps1`.
 
-Required tiers are native parity, preprocessing, adapters, lifecycle, GPU and CLI tests; source-generated fixture drift, a headless native-dashboard harness, an inspected package, installed executable and launcher checks also run. Build concurrency is two; test threads are one because global log/environment state and GPU execution are exclusive. Missing tiers or pending source-test mappings fail closed. Independent stage failures are collected before reporting. The source oracle compares immutable arithmetic/SDK/tensor fixtures and source test identities/hashes; it never regenerates expected answers from Rust.
-
-The pre-retirement migration passed all 15 stages on `4a5e60b` in [CI 37777670392](https://github.com/KiaroSama/Numera-CHA-Solver/actions/runs/37777670392). The previous application source and source-only tests/helpers are retired after the copied-state rollback rehearsal. Native fixtures remain maintained. `scripts/source_oracle.ps1` extracts the exact historic source revision into temporary project state, restores its frozen test environment when required, runs generation/rollback and removes the snapshot. Its disposable environment is not deployed and can be recreated; final cleanup removes it. Post-retirement changes require their own affected verification; prior CI is not automatically evidence for a new tree. Never delete model assets, user data, operational logs, shared Rust/Python/CUDA tools or history as part of package cleanup. No runtime, packaging, browser, device or rollback success should be claimed merely because this procedure is documented.
+Historical migration evidence remains in prior validation reports. A new tree requires its own exact-source hosted result. Preserve models, private data, operational logs, shared tools and Git history; removing historical test execution is not permission to delete them.

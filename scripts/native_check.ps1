@@ -18,7 +18,7 @@ try{
     $arguments=switch($Operation){
         'compile' {@('check','--locked','--all-targets');break}
         'build' {@('build','--locked','--bin','numera-cha');break}
-        'oracle' {$executable=(Get-Command pwsh -ErrorAction Stop).Source; @('-NoLogo','-NoProfile','-NonInteractive','-File',(Join-Path $PSScriptRoot 'source_oracle.ps1'),'-Work',(Join-Path $root '.ci-work/oracle-development'));break}
+        'oracle' {@('test','--locked','--test','fixture_inventory','--','--test-threads=1');break}
         'smoke' {$executable=Get-NativeExecutable; @('recognize','--text','12 * 3 = ?');break}
         'gpu-smoke' {$executable=Get-NativeExecutable; @('doctor','--smoke',(Join-Path $root 'tests/fixtures/ocr/ascii-smoke.png'));break}
         'launcher-owner' {$executable=(Get-Command pwsh -ErrorAction Stop).Source; @('-NoLogo','-NoProfile','-NonInteractive','-File',(Join-Path $root 'tests/launcher_ownership.ps1'));break}
