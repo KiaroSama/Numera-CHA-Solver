@@ -14,7 +14,7 @@ openssl dgst -sha256 -verify resources/signing/publisher-public.pem -signature n
 
 The command must report `Verified OK` and exit0. Then inspect `package-manifest.json`: expected version, platform, exact source commit, entry names/sizes/SHA256, matching source and independent notices. Reject altered files or a different signer. Keep the working installation and private state until the replacement is verified.
 
-Windows executables and the NSIS installer additionally have embedded Authenticode signatures. Verify `Get-AuthenticodeSignature` against the pinned certificate thumbprint and reject `HashMismatch`, missing certificates or another thumbprint. `NotTrusted` is expected without installing trust; it is not permission to ignore a mismatched signature. macOS code signatures identify this owner certificate but are not notarized. Linux uses the signed archive and member manifest rather than claiming an embedded executable signature.
+Windows executables and the NSIS installer additionally have embedded Authenticode signatures. Use `scripts/verify_windows_signature.ps1 -Path <executable>` from a trusted source checkout with PowerShell7: it verifies the pinned certificate, CMS signature and SHA256 PE image digest without installing trust. `Get-AuthenticodeSignature` alone can report `NotTrusted` or `UnknownError` for this self-signed identity; neither status establishes integrity or permits ignoring altered bytes or another signer. macOS code signatures identify this owner certificate but are not notarized. Linux uses the signed archive and member manifest rather than claiming an embedded executable signature.
 
 ## Custody and builds
 
