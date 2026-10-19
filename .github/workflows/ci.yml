@@ -33,30 +33,19 @@ jobs:
       NUMERA_MAX_TEST_WORKERS: '1'
       NUMERA_TEST_GPU: '0'
       NUMERA_DEVICE: cpu
-      UV_NO_PROGRESS: '1'
-      PIP_DISABLE_PIP_VERSION_CHECK: '1'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
           fetch-depth: 0
-      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
-        with:
-          python-version: '3.14.8'
-      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
-        with:
-          version: '0.13.0'
-          enable-cache: false
       - name: Bind isolated hosted work, cache and native toolchain
         run: |
           $root=$env:GITHUB_WORKSPACE
-          foreach ($path in @('.ci-cache/tmp','.ci-cache/uv','.ci-cache/pip','.ci-cache/browser','.ci-work/tools','.ci-work/hosted')) {
+          foreach ($path in @('.ci-cache/tmp','.ci-work/tools','.ci-work/hosted')) {
             [IO.Directory]::CreateDirectory((Join-Path $root $path))|Out-Null
           }
           foreach ($entry in @{
-            TEMP='.ci-cache/tmp'; TMP='.ci-cache/tmp'; TMPDIR='.ci-cache/tmp';
-            UV_CACHE_DIR='.ci-cache/uv'; PIP_CACHE_DIR='.ci-cache/pip';
-            PLAYWRIGHT_BROWSERS_PATH='.ci-cache/browser'
+            TEMP='.ci-cache/tmp'; TMP='.ci-cache/tmp'; TMPDIR='.ci-cache/tmp'
           }.GetEnumerator()) {
             "$($entry.Key)=$(Join-Path $root $entry.Value)"|Out-File $env:GITHUB_ENV -Append -Encoding utf8
           }
@@ -74,18 +63,22 @@ jobs:
         run: |
           Import-Module ./desktop/ci/Hosted.psm1 -Force
           Initialize-HostedLog 'hosted-tools'
-          $bootstrap=[Diagnostics.ProcessStartInfo]::new();$bootstrap.FileName=(Get-HostedCommand uv)
-          foreach($argument in @('pip','install','--python',(Get-HostedCommand python),'psutil==7.2.2')){$bootstrap.ArgumentList.Add($argument)}
-          $bootstrap.UseShellExecute=$false;$bootstrap.CreateNoWindow=$true
-          $bootstrap.RedirectStandardInput=$true;$bootstrap.RedirectStandardOutput=$true;$bootstrap.RedirectStandardError=$true
-          $process=[Diagnostics.Process]::new();$process.StartInfo=$bootstrap
-          try {
-            $null=$process.Start();$process.StandardInput.Close()
-            $stdout=$process.StandardOutput.ReadToEndAsync();$stderr=$process.StandardError.ReadToEndAsync()
-            if(-not $process.WaitForExit(120000)){$process.Kill($true);$null=$process.WaitForExit(5000);throw 'Hosted process-identity prerequisite installation timed out.'}
-            if($process.ExitCode -ne 0){throw 'Hosted process-identity prerequisite installation failed.'}
-          } finally {$process.Dispose()}
-          Assert-Exit (Invoke-Hosted uv @('pip','check','--python',(Get-HostedCommand python)) 30 10) 'hosted-identity-tool-check'
+          if (-not $IsWindows) {
+            $owner=Join-Path $env:GITHUB_WORKSPACE '.ci-work/tools/owned-command'
+            $bootstrap=[Diagnostics.ProcessStartInfo]::new();$bootstrap.FileName=(Get-HostedCommand rustc)
+            foreach($argument in @('--edition=2024','desktop/ci/owned_command.rs','-o',$owner)){$bootstrap.ArgumentList.Add($argument)}
+            $bootstrap.UseShellExecute=$false;$bootstrap.CreateNoWindow=$true
+            $bootstrap.RedirectStandardInput=$true;$bootstrap.RedirectStandardOutput=$true;$bootstrap.RedirectStandardError=$true
+            $process=[Diagnostics.Process]::new();$process.StartInfo=$bootstrap
+            try {
+              $null=$process.Start();$process.StandardInput.Close()
+              $stdout=$process.StandardOutput.ReadToEndAsync();$stderr=$process.StandardError.ReadToEndAsync()
+              if(-not $process.WaitForExit(60000)){$process.Kill($true);$null=$process.WaitForExit(5000);throw 'Native owner bootstrap compilation timed out.'}
+              if($process.ExitCode -ne 0){[Console]::Error.WriteLine($stderr.GetAwaiter().GetResult());throw 'Native owner bootstrap compilation failed.'}
+            } finally {$process.Dispose()}
+            $env:NUMERA_CI_OWNER_BINARY=$owner
+            "NUMERA_CI_OWNER_BINARY=$owner"|Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          }
           $tools=Join-Path $env:GITHUB_WORKSPACE '.ci-work/tools'
           $asset=@{
             'windows-x64'=@{name='cargo-tauri-x86_64-pc-windows-msvc.zip';hash='bef439eb1a0edd5192ed0009945e5de660b642a51519efe7d6953d70c5ab1939'}
@@ -102,17 +95,19 @@ jobs:
           if ($tool.Count -ne 1) { throw 'Official Tauri CLI executable is missing.' }
           if (-not $IsWindows) { Assert-Exit (Invoke-Hosted chmod @('755',$tool[0].FullName) 10 5) 'tauri-cli-executable-mode' }
           $tool[0].DirectoryName|Out-File $env:GITHUB_PATH -Append -Encoding utf8
-          $venv=Join-Path $env:GITHUB_WORKSPACE '.ci-work/browser-env'
-          Assert-Exit (Invoke-Hosted uv @('venv','--python','3.14.8',$venv) 90 30) 'browser-environment'
-          $python=Join-Path $venv $(if($IsWindows){'Scripts/python.exe'}else{'bin/python'})
-          Assert-Exit (Invoke-Hosted uv @('pip','install','--python',$python,'playwright==1.63.0','psutil==7.2.2') 180 60) 'browser-tooling'
-          Assert-Exit (Invoke-Hosted $python @('-m','playwright','install','chromium') 180 60) 'headless-browser-engine'
+          ./scripts/prepare_browser.ps1 -Platform '${{ matrix.platform }}'
       - name: Install Linux native desktop driver
         if: runner.os == 'Linux'
         run: |
           Import-Module ./desktop/ci/Hosted.psm1 -Force
           Initialize-HostedLog 'hosted-desktop-driver'
           Assert-Exit (Invoke-Hosted cargo @('install','tauri-driver','--version','=2.1.0','--locked','--root',(Join-Path $env:GITHUB_WORKSPACE '.ci-work/tools'),'--jobs','2') 300 120) 'tauri-driver-install'
+      - name: Initialize approved private project signer
+        env:
+          NUMERA_SIGNING_PFX: ${{ secrets.NUMERA_SIGNING_PFX }}
+          NUMERA_SIGNING_PASSWORD: ${{ secrets.NUMERA_SIGNING_PASSWORD }}
+          NUMERA_SIGNING_KEY: ${{ secrets.NUMERA_SIGNING_KEY }}
+        run: ./scripts/sign_release.ps1 -Phase Initialize
       - name: Acquire pinned official CPU runtime and immutable owned model
         run: ./scripts/prepare_runtime.ps1 -Platform '${{ matrix.platform }}'
       - name: Native contracts, desktop, browser and installed packages
@@ -129,10 +124,26 @@ jobs:
         if: success()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: numera-cha-0.3.0-${{ matrix.platform }}
+          name: numera-cha-0.4.0-${{ matrix.platform }}
           path: .ci-work/artifacts/*
           if-no-files-found: error
           retention-days: 14
+      - name: Preserve exact native release validator
+        if: success() && runner.os == 'Linux'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: native-release-validator
+          path: target/debug/examples/distribution
+          if-no-files-found: error
+          retention-days: 14
+      - name: Remove ephemeral private signer
+        if: always()
+        run: |
+          if($IsMacOS){
+            if(Test-Path .ci-work/signing/keychains.json){$previous=@([IO.File]::ReadAllText((Join-Path $env:GITHUB_WORKSPACE '.ci-work/signing/keychains.json'),[Text.Encoding]::UTF8)|ConvertFrom-Json);security list-keychains -d user -s @previous}
+            if(Test-Path .ci-work/signing/publisher.keychain-db){security delete-keychain .ci-work/signing/publisher.keychain-db}
+          }
+          if(Test-Path .ci-work/signing){Remove-Item -LiteralPath .ci-work/signing -Recurse -Force}
   release:
     name: Verify release assets
     needs: native
@@ -150,7 +161,11 @@ jobs:
           persist-credentials: false
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
-          pattern: numera-cha-0.3.0-*
+          pattern: numera-cha-0.4.0-*
           path: .ci-work/release
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: native-release-validator
+          path: .ci-work/release-validator
       - name: Verify exact native archives without publication
         run: ./scripts/publish_release.ps1 -Artifacts (Join-Path $env:GITHUB_WORKSPACE '.ci-work/release')

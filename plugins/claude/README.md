@@ -1,5 +1,7 @@
 # Claude Code and Claude Desktop
 
+Release0.4.0: verify the native package against the pinned owner self-signed key before replacement ([signing guide](../../docs/SIGNING.md)). Instructions and MCP installation are separate; self-signed does not establish public OS trust or notarization. Preserve private state and matching service/device configuration.
+
 ## Claude Code: instruction plugin
 
 Use the complete repository or CLI/agent package root, containing `.claude-plugin/plugin.json` and `skills/numera-cha-solver/SKILL.md`. This documentation subdirectory is not a separate plugin. Nothing here registers MCP or grants permissions.

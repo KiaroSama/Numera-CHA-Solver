@@ -6,6 +6,10 @@ license: LicenseRef-Noncommercial-Network-ShareAlike-1.0
 
 # Local recognition and human handoff
 
+## Release integrity (0.4.0)
+
+Before replacing binaries, verify the exact archive's detached RSA/SHA256 signature against the previously pinned project public key and check its version/source manifest. Windows executables/installers carry the owner's self-signed Authenticode identity; macOS packages are not notarized. Self-signed identity establishes continuity, not public publisher trust. A key downloaded only beside an unknown archive is not an independent trust anchor. Stop on missing signatures, changed signers or modified members; preserve the working installation and private state. Signer generation and system trust installation require separate owner authorization. Use the release signing guide for host-specific verification.
+
 ## Connection preflight
 
 Use the owner's existing **Numera-CHA-Solver-MCP** connection. Discover its live tools before calling them; client prefixes vary. The names below are server tools, not universal host invocation syntax.

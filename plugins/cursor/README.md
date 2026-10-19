@@ -1,5 +1,7 @@
 # Cursor IDE
 
+Release0.4.0: verify the native package against the pinned owner self-signed key before replacement ([signing guide](../../docs/SIGNING.md)). Instructions and MCP installation are separate; self-signed does not establish public OS trust or notarization. Preserve private state and matching service/device configuration.
+
 ## Local instruction plugin
 
 Copy the complete repository or CLI/agent package root to `~/.cursor/plugins/local/numera-cha-solver/` as a real directory, not this guide folder alone. Preserve modified files; team policy can restrict local imports. Reload Cursor, open **Customize**, verify the plugin/skill is enabled, then invoke `/numera-cha-solver` through supported skill discovery. JSON/cache presence does not prove loading.

@@ -73,13 +73,15 @@ fn immutable_contract_fixtures_and_native_targets_remain_complete() {
                 .split_once("::")
                 .unwrap_or((target.trim(), ""));
             assert!(!path.starts_with('/') && !path.split('/').any(|p| p == ".."));
+            let (path, symbol) = if path == "scripts/native_browser.py" && symbol == "main" {
+                ("examples/dashboard_browser.rs", "main")
+            } else {
+                (path, symbol)
+            };
             let source = fs::read_to_string(root.join(path)).unwrap();
             if status != "retired" && !symbol.is_empty() {
                 assert!(
-                    source.contains(&format!("fn {symbol}("))
-                        || (path == "scripts/native_browser.py"
-                            && symbol == "main"
-                            && source.contains("def main(")),
+                    source.contains(&format!("fn {symbol}(")),
                     "Mapped behavior is missing: {target}"
                 );
             }

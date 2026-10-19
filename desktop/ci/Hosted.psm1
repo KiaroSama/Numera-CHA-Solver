@@ -46,11 +46,11 @@ function Invoke-Hosted([string]$Executable, [string[]]$Arguments, [int]$Wall=120
         Initialize-RunLog 'hosted-command'
         return (Invoke-BoundedCommand -Executable $Executable -Arguments $Arguments -WallSeconds $Wall -IdleSeconds $Idle -CapturePath $Capture -WorkingDirectory $Cwd)
     }
-    $owner = Join-Path $PSScriptRoot 'run_owned.py'
-    $python = Get-HostedCommand python
-    $parameters = @('-I',$owner,'--cwd',$Cwd,'--work',(Join-Path $script:Root '.ci-work/owners'),'--wall',"$Wall",'--idle',"$Idle")
+    $owner = $env:NUMERA_CI_OWNER_BINARY
+    if (-not $owner -or -not [IO.File]::Exists($owner)) { throw 'The compiled native process owner is unavailable.' }
+    $parameters = @('--cwd',$Cwd,'--work',(Join-Path $script:Root '.ci-work/owners'),'--wall',"$Wall",'--idle',"$Idle")
     if ($Capture) { $parameters += @('--capture',$Capture) }
-    & $python @parameters -- $Executable @Arguments
+    & $owner @parameters -- $Executable @Arguments
     return $LASTEXITCODE
 }
 function Assert-Exit([int]$Code, [string]$Operation) {

@@ -103,9 +103,11 @@ impl Worker {
         if !settings.ort_library.is_file() {
             return Err(runtime_error());
         }
-        ort::init_from(&settings.ort_library)
+        let environment = ort::init_from(&settings.ort_library)
             .map_err(|_| runtime_error())?
-            .commit();
+            .with_telemetry(false)
+            .build()
+            .map_err(|_| runtime_error())?;
         let directory = registry.directory("ppocr-v6-small")?;
         let mut characters = vec![String::new()];
         let dictionary =
@@ -119,7 +121,9 @@ impl Worker {
         characters.push(" ".into());
         let profile_directory = settings.data_dir().join("runtime");
         fs::create_dir_all(&profile_directory).map_err(|_| runtime_error())?;
-        let mut builder = Session::builder()
+        let mut builder = Session::builder(&environment)
+            .map_err(|_| runtime_error())?
+            .with_auto_device(ort::session::builder::AutoDevicePolicy::PreferCPU)
             .map_err(|_| runtime_error())?
             .with_intra_threads(1)
             .map_err(|_| runtime_error())?

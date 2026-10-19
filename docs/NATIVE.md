@@ -1,12 +1,12 @@
 # Native operation
 
-Version0.3.0 adds hosted native CLI/MCP and Tauri delivery for Windows x64, Linux x64 and macOS Apple Silicon. Use the inspected [desktop/native artifacts](DESKTOP.md); [MCP setup](MCP.md) is separate. This task builds/tests only on hosted CI. The Windows source-build notes below preserve the earlier development workflow and do not authorize a local build in this delivery.
+Version0.4.0 provides hosted native CLI/MCP and Tauri delivery for Windows x64, Linux x64 and macOS Apple Silicon. Use the inspected [desktop/native artifacts](DESKTOP.md); [MCP setup](MCP.md) is separate. This task builds/tests only on hosted CI. The Windows source-build notes below preserve the earlier development workflow and do not authorize a local build in this delivery.
 
 The replacement application is a Rust executable and library. The existing dashboard remains HTML/CSS/JavaScript. Python is not an application prerequisite. Current CI executes native contracts and immutable generated fixtures; historical Python source restoration and its frozen environment are retired.
 
 ## Intentional Python SDK retirement
 
-Version 0.2.0 exposes a Rust crate only. Embedded consumers must install the actual `numera-cha.exe` beside their executable or in the configured root's `bin`, or set `NUMERA_WORKER_EXECUTABLE` to that approved binary. The SDK never assumes an arbitrary embedding executable implements the private worker protocol. The owner explicitly approved removal of Python imports and the synchronous running-event-loop wrapper; CLI/HTTP contracts and the static web dashboard are preserved. Remaining Python browser/process-supervision tools are verification tooling, not a production compatibility layer.
+Version 0.2.0 exposes a Rust crate only. Embedded consumers must install the actual `numera-cha.exe` beside their executable or in the configured root's `bin`, or set `NUMERA_WORKER_EXECUTABLE` to that approved binary. The SDK never assumes an arbitrary embedding executable implements the private worker protocol. The owner explicitly approved removal of Python imports and the synchronous running-event-loop wrapper; CLI/HTTP contracts and the static web dashboard are preserved. Browser and POSIX process-supervision verification are now Rust too; no tracked Python implementation or Python validation prerequisite remains.
 
 ## Build or install
 

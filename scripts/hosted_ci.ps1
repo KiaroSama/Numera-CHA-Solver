@@ -31,9 +31,8 @@ try {
     $env:NUMERA_TEST_GPU='0';$env:NUMERA_TEST_BROWSER='1';$env:NUMERA_DEVICE='cpu';$env:NUMERA_ROOT=$root
     if (-not $env:NUMERA_RUNTIME_ROOT -or -not $env:NUMERA_ORT_LIBRARY) { throw 'Verified CPU runtime/model fixture is required.' }
     $suffix=if($IsWindows){'.exe'}else{''};$pwsh=Get-HostedCommand pwsh
-    $python=Get-HostedCommand python
-    $browserPython=Join-Path $root $(if($IsWindows){'.ci-work/browser-env/Scripts/python.exe'}else{'.ci-work/browser-env/bin/python'})
-    $expected=@('parity','preprocessing','adapters','lifecycle','gpu','cli','http_parity','core_contracts','startup','worker','task_regressions','downloads','decode','mcp','mcp_bridge','review','platform','client_payload','native_webdriver','fixture_inventory')
+    if (-not $env:NUMERA_BROWSER_EXECUTABLE -or -not $env:NUMERA_BROWSER_DRIVER) { throw 'Native headless browser/driver paths are required.' }
+    $expected=@('parity','preprocessing','adapters','lifecycle','gpu','cli','http_parity','core_contracts','startup','worker','task_regressions','downloads','decode','mcp','mcp_bridge','review','platform','client_payload','native_webdriver','fixture_inventory','native_owner','distribution')
     $actual=@(Get-ChildItem -LiteralPath (Join-Path $root 'tests') -File -Filter '*.rs'|ForEach-Object {$_.BaseName})
     if (@(Compare-Object ($expected|Sort-Object) ($actual|Sort-Object)).Count) { throw 'Native test coverage inventory differs; map the new tier explicitly instead of omitting it.' }
     $utf8=[Text.UTF8Encoding]::new($false,$true)
@@ -46,7 +45,7 @@ try {
     }
     Required 'hosted-command-and-notice-contracts' $pwsh @('-NoLogo','-NoProfile','-NonInteractive','-File',(Join-Path $root 'desktop/ci/hosted_contracts.ps1')) 30 15
     if (-not $IsWindows) {
-        Required 'posix-owned-process-regression' $python @('-I',(Join-Path $root 'desktop/ci/owner_contract.py'),'--work',(Join-Path $work 'owner-contract')) 45 15
+        Required 'posix-owned-process-regression' $env:NUMERA_CI_OWNER_BINARY @('--contract','--work',(Join-Path $work 'owner-contract')) 45 15
     }
     Required 'format' cargo @('fmt','--all','--','--check') 60 30
     Required 'locked-workspace-dependencies' cargo @('fetch','--locked') 300 120
@@ -56,6 +55,11 @@ try {
     Required 'synthetic-native-worker-once' rustc @((Join-Path $root 'tests/fixtures/worker.rs'),'--edition=2024','--crate-type=bin','-o',$fixture) 60 30
     $env:NUMERA_FIXTURE_WORKER_EXECUTABLE=$fixture;$env:NUMERA_WORKER_EXECUTABLE=$null
     Required 'native-release-build' cargo @('build','--locked','--release','-p','numera-cha-solver','--bins','--jobs','2') 1200 240
+    if ($IsWindows -or $IsMacOS) {
+        foreach($name in @('numera-cha','numera-cha-solver-mcp')) {
+            Required "sign-native-$name" $pwsh @('-NoProfile','-File',(Join-Path $PSScriptRoot 'sign_release.ps1'),'-Phase','Native','-Path',(Join-Path $root "target/release/$name$suffix")) 45 30
+        }
+    }
     Required 'matching-source-and-desktop-resources' $pwsh @('-NoLogo','-NoProfile','-NonInteractive','-File',(Join-Path $PSScriptRoot 'package_hosted.ps1'),'-Phase','Resources','-Platform',$Platform,'-Target',$Target) 180 60
     Required 'desktop-icon-from-approved-logo' cargo @('tauri','icon',(Join-Path $root 'resources/web/logo.png'),'--output',(Join-Path $root 'desktop/icons')) 60 30 '' (Join-Path $root 'desktop')
     $null=Stage 'clippy-all-native-and-desktop' cargo @('clippy','--locked','--workspace','--all-targets','--jobs','2','--','-D','warnings') 1200 180
@@ -74,10 +78,11 @@ try {
             }
         }
     }
-    $null=Stage 'native-headless-browser' $browserPython @((Join-Path $PSScriptRoot 'native_browser.py'),'--executable',(Join-Path $root "target/debug/numera-cha$suffix"),'--work',(Join-Path $work 'browser')) 120 45
+    $null=Stage 'native-headless-browser' (Join-Path $root "target/debug/examples/dashboard_browser$suffix") @('--executable',(Join-Path $root "target/debug/numera-cha$suffix"),'--driver',$env:NUMERA_BROWSER_DRIVER,'--browser',$env:NUMERA_BROWSER_EXECUTABLE,'--work',(Join-Path $work 'browser')) 120 45
     if ($IsWindows) {
         $null=Stage 'windows-owned-launcher-tree' $pwsh @('-NoLogo','-NoProfile','-NonInteractive','-File',(Join-Path $root 'tests/launcher_ownership.ps1')) 90 30
     }
+    if($IsMacOS){$publisher=[IO.File]::ReadAllText((Join-Path $root 'resources/signing/publisher.json'),[Text.Encoding]::UTF8)|ConvertFrom-Json;$env:APPLE_SIGNING_IDENTITY=$publisher.thumbprint}
     $bundle=if($IsWindows){'nsis'}elseif($IsMacOS){'app'}else{'deb'}
     Required 'native-desktop-build-and-bundle' cargo @('tauri','build','--ci','--bundles',$bundle,'--','--locked','--jobs','2') 1200 240 '' (Join-Path $root 'desktop')
     if ($Platform -eq 'linux-x64') {
@@ -90,8 +95,9 @@ try {
         Required 'linux-packaged-native-webdriver' xvfb-run @('-a',(Join-Path $root 'target/debug/examples/native_webdriver'),'--executable','/usr/bin/numera-cha-desktop','--driver',(Join-Path $root '.ci-work/tools/bin/tauri-driver'),'--native-close',$nativeClose,'--work',(Join-Path $work 'desktop-webdriver')) 120 30
     }
     Required 'final-native-distributions' $pwsh @('-NoLogo','-NoProfile','-NonInteractive','-File',(Join-Path $PSScriptRoot 'package_hosted.ps1'),'-Phase','Archives','-Platform',$Platform,'-Target',$Target) 180 60
+    Required 'signer-tamper-and-wrong-key-contracts' $pwsh @('-NoLogo','-NoProfile','-NonInteractive','-File',(Join-Path $root 'tests/signing_contracts.ps1'),'-Artifacts',(Join-Path $root '.ci-work/artifacts')) 60 30
     $installed=Join-Path $work 'installed native sample'
-    [IO.Compression.ZipFile]::ExtractToDirectory((Join-Path $root ".ci-work/artifacts/numera-cha-0.3.0-$Platform.zip"),$installed)
+    [IO.Compression.ZipFile]::ExtractToDirectory((Join-Path $root ".ci-work/artifacts/numera-cha-0.4.0-$Platform.zip"),$installed)
     if (-not $IsWindows) { foreach ($file in (Get-ChildItem -LiteralPath (Join-Path $installed 'bin') -File)) { [IO.File]::SetUnixFileMode($file.FullName,[IO.UnixFileMode]::UserRead -bor [IO.UnixFileMode]::UserWrite -bor [IO.UnixFileMode]::UserExecute -bor [IO.UnixFileMode]::GroupRead -bor [IO.UnixFileMode]::GroupExecute -bor [IO.UnixFileMode]::OtherRead -bor [IO.UnixFileMode]::OtherExecute) } }
     $null=Stage 'installed-cli-connector-and-real-cpu-ocr' (Join-Path $root "target/debug/examples/installed_release$suffix") @('--root',$installed,'--runtime-root',$env:NUMERA_RUNTIME_ROOT,'--image',(Join-Path $root 'tests/fixtures/ocr/ascii-smoke.png'),'--work',(Join-Path $work 'installed OCR private state')) 60 45
     if ($IsWindows) {

@@ -73,6 +73,33 @@ fn public_clients_are_portable_and_the_skill_is_self_contained() {
         );
         assert!(guide.contains("bridge") && guide.contains("server_verified"));
     }
+    for path in [
+        "plugin.json",
+        ".claude-plugin/plugin.json",
+        ".codex-plugin/plugin.json",
+        ".cursor-plugin/plugin.json",
+    ] {
+        let manifest: Value = serde_json::from_slice(&fs::read(root.join(path)).unwrap()).unwrap();
+        assert_eq!(
+            manifest["version"],
+            env!("CARGO_PKG_VERSION"),
+            "Stale client manifest: {path}"
+        );
+    }
+    assert!(skill.contains("self-signed") && skill.contains("pinned"));
+    let workflow = fs::read_to_string(root.join(".github/workflows/ci.yml")).unwrap();
+    assert!(!workflow.contains("setup-python") && !workflow.contains("setup-uv"));
+    for path in [
+        "desktop/ci/run_owned.py",
+        "desktop/ci/owner_contract.py",
+        "desktop/ci/owner_discovery_contract.py",
+        "scripts/native_browser.py",
+    ] {
+        assert!(
+            !root.join(path).exists(),
+            "Retired Python implementation remains: {path}"
+        );
+    }
     let claude = fs::read_to_string(root.join("plugins/claude/README.md")).unwrap();
     assert!(claude.contains("--plugin-dir") && claude.contains("Desktop"));
     let codex = fs::read_to_string(root.join("plugins/codex/README.md")).unwrap();

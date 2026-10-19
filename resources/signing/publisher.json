@@ -1,0 +1,7 @@
+{
+  "thumbprint": "9215F361B90BA515133A22F4C214AD8B793E4419",
+  "sha256": "be3f4519db1d87f7ad6022efc2f7ec54b4b804042b5181b55a1c261ec64e15d0",
+  "expires_utc": "2029-10-19T12:09:25.0000000Z",
+  "subject": "CN=KiaroSama, O=Numera CHA-Solver",
+  "trust": "self-signed; not publicly trusted or notarized"
+}

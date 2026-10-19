@@ -1,5 +1,7 @@
 # Codex CLI and IDE
 
+Release0.4.0: verify the native package against the pinned owner self-signed key before replacement ([signing guide](../../docs/SIGNING.md)). Instructions and MCP installation are separate; self-signed does not establish public OS trust or notarization. Preserve private state and matching service/device configuration.
+
 ## Codex CLI plugin
 
 Use the complete repository/CLI archive root, not this guide directory. Root `plugin.json` targets Agent Plugins1.0.0 with fixed `skills/` discovery. `.codex-plugin/plugin.json` is compatibility metadata, not a second payload or MCP registration.
