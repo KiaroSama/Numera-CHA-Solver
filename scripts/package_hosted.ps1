@@ -139,7 +139,9 @@ try {
             if (-not @($contents|Where-Object {$_.Name -eq "numera-cha$suffix"}).Count -or -not @($contents|Where-Object {$_.Name -eq 'runtime-manifest.json'}).Count -or -not @($contents|Where-Object {$_.Name -eq 'ThirdPartyNotices.txt'}).Count) { throw 'Desktop installer is missing its worker/runtime/notices.' }
             Assert-Exit (Invoke-Hosted $distribution @('inspect','--directory',$inspect) 45 20) 'native-installer-boundary'
             if($IsWindows){
-                foreach($file in @($installers[0].FullName,(Join-Path $root 'target/release/numera-cha-desktop.exe'))){
+                $desktopBinary=@($contents|Where-Object {$_.Name -ceq 'numera-cha-desktop.exe'})
+                if($desktopBinary.Count -ne 1){throw 'Installer must contain exactly one signed desktop executable.'}
+                foreach($file in @($installers[0].FullName,$desktopBinary[0].FullName)){
                     & (Join-Path $PSScriptRoot 'sign_release.ps1') -Phase CheckWindows -Path $file
                 }
             }

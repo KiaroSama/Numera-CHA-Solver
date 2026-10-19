@@ -7,7 +7,8 @@ $version='155.0.8059.84'
 $target=@{'windows-x64'='win64';'linux-x64'='linux64';'macos-arm64'='mac-arm64'}[$Platform]
 $directory=Join-Path $root '.ci-work/browser-tools'
 [IO.Directory]::CreateDirectory($directory)|Out-Null
-foreach($kind in @('chrome-headless-shell','chromedriver')){
+$browserKind=if($Platform -eq 'windows-x64'){'chrome'}else{'chrome-headless-shell'}
+foreach($kind in @($browserKind,'chromedriver')){
  $archive=Join-Path $directory "$kind.zip"
  $url="https://storage.googleapis.com/chrome-for-testing-public/$version/$target/$kind-$target.zip"
  Invoke-WebRequest -Uri $url -OutFile $archive -ConnectionTimeoutSeconds 20 -OperationTimeoutSeconds 180
@@ -19,7 +20,7 @@ foreach($kind in @('chrome-headless-shell','chromedriver')){
  }finally{$zip.Dispose()}
  [IO.Compression.ZipFile]::ExtractToDirectory($archive,$directory)
 }
-$browser=Join-Path $directory ("chrome-headless-shell-$target/"+$(if($IsWindows){'chrome-headless-shell.exe'}else{'chrome-headless-shell'}))
+$browser=Join-Path $directory ("$browserKind-$target/"+$(if($IsWindows){'chrome.exe'}else{'chrome-headless-shell'}))
 $driver=Join-Path $directory ("chromedriver-$target/"+$(if($IsWindows){'chromedriver.exe'}else{'chromedriver'}))
 if(-not $IsWindows){
  foreach($file in Get-ChildItem -LiteralPath $directory -File -Recurse){
@@ -30,11 +31,12 @@ if(-not $IsWindows){
  }
 }
 if($Platform -eq 'linux-x64'){
- $sandbox='/opt/google/chrome/chrome-sandbox'
- $null=Assert-RegularFile $sandbox
- $mode=[IO.File]::GetUnixFileMode($sandbox)
- if(-not ($mode -band [IO.UnixFileMode]::SetUser) -or ($mode -band ([IO.UnixFileMode]::GroupWrite -bor [IO.UnixFileMode]::OtherWrite))){throw 'The preinstalled Chrome sandbox helper is not safely configured.'}
- "CHROME_DEVEL_SANDBOX=$sandbox"|Out-File $env:GITHUB_ENV -Append -Encoding utf8
+ # The official installed binary already has Ubuntu's path-scoped AppArmor allowance.
+ $browser='/opt/google/chrome/chrome'
+ $null=Assert-RegularFile $browser
+ $installedVersion=(& $browser --product-version).Trim()
+ if($LASTEXITCODE -ne 0 -or $installedVersion -notmatch '^155\.0\.8059\.[0-9]+$'){throw 'Installed sandboxed Chrome differs from the reviewed driver build family.'}
+ Write-HostedLog INFO verification "Using official installed Chrome version=$installedVersion with its existing sandbox policy."
 }
 foreach($file in @($browser,$driver)){$null=Assert-RegularFile $file}
 "NUMERA_BROWSER_EXECUTABLE=$browser"|Out-File $env:GITHUB_ENV -Append -Encoding utf8

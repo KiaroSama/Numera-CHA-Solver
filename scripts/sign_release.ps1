@@ -23,6 +23,10 @@ function Invoke-SigningTool([string]$Executable,[string[]]$Arguments) {
    $diagnostic=$err.GetAwaiter().GetResult()
    foreach($name in @('NUMERA_SIGNING_PFX','NUMERA_SIGNING_PASSWORD','NUMERA_SIGNING_KEY')){$value=[Environment]::GetEnvironmentVariable($name);if($value){$diagnostic=$diagnostic.Replace($value,'[REDACTED]')}}
    $safe=@([regex]::Matches($diagnostic,'(?m)^security: [A-Za-z][A-Za-z0-9_]+: [A-Za-z0-9 ()/.,_-]{1,160}$')|ForEach-Object {$_.Value}) -join '; '
+   if([IO.Path]::GetFileName($Executable) -eq 'codesign'){
+    $safe=($diagnostic -replace '(?m)^.*?:\s*','' -replace '[\r\n]+',' ').Trim()
+    $safe=$safe.Substring(0,[Math]::Min(1024,$safe.Length))
+   }
    throw "Signature operation failed: tool=$([IO.Path]::GetFileName($Executable)) operation=$($Arguments[0]) exit_code=$($process.ExitCode); $safe; other private output withheld."
   }
  }finally{$process.Dispose()}
