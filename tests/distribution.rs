@@ -49,7 +49,12 @@ fn zip(entries: &[(&str, &[u8])], comment: &str) -> Vec<u8> {
             0o644
         };
         writer
-            .start_file(*path, SimpleFileOptions::default().unix_permissions(mode))
+            .start_file(
+                *path,
+                SimpleFileOptions::default()
+                    .system(zip::System::Unix)
+                    .unix_permissions(mode),
+            )
             .unwrap();
         writer.write_all(data).unwrap();
     }

@@ -80,10 +80,15 @@ try {
     }
     $browserStatus=Stage 'native-headless-browser' (Join-Path $root "target/debug/examples/dashboard_browser$suffix") @('--executable',(Join-Path $root "target/debug/numera-cha$suffix"),'--driver',$env:NUMERA_BROWSER_DRIVER,'--browser',$env:NUMERA_BROWSER_EXECUTABLE,'--work',(Join-Path $work 'browser')) 120 45
     if($browserStatus -ne 0){
-        $diagnostic=Join-Path $work 'browser/chromedriver-startup.log'
-        if([IO.File]::Exists($diagnostic)){
-            $reader=[IO.StreamReader]::new($diagnostic,[Text.Encoding]::UTF8)
-            try{$buffer=[char[]]::new(16384);$count=$reader.ReadBlock($buffer,0,$buffer.Length);Write-HostedLog ERROR browser-startup ([string]::new($buffer,0,$count))}finally{$reader.Dispose()}
+        foreach($name in @('chromedriver-startup.log','chrome-startup.log')){
+            $diagnostic=Join-Path $work "browser/$name"
+            if([IO.File]::Exists($diagnostic)){
+                try{
+                    $stream=[IO.FileStream]::new($diagnostic,[IO.FileMode]::Open,[IO.FileAccess]::Read,([IO.FileShare]::ReadWrite -bor [IO.FileShare]::Delete))
+                    $reader=[IO.StreamReader]::new($stream,[Text.Encoding]::UTF8)
+                    try{$buffer=[char[]]::new(16384);$count=$reader.ReadBlock($buffer,0,$buffer.Length);Write-HostedLog ERROR browser-startup ([string]::new($buffer,0,$count))}finally{$reader.Dispose()}
+                }catch{Write-HostedLog ERROR browser-startup 'Bounded startup diagnostic unavailable; original stage failure retained.'}
+            }
         }
     }
     if ($IsWindows) {

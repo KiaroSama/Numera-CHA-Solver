@@ -11,6 +11,7 @@ if($env:RUNNER_ENVIRONMENT -eq 'github-hosted'){
  Initialize-HostedLog 'release-signing'
 }
 function Invoke-SigningTool([string]$Executable,[string[]]$Arguments) {
+ if($env:RUNNER_ENVIRONMENT -eq 'github-hosted'){Write-HostedLog INFO signing "Tool=$([IO.Path]::GetFileName($Executable)) operation=$($Arguments[0]) started; arguments withheld."}
  $info=[Diagnostics.ProcessStartInfo]::new();$info.FileName=$Executable
  foreach($arg in $Arguments){$info.ArgumentList.Add($arg)}
  $info.UseShellExecute=$false;$info.CreateNoWindow=$true;$info.RedirectStandardInput=$true;$info.RedirectStandardOutput=$true;$info.RedirectStandardError=$true
@@ -18,15 +19,22 @@ function Invoke-SigningTool([string]$Executable,[string[]]$Arguments) {
  try{
   $null=$process.Start();$process.StandardInput.Close();$out=$process.StandardOutput.ReadToEndAsync();$err=$process.StandardError.ReadToEndAsync()
   if(-not $process.WaitForExit(30000)){$process.Kill($true);$null=$process.WaitForExit(5000);throw 'Signing operation exceeded its deadline.'}
-  if($process.ExitCode -ne 0){throw 'Signature operation failed; private diagnostic output withheld.'}
+  if($process.ExitCode -ne 0){
+   $diagnostic=$err.GetAwaiter().GetResult()
+   foreach($name in @('NUMERA_SIGNING_PFX','NUMERA_SIGNING_PASSWORD','NUMERA_SIGNING_KEY')){$value=[Environment]::GetEnvironmentVariable($name);if($value){$diagnostic=$diagnostic.Replace($value,'[REDACTED]')}}
+   $safe=@([regex]::Matches($diagnostic,'(?m)^security: [A-Za-z][A-Za-z0-9_]+: [A-Za-z0-9 ()/.,_-]{1,160}$')|ForEach-Object {$_.Value}) -join '; '
+   throw "Signature operation failed: tool=$([IO.Path]::GetFileName($Executable)) operation=$($Arguments[0]) exit_code=$($process.ExitCode); $safe; other private output withheld."
+  }
  }finally{$process.Dispose()}
 }
 function Get-Certificate {
  $password=[IO.File]::ReadAllText((Join-Path $private 'password.txt'),[Text.Encoding]::UTF8)
- $flags=[Security.Cryptography.X509Certificates.X509KeyStorageFlags]::Exportable -bor [Security.Cryptography.X509Certificates.X509KeyStorageFlags]::PersistKeySet
- $certificate=[Security.Cryptography.X509Certificates.X509Certificate2]::new((Join-Path $private 'publisher.pfx'),$password,$flags)
+ if($IsWindows){
+  $flags=[Security.Cryptography.X509Certificates.X509KeyStorageFlags]::Exportable -bor [Security.Cryptography.X509Certificates.X509KeyStorageFlags]::PersistKeySet
+  $certificate=[Security.Cryptography.X509Certificates.X509Certificate2]::new((Join-Path $private 'publisher.pfx'),$password,$flags)
+ }else{$certificate=[Security.Cryptography.X509Certificates.X509Certificate2]::new((Join-Path $public 'publisher-cert.pem'))}
  $hash=[Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($certificate.RawData)).ToLowerInvariant()
- if($hash -cne $pin.sha256 -or -not $certificate.HasPrivateKey){$certificate.Dispose();throw 'Private signer does not match the approved public identity.'}
+ if($hash -cne $pin.sha256 -or ($IsWindows -and -not $certificate.HasPrivateKey)){$certificate.Dispose();throw 'Private signer does not match the approved public identity.'}
  return $certificate
 }
 function Test-WindowsSignature([string]$File) {
@@ -51,7 +59,7 @@ if($Phase -eq 'Initialize') {
   Invoke-SigningTool security @('unlock-keychain','-p','',$keychain)
   # A password-free import container remains inside the private ephemeral runner directory.
   Invoke-SigningTool openssl @('pkcs12','-export','-inkey',(Join-Path $private 'private.pem'),'-in',(Join-Path $public 'publisher-cert.pem'),'-out',(Join-Path $private 'import.p12'),'-passout','pass:')
-  Invoke-SigningTool security @('import',(Join-Path $private 'import.p12'),'-k',$keychain,'-P','','-T','/usr/bin/codesign')
+  Invoke-SigningTool security @('import',(Join-Path $private 'import.p12'),'-f','pkcs12','-t','agg','-k',$keychain,'-P','','-T','/usr/bin/codesign')
   Invoke-SigningTool security @('set-key-partition-list','-S','apple-tool:,apple:','-s','-k','',$keychain)
   $previous=@(& security list-keychains -d user|ForEach-Object {$_.Trim().Trim('"')})
   if($LASTEXITCODE -ne 0){throw 'Keychain search list could not be preserved.'}

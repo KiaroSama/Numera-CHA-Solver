@@ -274,6 +274,7 @@ pub fn create_archive(directory: &Path, output: &Path) -> Result<()> {
                         || record.path.contains(".app/Contents/MacOS/"));
                 let options = SimpleFileOptions::default()
                     .compression_method(zip::CompressionMethod::Deflated)
+                    .system(zip::System::Unix)
                     .unix_permissions(if executable { 0o755 } else { 0o644 });
                 writer.start_file(&record.path, options)?;
                 let size = std::io::copy(&mut File::open(path)?.take(MAX_FILE + 1), &mut writer)?;

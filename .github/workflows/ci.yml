@@ -141,7 +141,7 @@ jobs:
         run: |
           if($IsMacOS){
             if(Test-Path .ci-work/signing/keychains.json){$previous=@([IO.File]::ReadAllText((Join-Path $env:GITHUB_WORKSPACE '.ci-work/signing/keychains.json'),[Text.Encoding]::UTF8)|ConvertFrom-Json);security list-keychains -d user -s @previous}
-            if(Test-Path .ci-work/signing/publisher.keychain-db){security delete-keychain .ci-work/signing/publisher.keychain-db}
+            if(Test-Path .ci-work/signing/publisher.keychain-db){security delete-keychain (Join-Path $env:GITHUB_WORKSPACE '.ci-work/signing/publisher.keychain-db')}
           }
           if(Test-Path .ci-work/signing){Remove-Item -LiteralPath .ci-work/signing -Recurse -Force}
   release:

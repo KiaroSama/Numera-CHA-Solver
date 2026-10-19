@@ -104,6 +104,18 @@ fn require(value: bool, message: &str) -> Result<()> {
 fn port() -> Result<u16> {
     Ok(TcpListener::bind(("127.0.0.1", 0))?.local_addr()?.port())
 }
+fn browser_path(path: &Path) -> Result<String> {
+    let value = path.to_str().ok_or("Browser path is not Unicode.")?;
+    #[cfg(windows)]
+    if let Some(value) = value.strip_prefix(r"\\?\") {
+        require(
+            !value.starts_with("UNC\\"),
+            "Hosted browser requires a local drive.",
+        )?;
+        return Ok(value.to_owned());
+    }
+    Ok(value.to_owned())
+}
 fn child(executable: &Path, args: &[String], work: &Path) -> Result<Child> {
     let mut command = Command::new(executable);
     command
@@ -112,6 +124,10 @@ fn child(executable: &Path, args: &[String], work: &Path) -> Result<Child> {
         .env("NUMERA_ROOT", work)
         .env("NUMERA_API_TOKEN", "browser-owned-test-only")
         .env_remove("NUMERA_MCP_TOKEN")
+        .env(
+            "CHROME_LOG_FILE",
+            browser_path(&work.join("chrome-startup.log"))?,
+        )
         .stdin(Stdio::null())
         .stdout(Stdio::null())
         .stderr(Stdio::null())
@@ -286,7 +302,8 @@ async fn verify(args: Args) -> Result<()> {
     let driver_port = port()?;
     let executable = args.executable.canonicalize()?;
     let driver = args.driver.canonicalize()?;
-    let browser = args.browser.canonicalize()?;
+    let browser = browser_path(&args.browser.canonicalize()?)?;
+    let profile = browser_path(&work.join("browser-profile"))?;
     let mut server = child(
         &executable,
         &["serve".into(), "--port".into(), server_port.to_string()],
@@ -314,7 +331,7 @@ async fn verify(args: Args) -> Result<()> {
     let result=timeout(Duration::from_secs(90),async {
         ready(&mut server,server_port,"/health/live").await?;
         ready(&mut browser_driver,driver_port,"/status").await?;
-        let created=webdriver_client::request(driver_port,"POST","/session",Some(&json!({"capabilities":{"alwaysMatch":{"browserName":"chrome","goog:chromeOptions":{"binary":browser,"args":["--headless=new","--disable-background-networking","--no-first-run","--no-default-browser-check",format!("--user-data-dir={}",work.join("browser-profile").display())]}}}})),IO).await?;
+        let created=webdriver_client::request(driver_port,"POST","/session",Some(&json!({"capabilities":{"alwaysMatch":{"browserName":"chrome","goog:chromeOptions":{"binary":browser,"args":["--headless=new","--disable-background-networking","--no-first-run","--no-default-browser-check",format!("--user-data-dir={profile}")]}}}})),IO).await?;
         let id=webdriver_client::identifier(created["sessionId"].as_str().ok_or("Missing Chrome session identity.")?)?;
         session=Some(id.clone());
         scenario(&Driver{port:driver_port,session:id},server_port,&work).await
@@ -334,12 +351,12 @@ async fn verify(args: Args) -> Result<()> {
     driver_cleanup?;
     server_cleanup?;
     if result.is_err() {
-        let mut diagnostic = String::new();
-        if let Ok(file) = fs::File::open(work.join("chromedriver-startup.log")) {
-            match file.take(16 * 1024).read_to_string(&mut diagnostic) {
-                Ok(_) => logging::event("ERROR", "chromedriver-startup", &diagnostic),
-                Err(_) => {
-                    logging::event("ERROR", "chromedriver-startup", "Startup log unreadable.")
+        for name in ["chromedriver-startup.log", "chrome-startup.log"] {
+            let mut diagnostic = String::new();
+            if let Ok(file) = fs::File::open(work.join(name)) {
+                match file.take(16 * 1024).read_to_string(&mut diagnostic) {
+                    Ok(_) => logging::event("ERROR", "browser-startup", &diagnostic),
+                    Err(_) => logging::event("ERROR", "browser-startup", "Startup log unreadable."),
                 }
             }
         }
