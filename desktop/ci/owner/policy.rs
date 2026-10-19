@@ -173,7 +173,7 @@ impl Tree {
         }
     }
     pub fn snapshot<S: Source>(&mut self, source: &mut S) -> Result<()> {
-        for pid in source
+        'discovery: for pid in source
             .list()
             .map_err(|_| "Process discovery enumeration failed.")?
         {
@@ -241,15 +241,43 @@ impl Tree {
                     if self.attribute(source, current)? || current.state == State::Ended {
                         continue;
                     }
-                    if settled {
-                        match source.tagged(pid, &self.tag) {
-                            Ok(true) => {
-                                self.remember_if_same(source, candidate)?;
-                                continue;
+                    if settled || source.darwin() {
+                        // XNU can clear the user stack during exec while BSD state is SRUN.
+                        // Observe an exact identity; persistent unreadable live peers still fail.
+                        let deadline = self
+                            .deadline
+                            .min(source.now().saturating_add(Duration::from_secs(1)));
+                        loop {
+                            match source.tagged(pid, &self.tag) {
+                                Ok(true) => {
+                                    self.remember_if_same(source, candidate)?;
+                                    continue 'discovery;
+                                }
+                                Ok(false) => continue 'discovery,
+                                Err(error) if vanished(&error) => continue 'discovery,
+                                Err(error) if error.kind() == io::ErrorKind::PermissionDenied => {}
+                                Err(_) => return Err("Owned environment discovery failed.".into()),
                             }
-                            Ok(false) => continue,
-                            Err(error) if vanished(&error) => continue,
-                            Err(_) => {}
+                            let Some(fresh) = inspect(source, pid)? else {
+                                continue 'discovery;
+                            };
+                            if !candidate.same(fresh) {
+                                return Err("Discovery candidate PID was reused.".into());
+                            }
+                            if fresh.state == State::Unknown {
+                                return Err(
+                                    "Discovery process status unavailable during observation."
+                                        .into(),
+                                );
+                            }
+                            if self.attribute(source, fresh)? || fresh.state == State::Ended {
+                                continue 'discovery;
+                            }
+                            let remaining = deadline.saturating_sub(source.now());
+                            if remaining.is_zero() {
+                                break;
+                            }
+                            source.pause(remaining.min(Duration::from_millis(10)));
                         }
                     }
                     return Err(format!(

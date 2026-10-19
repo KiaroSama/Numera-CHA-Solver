@@ -20,6 +20,8 @@ use tokio::{
 };
 type Result<T> = std::result::Result<T, Box<dyn Error + Send + Sync>>;
 const IO: Duration = Duration::from_secs(5);
+// Chrome's cold-start budget is separate from ordinary WebDriver command I/O.
+const STARTUP: Duration = Duration::from_secs(10);
 #[derive(Parser)]
 struct Args {
     #[arg(long)]
@@ -336,7 +338,9 @@ async fn verify(args: Args) -> Result<()> {
     let result=timeout(Duration::from_secs(90),async {
         ready(&mut server,server_port,"/health/live").await?;
         ready(&mut browser_driver,driver_port,"/status").await?;
-        let created=webdriver_client::request(driver_port,"POST","/session",Some(&json!({"capabilities":{"alwaysMatch":{"browserName":"chrome","goog:chromeOptions":{"binary":browser,"args":["--headless=new","--remote-debugging-pipe","--disable-background-networking","--no-first-run","--no-default-browser-check",format!("--user-data-dir={profile}")]}}}})),IO).await?;
+        let startup=Instant::now();
+        let created=webdriver_client::request(driver_port,"POST","/session",Some(&json!({"capabilities":{"alwaysMatch":{"browserName":"chrome","goog:chromeOptions":{"browserStartupTimeout":8000,"binary":browser,"args":["--headless=new","--remote-debugging-pipe","--disable-background-networking","--no-first-run","--no-default-browser-check",format!("--user-data-dir={profile}")]}}}})),STARTUP).await?;
+        logging::event("INFO","browser-startup",&format!("Cold session ready elapsed_ms={}",startup.elapsed().as_millis()));
         let id=webdriver_client::identifier(created["sessionId"].as_str().ok_or("Missing Chrome session identity.")?)?;
         session=Some(id.clone());
         scenario(&Driver{port:driver_port,session:id},server_port,&work).await

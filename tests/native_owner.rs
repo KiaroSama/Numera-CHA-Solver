@@ -332,9 +332,60 @@ fn darwin_initialization_rechecks_tag_and_never_waives_denial() {
         source.tags.extend([Tag::Denied, tag]);
         assert_eq!(tree.snapshot(&mut source).is_err(), fails);
         assert_eq!(tree.members.contains_key(&30), owned);
-        assert_eq!(source.pauses, [Duration::from_millis(10)]);
-        assert_eq!(source.tag_reads, 2);
+        if fails {
+            assert!(
+                source
+                    .pauses
+                    .iter()
+                    .all(|pause| *pause == Duration::from_millis(10))
+            );
+            assert_eq!(source.clock.get(), Duration::from_millis(1010));
+            assert!(source.tag_reads > 2);
+        } else {
+            assert_eq!(source.tag_reads, 2);
+        }
     }
+}
+#[test]
+fn darwin_running_exec_transition_recovers_only_verified_identity() {
+    for (tag, owned) in [(Tag::Yes, true), (Tag::No, false), (Tag::Gone, false)] {
+        let (mut tree, mut source) = setup();
+        source.darwin = true;
+        source
+            .identities
+            .insert(30, identity(30, 1, 102, State::Running));
+        source.tags.extend([Tag::Denied, Tag::Denied, tag]);
+        tree.snapshot(&mut source).unwrap();
+        assert_eq!(tree.members.contains_key(&30), owned);
+        assert_eq!(source.pauses, [Duration::from_millis(10)]);
+    }
+    let (mut tree, mut source) = setup();
+    source.darwin = true;
+    let candidate = identity(30, 1, 102, State::Running);
+    source.identities.insert(30, candidate);
+    assert!(
+        tree.snapshot(&mut source)
+            .unwrap_err()
+            .contains("new live same-user")
+    );
+    assert_eq!(source.clock.get(), Duration::from_secs(1));
+    assert!(!tree.members.contains_key(&30));
+    source.clock.set(Duration::ZERO);
+    let reused = Identity {
+        birth: Birth(103, 0),
+        ..candidate
+    };
+    source.reads.insert(
+        30,
+        VecDeque::from([
+            Some(candidate),
+            Some(candidate),
+            Some(candidate),
+            Some(reused),
+        ]),
+    );
+    assert!(tree.snapshot(&mut source).unwrap_err().contains("reused"));
+    assert!(!tree.members.contains_key(&30));
 }
 #[test]
 fn darwin_observation_uses_monotonic_budget_and_exact_microsecond_identity() {

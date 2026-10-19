@@ -1,6 +1,11 @@
 name: CI
 on:
   workflow_dispatch:
+    inputs:
+      diagnose:
+        description: Focused Linux browser and macOS process-owner diagnosis (not release validation)
+        type: boolean
+        default: false
 permissions:
   contents: read
 concurrency:
@@ -8,22 +13,13 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
   native:
-    name: Native / ${{ matrix.platform }}
+    name: ${{ inputs.diagnose && 'Diagnosis' || 'Native' }} / ${{ matrix.platform }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - os: windows-2025
-            platform: windows-x64
-            target: x86_64-pc-windows-msvc
-          - os: ubuntu-24.04
-            platform: linux-x64
-            target: x86_64-unknown-linux-gnu
-          - os: macos-15
-            platform: macos-arm64
-            target: aarch64-apple-darwin
+        include: ${{ fromJSON(inputs.diagnose && '[{"os":"ubuntu-24.04","platform":"linux-x64","target":"x86_64-unknown-linux-gnu"},{"os":"macos-15","platform":"macos-arm64","target":"aarch64-apple-darwin"}]' || '[{"os":"windows-2025","platform":"windows-x64","target":"x86_64-pc-windows-msvc"},{"os":"ubuntu-24.04","platform":"linux-x64","target":"x86_64-unknown-linux-gnu"},{"os":"macos-15","platform":"macos-arm64","target":"aarch64-apple-darwin"}]') }}
     defaults:
       run:
         shell: pwsh
@@ -97,23 +93,29 @@ jobs:
           $tool[0].DirectoryName|Out-File $env:GITHUB_PATH -Append -Encoding utf8
           ./scripts/prepare_browser.ps1 -Platform '${{ matrix.platform }}'
       - name: Install Linux native desktop driver
-        if: runner.os == 'Linux'
+        if: runner.os == 'Linux' && !inputs.diagnose
         run: |
           Import-Module ./desktop/ci/Hosted.psm1 -Force
           Initialize-HostedLog 'hosted-desktop-driver'
           Assert-Exit (Invoke-Hosted cargo @('install','tauri-driver','--version','=2.1.0','--locked','--root',(Join-Path $env:GITHUB_WORKSPACE '.ci-work/tools'),'--jobs','2') 300 120) 'tauri-driver-install'
       - name: Initialize approved private project signer
+        if: ${{ !inputs.diagnose }}
         env:
           NUMERA_SIGNING_PFX: ${{ secrets.NUMERA_SIGNING_PFX }}
           NUMERA_SIGNING_PASSWORD: ${{ secrets.NUMERA_SIGNING_PASSWORD }}
           NUMERA_SIGNING_KEY: ${{ secrets.NUMERA_SIGNING_KEY }}
         run: ./scripts/sign_release.ps1 -Phase Initialize
       - name: Acquire pinned official CPU runtime and immutable owned model
+        if: ${{ !inputs.diagnose }}
         run: ./scripts/prepare_runtime.ps1 -Platform '${{ matrix.platform }}'
+      - name: Focused platform diagnosis without release eligibility
+        if: inputs.diagnose
+        run: ./scripts/diagnose_native.ps1 -Platform '${{ matrix.platform }}'
       - name: Native contracts, desktop, browser and installed packages
+        if: ${{ !inputs.diagnose }}
         run: ./scripts/hosted_ci.ps1 -Platform '${{ matrix.platform }}' -Target '${{ matrix.target }}'
       - name: Preserve bounded sanitized stage evidence
-        if: always()
+        if: always() && !inputs.diagnose
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: validation-${{ matrix.platform }}
@@ -121,7 +123,7 @@ jobs:
           if-no-files-found: warn
           retention-days: 7
       - name: Upload inspected native artifacts, not a release
-        if: success()
+        if: success() && !inputs.diagnose
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: numera-cha-0.4.0-${{ matrix.platform }}
@@ -129,7 +131,7 @@ jobs:
           if-no-files-found: error
           retention-days: 14
       - name: Preserve exact native release validator
-        if: success() && runner.os == 'Linux'
+        if: success() && runner.os == 'Linux' && !inputs.diagnose
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: native-release-validator
@@ -146,6 +148,7 @@ jobs:
           if(Test-Path .ci-work/signing){Remove-Item -LiteralPath .ci-work/signing -Recurse -Force}
   release:
     name: Verify release assets
+    if: ${{ !inputs.diagnose }}
     needs: native
     runs-on: ubuntu-24.04
     timeout-minutes: 10
