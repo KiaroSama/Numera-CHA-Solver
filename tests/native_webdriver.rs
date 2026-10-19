@@ -13,6 +13,26 @@ use webdriver_client::{Failure, RESPONSE_LIMIT, request};
 const IO: Duration = Duration::from_secs(2);
 type Check<T> = Result<T, String>;
 
+#[test]
+fn cold_session_budget_does_not_relax_ordinary_commands() {
+    use webdriver_client::command_budget;
+    let seconds = Duration::from_secs;
+    assert_eq!(command_budget("POST", "/session", seconds(25)), seconds(25));
+    assert_eq!(command_budget("POST", "/session", seconds(99)), seconds(30));
+    for (method, path) in [
+        ("GET", "/session"),
+        ("POST", "/session/id/url"),
+        ("DELETE", "/session/id"),
+    ] {
+        assert_eq!(command_budget(method, path, seconds(99)), seconds(10));
+        assert_eq!(command_budget(method, path, seconds(5)), seconds(5));
+    }
+    assert_eq!(
+        command_budget("POST", "/session", Duration::ZERO),
+        Duration::ZERO
+    );
+}
+
 struct Case {
     status: Option<u16>,
     body: Vec<u8>,

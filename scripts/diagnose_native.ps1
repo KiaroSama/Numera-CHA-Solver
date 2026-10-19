@@ -13,7 +13,7 @@ Assert-Exit (Invoke-Hosted $env:NUMERA_CI_OWNER_BINARY @('--contract','--work',(
 if($Platform -eq 'macos-arm64'){
     Assert-Exit (Invoke-Hosted cargo @('build','--locked','--release','-p','numera-cha-solver','--bins','--jobs','2') 1200 240) 'actual-release-compile-ownership'
 }
-if($Platform -eq 'linux-x64'){
+if($Platform -in @('linux-x64','macos-arm64')){
     Assert-Exit (Invoke-Hosted cargo @('build','--locked','-p','numera-cha-solver','--bins','--example','dashboard_browser','--jobs','2') 600 180) 'browser-consumer-build'
     $watch=[Diagnostics.Stopwatch]::StartNew()
     Assert-Exit (Invoke-Hosted (Join-Path $root 'target/debug/examples/dashboard_browser') @('--executable',(Join-Path $root 'target/debug/numera-cha'),'--driver',$env:NUMERA_BROWSER_DRIVER,'--browser',$env:NUMERA_BROWSER_EXECUTABLE,'--work',(Join-Path $root '.ci-work/diagnosis/browser')) 120 45) 'cold-browser-real-scenario'

@@ -60,6 +60,14 @@ pub fn session_failure(status: u16, bytes: &[u8]) -> String {
     safe.chars().take(4096).collect()
 }
 
+pub fn command_budget(method: &str, path: &str, budget: Duration) -> Duration {
+    budget.min(if method == "POST" && path == "/session" {
+        Duration::from_secs(30)
+    } else {
+        IO
+    })
+}
+
 pub async fn request(
     port: u16,
     method: &str,
@@ -70,6 +78,7 @@ pub async fn request(
     if budget.is_zero() {
         return Err(Failure::Deadline);
     }
+    let budget = command_budget(method, path, budget);
     let operation = async {
         // Fresh nonpooled sockets preserve at-most-one send; keep-alive must reach tauri-driver's upstream pool.
         let client = Client::builder()
@@ -78,8 +87,8 @@ pub async fn request(
             .redirect(redirect::Policy::none())
             .retry(reqwest::retry::never())
             .pool_max_idle_per_host(0)
-            .connect_timeout(budget.min(IO))
-            .timeout(budget.min(IO))
+            .connect_timeout(budget)
+            .timeout(budget)
             .build()
             .map_err(|_| Failure::Transport)?;
         let method = Method::from_bytes(method.as_bytes()).map_err(|_| Failure::Transport)?;
@@ -119,7 +128,7 @@ pub async fn request(
         }
         Ok(value.clone())
     };
-    tokio::time::timeout(budget.min(IO), operation)
+    tokio::time::timeout(budget, operation)
         .await
         .map_err(|_| Failure::Deadline)?
 }
