@@ -76,7 +76,7 @@ if($Phase -eq 'Initialize') {
   [IO.File]::Copy($env:NUMERA_CI_OWNER_BINARY,$probe,$false)
   [IO.File]::SetUnixFileMode($probe,[IO.UnixFileMode]::UserRead -bor [IO.UnixFileMode]::UserWrite -bor [IO.UnixFileMode]::UserExecute)
   Invoke-SigningTool codesign @('--force','--sign',$pin.thumbprint,'--keychain',$keychain,'--timestamp=none',$probe)
-  Invoke-SigningTool codesign @('--verify','--strict','-R',('certificate leaf = H"'+$pin.thumbprint+'"'),$probe)
+  Invoke-SigningTool codesign @('--verify','--strict','-R',('=certificate leaf = H"'+$pin.thumbprint+'"'),$probe)
  }
  'Protected signing identity initialized; no public trust installed.'
 } elseif($Phase -eq 'Native') {
@@ -93,7 +93,7 @@ if($Phase -eq 'Initialize') {
   Write-Output "Pinned native signature verified: $([IO.Path]::GetFileName($Path))"
  } elseif($IsMacOS){
   Invoke-SigningTool codesign @('--force','--sign',$pin.thumbprint,'--keychain',(Join-Path $private 'publisher.keychain-db'),'--timestamp=none',$Path)
-  Invoke-SigningTool codesign @('--verify','--strict','-R',('certificate leaf = H"'+$pin.thumbprint+'"'),$Path)
+  Invoke-SigningTool codesign @('--verify','--strict','-R',('=certificate leaf = H"'+$pin.thumbprint+'"'),$Path)
  } else {throw 'Linux native files are covered by the signed archive manifest.'}
 } elseif($Phase -eq 'CheckWindows') { Test-WindowsSignature $Path }
 else {

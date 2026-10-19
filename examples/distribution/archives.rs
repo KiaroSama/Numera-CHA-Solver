@@ -266,7 +266,19 @@ pub fn create_archive(directory: &Path, output: &Path) -> Result<()> {
         let mut temporary = tempfile::NamedTempFile::new_in(parent)?;
         {
             let mut writer = ZipWriter::new(temporary.as_file_mut());
-            for record in expected.values() {
+            for (index, record) in expected.values().enumerate() {
+                if index % 100 == 0 || record.size > 16 * 1024 * 1024 {
+                    numera_cha_solver::logging::event(
+                        "INFO",
+                        "archive",
+                        &format!(
+                            "Compressing entry={} total={} bytes={}",
+                            index + 1,
+                            expected.len(),
+                            record.size
+                        ),
+                    );
+                }
                 let path = directory.join(&record.path);
                 paths::regular(&path, false)?;
                 let executable = manifest.platform != "windows-x64"
@@ -274,6 +286,7 @@ pub fn create_archive(directory: &Path, output: &Path) -> Result<()> {
                         || record.path.contains(".app/Contents/MacOS/"));
                 let options = SimpleFileOptions::default()
                     .compression_method(zip::CompressionMethod::Deflated)
+                    .compression_level(Some(1))
                     .system(zip::System::Unix)
                     .unix_permissions(if executable { 0o755 } else { 0o644 });
                 writer.start_file(&record.path, options)?;

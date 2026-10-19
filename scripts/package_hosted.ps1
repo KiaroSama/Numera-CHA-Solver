@@ -121,7 +121,7 @@ try {
             $null=Assert-RegularFile (Join-Path $bundle 'Contents/MacOS/numera-cha')
             $null=Assert-RegularFile (Join-Path $bundle 'Contents/Resources/data/runtime/runtime-manifest.json')
             $publisher=[IO.File]::ReadAllText((Join-Path $root 'resources/signing/publisher.json'),[Text.Encoding]::UTF8)|ConvertFrom-Json
-            Assert-Exit (Invoke-Hosted codesign @('--verify','--deep','--strict','-R',('certificate leaf = H"'+$publisher.thumbprint+'"'),$bundle) 30 15) 'macos-owner-signature-verification'
+            Assert-Exit (Invoke-Hosted codesign @('--verify','--deep','--strict','-R',('=certificate leaf = H"'+$publisher.thumbprint+'"'),$bundle) 30 15) 'macos-owner-signature-verification'
             Assert-Exit (Invoke-Hosted ditto @('-c','-k','--sequesterRsrc','--keepParent',$bundle,(Join-Path $desktopStage 'Numera CHA-Solver.app.zip')) 120 45) 'macos-bundle-archive'
         } else {
             $folder=if ($IsWindows) {'nsis'} else {'deb'}
