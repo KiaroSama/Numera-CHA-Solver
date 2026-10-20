@@ -184,6 +184,7 @@ pub fn regular(path: &Path, directory: bool) -> Result<Metadata> {
 pub fn hash(mut reader: impl Read, limit: u64) -> Result<(u64, String)> {
     let mut hash = Sha256::new();
     let mut bytes = 0_u64;
+    let mut next_progress = 16 * 1024 * 1024;
     let mut buffer = [0_u8; 64 * 1024];
     loop {
         let n = reader.read(&mut buffer)?;
@@ -197,6 +198,14 @@ pub fn hash(mut reader: impl Read, limit: u64) -> Result<(u64, String)> {
             return Err("Distribution entry exceeds inspection limits.".into());
         }
         hash.update(&buffer[..n]);
+        if bytes >= next_progress {
+            numera_cha_solver::logging::event(
+                "INFO",
+                "archive-integrity",
+                &format!("Hashed bytes={bytes} limit={limit}"),
+            );
+            next_progress = bytes.saturating_add(16 * 1024 * 1024);
+        }
     }
     let digest = hash.finalize().iter().map(|b| format!("{b:02x}")).collect();
     Ok((bytes, digest))
