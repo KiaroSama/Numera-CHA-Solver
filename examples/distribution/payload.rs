@@ -80,6 +80,7 @@ pub(super) fn verify<R: Read + Seek>(
         for name in [
             "plugin.json",
             ".claude-plugin/plugin.json",
+            ".claude-plugin/marketplace.json",
             ".codex-plugin/plugin.json",
             ".cursor-plugin/plugin.json",
             "skills/numera-cha-solver/SKILL.md",

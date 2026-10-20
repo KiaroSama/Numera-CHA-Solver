@@ -70,6 +70,22 @@ Replace both placeholder paths with your actual installation. `cpu` matches the 
 
 [Complete MCP configuration, ports and troubleshooting](docs/MCP.md) · [Portable usage skill](skills/numera-cha-solver/SKILL.md) · [Client packaging](plugins/README.md). Plugin compatibility and native installation are separate; a manifest alone is not proof a client has been exercised.
 
+### Claude Code instruction plugin
+
+Add the repository marketplace:
+
+```bash
+claude plugin marketplace add KiaroSama/Numera-CHA-Solver
+```
+
+Install its instruction plugin:
+
+```bash
+claude plugin install numera-cha-solver@numera-cha-solver-marketplace
+```
+
+Invoke `/numera-cha-solver:numera-cha-solver` in a new Claude Code session. This installs instructions only; the MCP connection above remains separate. See the [Claude guide](plugins/claude/README.md) for direct session loading, validation and older-archive limitations.
+
 ## SDK
 
 ```rust

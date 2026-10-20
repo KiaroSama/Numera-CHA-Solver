@@ -154,6 +154,7 @@ pub fn verify_source(reader: impl Read + Seek, source: &str) -> Result<()> {
                     | "run.ps1"
                     | "plugin.json"
                     | ".claude-plugin/plugin.json"
+                    | ".claude-plugin/marketplace.json"
                     | ".codex-plugin/plugin.json"
                     | ".cursor-plugin/plugin.json"
             )
@@ -178,6 +179,7 @@ pub fn verify_source(reader: impl Read + Seek, source: &str) -> Result<()> {
         "run.ps1",
         "plugin.json",
         ".claude-plugin/plugin.json",
+        ".claude-plugin/marketplace.json",
         ".codex-plugin/plugin.json",
         ".cursor-plugin/plugin.json",
         "assets/brand/logo.png",

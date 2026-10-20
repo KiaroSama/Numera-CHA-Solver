@@ -86,6 +86,32 @@ fn public_clients_are_portable_and_the_skill_is_self_contained() {
             "Stale client manifest: {path}"
         );
     }
+    let marketplace: Value =
+        serde_json::from_slice(&fs::read(root.join(".claude-plugin/marketplace.json")).unwrap())
+            .unwrap();
+    let plugin: Value =
+        serde_json::from_slice(&fs::read(root.join(".claude-plugin/plugin.json")).unwrap())
+            .unwrap();
+    assert_eq!(marketplace["name"], "numera-cha-solver-marketplace");
+    assert_eq!(marketplace["owner"]["name"], plugin["author"]["name"]);
+    assert!(!marketplace["description"].as_str().unwrap().is_empty());
+    let entries = marketplace["plugins"].as_array().unwrap();
+    assert_eq!(entries.len(), 1);
+    let entry = &entries[0];
+    for field in ["name", "version", "description", "license"] {
+        assert_eq!(entry[field], plugin[field], "Catalog differs: {field}");
+    }
+    assert_eq!(entry["source"], "./");
+    assert!(
+        entry.get("strict").is_none(),
+        "Keep native manifest validation."
+    );
+    assert_eq!(
+        root.join(entry["source"].as_str().unwrap())
+            .canonicalize()
+            .unwrap(),
+        root.canonicalize().unwrap()
+    );
     assert!(skill.contains("self-signed") && skill.contains("pinned"));
     let workflow = fs::read_to_string(root.join(".github/workflows/ci.yml")).unwrap();
     assert!(!workflow.contains("setup-python") && !workflow.contains("setup-uv"));

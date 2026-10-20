@@ -6,6 +6,26 @@ Release0.4.0: verify the native package against the pinned owner self-signed key
 
 Use the complete repository or CLI/agent package root, containing `.claude-plugin/plugin.json` and `skills/numera-cha-solver/SKILL.md`. This documentation subdirectory is not a separate plugin. Nothing here registers MCP or grants permissions.
 
+### Install from the repository marketplace
+
+Register the repository, not this documentation subdirectory:
+
+```bash
+claude plugin marketplace add KiaroSama/Numera-CHA-Solver
+```
+
+Install the plugin by its name and the catalog's declared marketplace name:
+
+```bash
+claude plugin install numera-cha-solver@numera-cha-solver-marketplace
+```
+
+The repository's `.claude-plugin/marketplace.json` lists the existing root plugin with `source: "./"`; `.claude-plugin/plugin.json` describes that plugin. Both are needed for this marketplace route. Adding a plugin-only repository as a marketplace fails with "no manifest found at .claude-plugin/marketplace.json". These commands change the selected client's marketplace/plugin configuration; they are user-run steps, not automatic setup. They do not start or register MCP.
+
+This catalog is available in the updated source checkout. Previously published archives are immutable and may lack it; use the repository route or direct loading below rather than assuming an older archive has marketplace support.
+
+### Load only for one session
+
 Session-local loading, with your actual absolute path:
 
 ```bash

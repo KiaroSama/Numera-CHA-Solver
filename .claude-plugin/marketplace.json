@@ -1,0 +1,17 @@
+{
+  "name": "numera-cha-solver-marketplace",
+  "description": "Numera CHA-Solver local recognition and human-review instruction plugin.",
+  "owner": {
+    "name": "KiaroSama",
+    "url": "https://github.com/KiaroSama"
+  },
+  "plugins": [
+    {
+      "name": "numera-cha-solver",
+      "source": "./",
+      "description": "Licensed local recognition and explicit human review; native MCP configuration is separate.",
+      "version": "0.4.0",
+      "license": "LicenseRef-Noncommercial-Network-ShareAlike-1.0"
+    }
+  ]
+}

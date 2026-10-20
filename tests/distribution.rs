@@ -68,6 +68,7 @@ fn source() -> Vec<u8> {
         "run.ps1",
         "plugin.json",
         ".claude-plugin/plugin.json",
+        ".claude-plugin/marketplace.json",
         ".codex-plugin/plugin.json",
         ".cursor-plugin/plugin.json",
         "assets/brand/logo.png",
@@ -121,6 +122,7 @@ fn staged(platform: &str, kind: &str) -> TempDir {
         for name in [
             "plugin.json",
             ".claude-plugin/plugin.json",
+            ".claude-plugin/marketplace.json",
             ".codex-plugin/plugin.json",
             ".cursor-plugin/plugin.json",
         ] {
@@ -315,6 +317,15 @@ fn source_is_bound_to_revision_allowlist_and_required_public_payload() {
             .to_string()
             .contains("allowlist")
     );
+    let missing_catalog = rewrite(source(), |entries| {
+        entries.retain(|e| e.0 != ".claude-plugin/marketplace.json")
+    });
+    assert!(
+        verify_source(Cursor::new(missing_catalog), SHA)
+            .unwrap_err()
+            .to_string()
+            .contains("required public payload")
+    );
     let unsafe_source = rewrite(source(), |entries| {
         entries.push(("nested/secrets.md".into(), b"private".to_vec()))
     });
@@ -326,6 +337,19 @@ fn source_is_bound_to_revision_allowlist_and_required_public_payload() {
 
 #[test]
 fn package_rejects_tampering_missing_extra_duplicate_manifest_and_wrong_identity() {
+    let missing_catalog = staged("windows-x64", "cli-agent");
+    fs::remove_file(
+        missing_catalog
+            .path()
+            .join(".claude-plugin/marketplace.json"),
+    )
+    .unwrap();
+    let id = identity("windows-x64", "cli-agent");
+    write_manifest(missing_catalog.path(), &id).unwrap();
+    let output = temporary_directory();
+    let path = output.path().join("missing-catalog.zip");
+    assert!(create_archive(missing_catalog.path(), &path).is_err());
+    assert!(!path.exists());
     let good = packaged("windows-x64", "cli-agent");
     for mutation in 0..7 {
         let bad = rewrite(good.clone(), |entries| match mutation {
