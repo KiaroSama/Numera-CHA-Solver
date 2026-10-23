@@ -1,6 +1,6 @@
 # Codex CLI and IDE
 
-Release0.4.0: verify the native package against the pinned owner self-signed key before replacement ([signing guide](../../docs/SIGNING.md)). Instructions and MCP installation are separate; self-signed does not establish public OS trust or notarization. Preserve private state and matching service/device configuration.
+Release0.4.1: verify the native package against the pinned owner self-signed key before replacement ([signing guide](../../docs/SIGNING.md)). Instructions and MCP installation are separate; self-signed does not establish public OS trust or notarization. Preserve private state and matching service/device configuration.
 
 ## Codex CLI plugin
 
@@ -20,6 +20,6 @@ Configure MCP separately with [native TOML](../../examples/codex-config.toml) an
 
 ## Verify and limits
 
-Discover the seven tools. Owned `12 * 3 = ?` should suggest `36`, `server_verified:false`. Missing service/model or permission refusal is a blocker, not permission to change providers. Retain review IDs/revisions; only the person confirms.
+Discover the seven tools. Owned `12 * 3 = ?` should suggest `36`, `server_verified:false`. Default direct mode needs no separate service. Missing models, permission refusal or an absent explicit remote service remain blockers, not permission to change providers. Retain review IDs/revisions; only the person confirms.
 
 Official packaging and stable0.163.0 loader were inspected. Native CLI loading, IDE invocation and permission behavior are separate runtime evidence, not implied by JSON acceptance. Cloud/account catalogs are distinct from local installation and cannot be assumed to reach localhost.

@@ -25,7 +25,7 @@ Persistence uses wall-clock restart/TTL timestamps; execution and sessions use m
 
 ## Agent and desktop boundaries
 
-`src/mcp/` uses the official Rust MCP SDK for authenticated bounded loopback HTTP and a stdio bridge to the owner's selected endpoint. Protocol stdout is separate from diagnostics. Tools reuse the SDK; agent confirmation and external submission are not exposed. `src/review.rs` persists exact revision-bound pending/terminal transitions with TTL and compare-and-set. Human attestation does not set owner/server acceptance.
+`src/mcp/` uses the official Rust MCP SDK. Default `bridge` owns the local SDK over stdio without an HTTP/token prerequisite; explicit `bridge --remote` relays to the owner's selected authenticated loopback endpoint. Each direct process owns its inference/admission lifecycle; persisted reviews share the selected root. EOF closes admission and drains owned work. Protocol stdout is separate from diagnostics. Tools reuse the SDK; agent confirmation and external submission are not exposed. `src/review.rs` persists exact revision-bound pending/terminal transitions with TTL and compare-and-set. Human attestation does not set owner/server acceptance.
 
 `desktop/` hosts the static workspace with Tauri. The main embedded origin alone can request the in-memory connection token, external navigation is blocked, and the owned API/worker drains on close. Windows/Linux/macOS packages use native platform runtime and worker names. Packaged desktop defaults to its CPU runtime unless explicitly configured; strict CUDA never silently falls back.
 

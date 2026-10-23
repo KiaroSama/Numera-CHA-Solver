@@ -109,7 +109,7 @@ try {
     Required 'final-native-distributions' $pwsh @('-NoLogo','-NoProfile','-NonInteractive','-File',(Join-Path $PSScriptRoot 'package_hosted.ps1'),'-Phase','Archives','-Platform',$Platform,'-Target',$Target) 180 60
     Required 'signer-tamper-and-wrong-key-contracts' $pwsh @('-NoLogo','-NoProfile','-NonInteractive','-File',(Join-Path $root 'tests/signing_contracts.ps1'),'-Artifacts',(Join-Path $root '.ci-work/artifacts')) 60 30
     $installed=Join-Path $work 'installed native sample'
-    [IO.Compression.ZipFile]::ExtractToDirectory((Join-Path $root ".ci-work/artifacts/numera-cha-0.4.0-$Platform.zip"),$installed)
+    [IO.Compression.ZipFile]::ExtractToDirectory((Join-Path $root ".ci-work/artifacts/numera-cha-0.4.1-$Platform.zip"),$installed)
     if (-not $IsWindows) { foreach ($file in (Get-ChildItem -LiteralPath (Join-Path $installed 'bin') -File)) { [IO.File]::SetUnixFileMode($file.FullName,[IO.UnixFileMode]::UserRead -bor [IO.UnixFileMode]::UserWrite -bor [IO.UnixFileMode]::UserExecute -bor [IO.UnixFileMode]::GroupRead -bor [IO.UnixFileMode]::GroupExecute -bor [IO.UnixFileMode]::OtherRead -bor [IO.UnixFileMode]::OtherExecute) } }
     $null=Stage 'installed-cli-connector-and-real-cpu-ocr' (Join-Path $root "target/debug/examples/installed_release$suffix") @('--root',$installed,'--runtime-root',$env:NUMERA_RUNTIME_ROOT,'--image',(Join-Path $root 'tests/fixtures/ocr/ascii-smoke.png'),'--work',(Join-Path $work 'installed OCR private state')) 60 45
     if ($IsWindows) {

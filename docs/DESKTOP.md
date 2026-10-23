@@ -1,15 +1,15 @@
 # Native desktop delivery
 
-Download your platform from [GitHub Releases](https://github.com/KiaroSama/Numera-CHA-Solver/releases), verify the detached archive signature against the pinned key ([signing](SIGNING.md)) and `SHA256SUMS.txt`, and read the included license and third-party notices before installing. A version is published only after all required native checks pass; an authored or failing version is not a release. Version0.4.0 uses a Tauri2.12.4 Rust shell around the existing Numera workspace; no new JavaScript framework or visual redesign.
+Download your platform from [GitHub Releases](https://github.com/KiaroSama/Numera-CHA-Solver/releases), verify the detached archive signature against the pinned key ([signing](SIGNING.md)) and `SHA256SUMS.txt`, and read the included license and third-party notices before installing. A version is published only after all required native checks pass; an authored or failing version is not a release. Version0.4.1 uses a Tauri2.12.4 Rust shell around the existing Numera workspace; no new JavaScript framework or visual redesign.
 
 ## Packages
 
 | Artifact | Architecture | Contents and prerequisites |
 |---|---|---|
-| `numera-cha-desktop-0.4.0-windows-x64.zip` | Windows x64 | Owner self-signed Authenticode NSIS installer. Microsoft WebView2 is required; the installer may fetch Microsoft's bootstrapper when absent. |
-| `numera-cha-desktop-0.4.0-linux-x64.zip` | Linux x64 | Signed-archive Debian package, natively built on Ubuntu24.04. Requires its declared WebKitGTK4.1/GTK system dependencies. Not a universal Linux compatibility claim. |
-| `numera-cha-desktop-0.4.0-macos-arm64.zip` | Apple Silicon | Owner self-signed `.app` archive, macOS11 or later. Runtime aliases retain verified native signatures; hardened-runtime distribution is not enabled. No Apple identity, notarization or Gatekeeper approval claim. Intel macOS is not included. |
-| `numera-cha-0.4.0-<platform>.zip` | Matching architecture | Native CLI and `numera-cha-solver-mcp`, CPU ONNX Runtime1.31.0, original authored connector guidance/config examples and root plugin manifests, Windows `run.ps1`, matching source and independent notices. |
+| `numera-cha-desktop-0.4.1-windows-x64.zip` | Windows x64 | Owner self-signed Authenticode NSIS installer. Microsoft WebView2 is required; the installer may fetch Microsoft's bootstrapper when absent. |
+| `numera-cha-desktop-0.4.1-linux-x64.zip` | Linux x64 | Signed-archive Debian package, natively built on Ubuntu24.04. Requires its declared WebKitGTK4.1/GTK system dependencies. Not a universal Linux compatibility claim. |
+| `numera-cha-desktop-0.4.1-macos-arm64.zip` | Apple Silicon | Owner self-signed `.app` archive, macOS11 or later. Runtime aliases retain verified native signatures; hardened-runtime distribution is not enabled. No Apple identity, notarization or Gatekeeper approval claim. Intel macOS is not included. |
+| `numera-cha-0.4.1-<platform>.zip` | Matching architecture | Native CLI and `numera-cha-solver-mcp`, CPU ONNX Runtime1.31.0, original authored connector guidance/config examples and root plugin manifests, Windows `run.ps1`, matching source and independent notices. |
 
 Packages have owner self-signed identity, **not publicly trusted** publisher signing. OS trust warnings are expected. Inspect provenance and obtain an approved signed distribution where your organization requires one; do not disable system-wide security controls. The owner's release policy promotes the exact inspected artifacts after the complete manually initiated native matrix succeeds and its exact source is integrated into the default branch. A separate manual promotion reuses that successful run's assets without rebuilding. No push, pull request or tag starts CI automatically. Existing versions/assets are never overwritten; a new version is required for a new release. Checksums and matching source are retained with the release, while disposable hosted work and temporary local inspection downloads are not retained. macOS/Linux binaries are linked on GitHub, not sent as chat attachments.
 

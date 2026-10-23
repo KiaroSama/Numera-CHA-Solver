@@ -1,6 +1,6 @@
 # Native operation
 
-Version0.4.0 provides hosted native CLI/MCP and Tauri delivery for Windows x64, Linux x64 and macOS Apple Silicon. Use the inspected [desktop/native artifacts](DESKTOP.md); [MCP setup](MCP.md) is separate. This task builds/tests only on hosted CI. The Windows source-build notes below preserve the earlier development workflow and do not authorize a local build in this delivery.
+Version0.4.1 provides hosted native CLI/MCP and Tauri delivery for Windows x64, Linux x64 and macOS Apple Silicon. Use the inspected [desktop/native artifacts](DESKTOP.md); [MCP setup](MCP.md) is separate. This task builds/tests only on hosted CI. The Windows source-build notes below preserve the earlier development workflow and do not authorize a local build in this delivery.
 
 The replacement application is a Rust executable and library. The existing dashboard remains HTML/CSS/JavaScript. Python is not an application prerequisite. Current CI executes native contracts and immutable generated fixtures; historical Python source restoration and its frozen environment are retired.
 

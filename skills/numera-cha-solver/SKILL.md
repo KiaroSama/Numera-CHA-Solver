@@ -6,7 +6,7 @@ license: LicenseRef-Noncommercial-Network-ShareAlike-1.0
 
 # Local recognition and human handoff
 
-## Release integrity (0.4.0)
+## Release integrity (0.4.1)
 
 Before replacing binaries, verify the exact archive's detached RSA/SHA256 signature against the previously pinned project public key and check its version/source manifest. Windows executables/installers carry the owner's self-signed Authenticode identity; macOS packages are not notarized. Self-signed identity establishes continuity, not public publisher trust. A key downloaded only beside an unknown archive is not an independent trust anchor. Stop on missing signatures, changed signers or modified members; preserve the working installation and private state. Signer generation and system trust installation require separate owner authorization. Use the release signing guide for host-specific verification.
 
@@ -14,9 +14,9 @@ Before replacing binaries, verify the exact archive's detached RSA/SHA256 signat
 
 Use the owner's existing **Numera-CHA-Solver-MCP** connection. Discover its live tools before calling them; client prefixes vary. The names below are server tools, not universal host invocation syntax.
 
-The owner installs the native release and starts its selected loopback server separately. The client launches `bin/numera-cha-solver-mcp` (`.exe` on Windows) with exactly `args: ["bridge"]`, `NUMERA_ROOT` set to the absolute installation/state root, and `NUMERA_MCP_PORT` matching the server (default `1583`). The bridge reads that root's protected `data/mcp-token.txt`; never request or print its value. Skill/plugin loading neither installs the binary nor starts the server.
+The owner installs the native release. From0.4.1 the client launches `bin/numera-cha-solver-mcp` (`.exe` on Windows) with exactly `args: ["bridge"]` and `NUMERA_ROOT` set to the absolute installation/state root. This process directly owns the local SDK; no separate HTTP server, port or MCP token is required. EOF closes its owned resources, and no Windows Startup registration is installed. Skill/plugin loading does not install or update native binaries. Explicit `args:["bridge","--remote"]` retains the authenticated selected-loopback relay; only that mode needs a separately running server, matching root/port (default1583) and protected `data/mcp-token.txt`. Never request or print that credential.
 
-Call `capabilities`, `models`, then `doctor` as needed. Catalog presence, GPU inventory and transport success do not establish model execution. The server's device controls recognition; changing bridge-only `NUMERA_DEVICE` does not reconfigure an already-running service. CPU packages need explicit CPU or a separately verified matching CUDA runtime.
+Call `capabilities`, `models`, then `doctor` as needed. Catalog presence, GPU inventory and transport success do not establish model execution. Direct mode uses the client-owned process's `NUMERA_DEVICE`; explicit remote mode uses the separate server's device and cannot reconfigure it through bridge-only environment changes. CPU packages need explicit CPU or a separately verified matching CUDA runtime.
 
 Optional setup references: [MCP setup](https://github.com/KiaroSama/Numera-CHA-Solver/blob/main/docs/MCP.md) and [client guides](https://github.com/KiaroSama/Numera-CHA-Solver/blob/main/plugins/README.md). This skill is self-contained for the workflow below.
 
@@ -48,9 +48,9 @@ Schema/validation errors can appear as protocol errors, error content or `data.c
 
 ## Uncertain outcomes and failures
 
-- `mcp_unavailable`: report unavailable selected server/root/port. The owner starts that instance; do not auto-start another provider, change credentials or switch endpoints.
+- `mcp_stdio_failed`: inspect client startup/root permissions and local logs; do not change providers. With explicit `--remote`, `mcp_unavailable` means the selected server/root/port/credential is unavailable. Do not silently switch modes, auto-start another provider, change credentials or switch endpoints.
 - Missing model: report `models` availability; acquire reviewed weights only with separate owner permission through the native model workflow.
-- `gpu_unavailable` / runtime failure: report matching runtime/provider/dependency requirements. Explicit CUDA must not silently become CPU. Bridge device settings prove no server-side execution.
+- `gpu_unavailable` / runtime failure: report matching runtime/provider/dependency requirements. Explicit CUDA must not silently become CPU. Device configuration alone proves no inference; explicit remote bridge settings do not change the server's device.
 - Lost `create_review` response without ID: report **outcome unknown**; do not repeat the non-idempotent write. With a returned ID, inspect only that identity.
 - Stale/expired/terminal review: report state; a new observation needs a new explicit review request, never reused confirmation.
 

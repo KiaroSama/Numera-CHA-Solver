@@ -37,6 +37,9 @@ use tokio::{
 };
 use tokio_util::sync::CancellationToken;
 
+#[path = "mcp_bridge/direct.rs"]
+mod direct;
+
 type Check<T> = Result<T, String>;
 const IO: Duration = Duration::from_secs(5);
 const EXIT: Duration = Duration::from_secs(8);
@@ -154,9 +157,12 @@ struct BridgeChild {
     messages: usize,
 }
 impl BridgeChild {
-    fn spawn(root: &Path, port: u16) -> Check<Self> {
+    fn spawn(root: &Path, port: u16, remote: bool) -> Check<Self> {
         let mut command = Command::new(env!("CARGO_BIN_EXE_numera-cha-solver-mcp"));
         command.arg("bridge").current_dir(root).env_clear();
+        if remote {
+            command.arg("--remote").env("NUMERA_MCP_TOKEN", TOKEN);
+        }
         for name in [
             "SystemRoot",
             "WINDIR",
@@ -175,7 +181,6 @@ impl BridgeChild {
             .env("TEMP", root)
             .env("TMP", root)
             .env("NUMERA_DEVICE", "cpu")
-            .env("NUMERA_MCP_TOKEN", TOKEN)
             .env("NUMERA_MCP_PORT", port.to_string())
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
@@ -573,7 +578,7 @@ async fn real_stdio_bridge_forwards_errors_cancels_and_reaps() {
             .with_graceful_shutdown(async move { stop.cancelled().await })
             .await
     });
-    let mut child = BridgeChild::spawn(root.path(), port);
+    let mut child = BridgeChild::spawn(root.path(), port, true);
     let result = match &mut child {
         Ok(child) => timeout(
             Duration::from_secs(30),
@@ -631,7 +636,7 @@ async fn bridge_unavailable_service_exits_two_without_protocol_stdout() {
     let reservation = tokio::net::TcpSocket::new_v4().unwrap();
     reservation.bind("127.0.0.1:0".parse().unwrap()).unwrap();
     let mut child =
-        BridgeChild::spawn(root.path(), reservation.local_addr().unwrap().port()).unwrap();
+        BridgeChild::spawn(root.path(), reservation.local_addr().unwrap().port(), true).unwrap();
     let result = timeout(Duration::from_secs(15), async {
         // Keep the captured stdin open: failure must come from unavailable HTTP, not EOF.
         let status = timeout(Duration::from_secs(12), child.child.wait())

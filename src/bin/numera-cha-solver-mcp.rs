@@ -17,7 +17,11 @@ enum Command {
         #[arg(long)]
         port: Option<u16>,
     },
-    Bridge,
+    Bridge {
+        /// Explicitly relay to a separately managed authenticated loopback server.
+        #[arg(long)]
+        remote: bool,
+    },
 }
 #[tokio::main]
 async fn main() {
@@ -25,13 +29,15 @@ async fn main() {
     let result = async {
         let settings = Settings::from_env()?;
         let _log = logging::initialize(&settings.log_dir(), "numera-cha-solver-mcp", false);
-        let environment = std::env::var("NUMERA_MCP_PORT").ok();
-        let port = mcp::port(environment.as_deref())?;
+        let configured_port = || {
+            let environment = std::env::var("NUMERA_MCP_PORT").ok();
+            mcp::port(environment.as_deref())
+        };
         let result = match cli.command {
             Command::Serve {
                 port: override_port,
             } => {
-                let chosen = override_port.unwrap_or(port);
+                let chosen = override_port.map(Ok).unwrap_or_else(configured_port)?;
                 if chosen == 0 {
                     return Err(numera_cha_solver::core::contracts::Error::new(
                         "invalid_config",
@@ -40,7 +46,10 @@ async fn main() {
                 }
                 mcp::transport::serve(settings, chosen).await
             }
-            Command::Bridge => mcp::bridge::run(settings, port).await,
+            Command::Bridge { remote: false } => mcp::local::run(settings).await,
+            Command::Bridge { remote: true } => {
+                mcp::bridge::run(settings, configured_port()?).await
+            }
         };
         logging::event(
             if result.is_ok() { "INFO" } else { "ERROR" },

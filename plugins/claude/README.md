@@ -1,6 +1,6 @@
 # Claude Code and Claude Desktop
 
-Release0.4.0: verify the native package against the pinned owner self-signed key before replacement ([signing guide](../../docs/SIGNING.md)). Instructions and MCP installation are separate; self-signed does not establish public OS trust or notarization. Preserve private state and matching service/device configuration.
+Release0.4.1: verify the native package against the pinned owner self-signed key before replacement ([signing guide](../../docs/SIGNING.md)). Instructions and MCP installation are separate; self-signed does not establish public OS trust or notarization. Preserve private state and matching service/device configuration.
 
 ## Claude Code: instruction plugin
 
@@ -44,7 +44,7 @@ Alternatively, copy the complete `skills/numera-cha-solver/` folder into the pro
 
 ## Separate MCP connection
 
-Install the verified native executable, manually start the selected service and merge the [bridge configuration](../../docs/MCP.md) into the intended client scope. Preserve `Numera-CHA-Solver-MCP`, `args:["bridge"]`, matching root/port and protected credential. No token belongs in public configuration.
+Install the verified0.4.1 native executable and merge the [connection configuration](../../docs/MCP.md) into the intended client scope. Preserve `Numera-CHA-Solver-MCP`, `args:["bridge"]` and the selected root/device. The client owns the local runtime directly; no separate HTTP server or token is required. Explicit `["bridge","--remote"]` retains the separately managed authenticated HTTP relay. No token belongs in public configuration.
 
 This plugin is instruction-only. A bundled MCP server would automatically launch a bridge and Claude scopes its name as `plugin:<plugin>:<server>`, rather than the existing bare identity. No hidden autostart or broad tool allowlist is installed.
 
@@ -54,6 +54,6 @@ This plugin is instruction-only. A bundled MCP server would automatically launch
 
 ## Verify
 
-Discover the selected connection's seven tools. Owned arithmetic `12 * 3 = ?` should suggest `36`, with `server_verified:false`. An absent service must report a blocker, not switch providers. Only requested pending reviews are created; the agent cannot confirm them.
+Discover the selected connection's seven tools. Owned arithmetic `12 * 3 = ?` should suggest `36`, with `server_verified:false`. Default direct mode needs no service; an unavailable explicit remote service remains a blocker, not permission to switch modes or providers. Only requested pending reviews are created; the agent cannot confirm them.
 
 Evidence distinguishes manifest validation, actual skill invocation, MCP operation and permission behavior. This guide does not claim runtime verification on every Claude surface.
