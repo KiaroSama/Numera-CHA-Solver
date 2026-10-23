@@ -408,7 +408,7 @@ impl OCREngine {
             .as_ref()
             .is_none_or(JoinHandle::is_finished)
     }
-    pub async fn close(&self) {
+    pub async fn close(&self) -> bool {
         self.closed.store(true, Ordering::Release);
         let work = self.work.lock().await;
         if let Some(cancel) = &work.cancel {
@@ -431,12 +431,13 @@ impl OCREngine {
                     "worker",
                     "Inference cleanup still draining after shutdown budget.",
                 );
-                return;
+                return false;
             }
         }
         let mut work = self.work.lock().await;
+        let mut clean = true;
         if let Some(job) = work.job.take() {
-            let _ = job.await;
+            clean = job.await.is_ok();
         }
         work.done = None;
         work.cancel = None;
@@ -446,6 +447,8 @@ impl OCREngine {
             && let Err(error) = worker.stop().await
         {
             crate::logging::event("ERROR", "worker", &error.message);
+            clean = false;
         }
+        clean
     }
 }

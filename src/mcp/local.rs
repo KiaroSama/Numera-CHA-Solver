@@ -1,12 +1,57 @@
 use super::tools::Tools;
 use crate::{config::Settings, core::contracts::Error, logging, review::ReviewStore, sdk::Numera};
-use rmcp::{
-    RoleServer, ServiceExt,
-    service::QuitReason,
-    transport::{IntoTransport, stdio},
+use rmcp::{ServiceExt, service::QuitReason, transport::stdio};
+use std::{
+    pin::Pin,
+    sync::{
+        Arc,
+        atomic::{AtomicBool, Ordering},
+    },
+    task::{Context, Poll},
+    time::Duration,
 };
-use std::time::Duration;
-use tokio::time::timeout;
+use tokio::{
+    io::{AsyncRead, AsyncWrite, ReadBuf},
+    time::timeout,
+};
+
+const FRAME_LIMIT: usize = 11_190_000;
+
+// Bound each JSON-RPC line before rmcp allocates/deserializes the full message.
+struct BoundedInput<R> {
+    inner: R,
+    length: usize,
+    rejected: Arc<AtomicBool>,
+}
+impl<R: AsyncRead + Unpin> AsyncRead for BoundedInput<R> {
+    fn poll_read(
+        mut self: Pin<&mut Self>,
+        cx: &mut Context<'_>,
+        buf: &mut ReadBuf<'_>,
+    ) -> Poll<std::io::Result<()>> {
+        let before = buf.filled().len();
+        match Pin::new(&mut self.inner).poll_read(cx, buf) {
+            Poll::Ready(Ok(())) => {
+                for &byte in &buf.filled()[before..] {
+                    if byte == b'\n' {
+                        self.length = 0;
+                    } else {
+                        self.length += 1;
+                        if self.length > FRAME_LIMIT {
+                            self.rejected.store(true, Ordering::Release);
+                            return Poll::Ready(Err(std::io::Error::new(
+                                std::io::ErrorKind::InvalidData,
+                                "MCP frame exceeds its byte limit.",
+                            )));
+                        }
+                    }
+                }
+                Poll::Ready(Ok(()))
+            }
+            other => other,
+        }
+    }
+}
 
 #[cfg(test)]
 #[path = "local_tests.rs"]
@@ -25,11 +70,20 @@ pub async fn run(settings: Settings) -> Result<(), Error> {
     run_transport(tools, stdio()).await
 }
 
-async fn run_transport<T, E, A>(tools: Tools, transport: T) -> Result<(), Error>
+async fn run_transport<R, W>(tools: Tools, (read, write): (R, W)) -> Result<(), Error>
 where
-    T: IntoTransport<RoleServer, E, A>,
-    E: std::error::Error + Send + Sync + 'static,
+    R: AsyncRead + Send + Unpin + 'static,
+    W: AsyncWrite + Send + Unpin + 'static,
 {
+    let rejected = Arc::new(AtomicBool::new(false));
+    let transport = (
+        BoundedInput {
+            inner: read,
+            length: 0,
+            rejected: rejected.clone(),
+        },
+        write,
+    );
     let sdk = tools.sdk.clone();
     logging::event(
         "INFO",
@@ -55,12 +109,11 @@ where
         _ => Err(failure()),
     };
     // Cancellation stops admission before the actual decoder/worker is drained.
-    sdk.close().await;
-    if !sdk.decode_idle() {
+    if !sdk.close().await {
         logging::event(
             "ERROR",
             "mcp-stdio",
-            "Owned decoder did not finish draining.",
+            "Owned decoder or inference worker did not finish draining.",
         );
         return Err(failure());
     }
@@ -69,7 +122,11 @@ where
         "mcp-stdio",
         "Client-owned local MCP resources closed.",
     );
-    result
+    if rejected.load(Ordering::Acquire) {
+        Err(failure())
+    } else {
+        result
+    }
 }
 fn orderly(result: Result<QuitReason, tokio::task::JoinError>) -> Result<(), Error> {
     match result {

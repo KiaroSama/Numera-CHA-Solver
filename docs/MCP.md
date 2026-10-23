@@ -4,7 +4,7 @@ Registration name: **Numera-CHA-Solver-MCP**. Native Rust tools expose licensed 
 
 ## Default: client-owned local execution
 
-From0.4.1, the client starts `bin/numera-cha-solver-mcp.exe bridge` on Windows (`bin/numera-cha-solver-mcp bridge` on Linux/macOS). This process directly uses the shared local SDK. **No separately started HTTP server, port1583 listener or MCP token is required.** Closing the client connection drains the owned runtime. Nothing is installed in Windows Startup, scheduled tasks or system services.
+From0.4.1, the client starts `bin/numera-cha-solver-mcp.exe bridge` on Windows (`bin/numera-cha-solver-mcp bridge` on Linux/macOS). This process directly uses the shared local SDK. **No separately started HTTP server, port1583 listener or MCP token is required.** Closing the client connection drains the owned runtime; incomplete decoder/inference cleanup is reported as failure. Each incoming JSON-RPC line is limited to11,190,000 bytes before deserialization. Nothing is installed in Windows Startup, scheduled tasks or system services.
 
 Merge the following entry into the intended client's configuration, preserving other entries. Replace paths with the actual installation; Windows uses `.exe`:
 

@@ -239,7 +239,7 @@ impl Numera {
             .await
             .map_err(|_| Error::new("internal_error", "Runtime diagnosis failed."))?
     }
-    pub async fn close(&self) {
+    pub async fn close(&self) -> bool {
         self.admission.close();
         let deadline = Instant::now() + Duration::from_secs(5);
         loop {
@@ -266,6 +266,7 @@ impl Numera {
             }
             tokio::task::yield_now().await;
         }
-        self.engine.close().await;
+        let engine_closed = self.engine.close().await;
+        engine_closed && self.decode_idle()
     }
 }

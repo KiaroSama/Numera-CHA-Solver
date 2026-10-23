@@ -114,6 +114,48 @@ async fn direct_cancellation_retains_admission_and_eof_drains_actual_decoder() {
             "inference_busy"
         );
         assert!(!observed.decode_idle());
+        {
+            let (lock, event) = &*gate.0;
+            *lock.lock().unwrap() = true;
+            event.notify_all();
+        }
+        timeout(IO, async {
+            while !observed.decode_idle() {
+                tokio::task::yield_now().await;
+            }
+        })
+        .await
+        .unwrap();
+        send(
+            &mut write,
+            json!({"jsonrpc":"2.0","id":"successor","method":"tools/call","params":{
+            "name":"recognize","arguments":{"kind":"text","text":"7+2"}}}),
+        )
+        .await;
+        assert_eq!(
+            response(&mut read, "successor").await["result"]["structuredContent"]["answer"],
+            "9"
+        );
+        *gate.0.0.lock().unwrap() = false;
+        send(
+            &mut write,
+            json!({"jsonrpc":"2.0","id":"eof-work","method":"tools/call","params":{
+            "name":"recognize","arguments":{"kind":"image","asset_base64":"AQ=="}}}),
+        )
+        .await;
+        timeout(IO, started.recv()).await.unwrap().unwrap();
+        send(&mut write, json!({"jsonrpc":"2.0","method":"notifications/cancelled","params":{"requestId":"eof-work"}})).await;
+        // A response orders cancellation before EOF without timing assumptions.
+        send(
+            &mut write,
+            json!({"jsonrpc":"2.0","id":"eof-busy","method":"tools/call","params":{
+            "name":"recognize","arguments":{"kind":"text","text":"1+2"}}}),
+        )
+        .await;
+        assert_eq!(
+            response(&mut read, "eof-busy").await["result"]["structuredContent"]["error"]["code"],
+            "inference_busy"
+        );
         write.shutdown().await.unwrap();
         // Observe closed admission, not elapsed time, before releasing the actual blocking decoder.
         timeout(IO, async {
@@ -158,6 +200,81 @@ async fn direct_cancellation_retains_admission_and_eof_drains_actual_decoder() {
         "Direct runtime failed orderly drain."
     );
     assert!(sdk.decode_idle());
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn inference_drain_timeout_is_not_success_even_when_decoder_is_idle() {
+    let root = tempfile::tempdir().unwrap();
+    let settings = Settings::new(root.path().into());
+    let gate = Gate(Arc::new((Mutex::new(false), Condvar::new())));
+    let barrier = gate.0.clone();
+    let (entered, mut started) = mpsc::channel(1);
+    let engine = OCREngine::with_runtime(
+        settings.clone(),
+        std::process::Command::new("unused-owned-fixture"),
+        Arc::new(move || {
+            let _ = entered.try_send(());
+            let (lock, event) = &*barrier;
+            let (_guard, _) = event
+                .wait_timeout_while(lock.lock().unwrap(), Duration::from_secs(8), |released| {
+                    !*released
+                })
+                .unwrap();
+            Err(Error::new("invalid_asset", "Owned verifier released."))
+        }),
+    );
+    let sdk = Numera::with_engine(settings, engine.clone());
+    let running = engine.clone();
+    let mut operation = tokio::spawn(async move {
+        running
+            .recognize(
+                b"owned",
+                tokio::time::Instant::now() + Duration::from_secs(10),
+            )
+            .await
+    });
+    let entered = timeout(IO, started.recv()).await;
+    let closed = timeout(Duration::from_secs(6), sdk.close()).await;
+    drop(gate);
+    let finished = timeout(IO, &mut operation).await;
+    if finished.is_err() {
+        operation.abort();
+        let _ = operation.await;
+    }
+    assert!(matches!(entered, Ok(Some(()))), "Verifier did not enter.");
+    assert!(sdk.decode_idle());
+    assert!(
+        !closed.unwrap(),
+        "Retained inference was falsely declared closed."
+    );
+    assert!(finished.unwrap().unwrap().is_err());
+    assert!(timeout(IO, sdk.close()).await.unwrap());
+}
+
+#[tokio::test]
+async fn frames_are_bounded_individually_before_deserialization() {
+    use tokio::io::AsyncReadExt;
+    let rejected = Arc::new(AtomicBool::new(false));
+    let mut input = BoundedInput {
+        inner: &b"abc\ndef\n"[..],
+        length: FRAME_LIMIT - 3,
+        rejected: rejected.clone(),
+    };
+    let mut bytes = Vec::new();
+    input.read_to_end(&mut bytes).await.unwrap();
+    assert_eq!(bytes, b"abc\ndef\n");
+    assert!(!rejected.load(Ordering::Acquire));
+    let mut input = BoundedInput {
+        inner: &b"xx"[..],
+        length: FRAME_LIMIT - 1,
+        rejected: rejected.clone(),
+    };
+    assert_eq!(input.read_u8().await.unwrap(), b'x');
+    assert_eq!(
+        input.read_u8().await.unwrap_err().kind(),
+        std::io::ErrorKind::InvalidData
+    );
+    assert!(rejected.load(Ordering::Acquire));
 }
 
 #[tokio::test]
