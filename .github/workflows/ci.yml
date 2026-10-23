@@ -2,6 +2,10 @@ name: CI
 on:
   workflow_dispatch:
     inputs:
+      mcp_diagnose:
+        description: With diagnose enabled, run only direct MCP startup diagnosis (not release validation)
+        type: boolean
+        default: false
       diagnose:
         description: Focused Linux browser and macOS process-owner diagnosis (not release validation)
         type: boolean
@@ -110,7 +114,14 @@ jobs:
         run: ./scripts/prepare_runtime.ps1 -Platform '${{ matrix.platform }}'
       - name: Focused platform diagnosis without release eligibility
         if: inputs.diagnose
-        run: ./scripts/diagnose_native.ps1 -Platform '${{ matrix.platform }}'
+        run: |
+          if('${{ inputs.mcp_diagnose }}' -eq 'true'){
+            Import-Module ./desktop/ci/Hosted.psm1 -Force
+            Initialize-HostedLog 'direct-mcp-diagnosis'
+            Assert-Exit (Invoke-Hosted cargo @('test','--locked','-p','numera-cha-solver','--test','mcp_bridge','direct::','--jobs','2','--','--test-threads=1','--nocapture') 600 120) 'direct-startup-diagnosis'
+          }else{
+            ./scripts/diagnose_native.ps1 -Platform '${{ matrix.platform }}'
+          }
       - name: Native contracts, desktop, browser and installed packages
         if: ${{ !inputs.diagnose }}
         run: ./scripts/hosted_ci.ps1 -Platform '${{ matrix.platform }}' -Target '${{ matrix.target }}'

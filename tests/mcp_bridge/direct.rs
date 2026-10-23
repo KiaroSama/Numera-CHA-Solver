@@ -128,8 +128,15 @@ async fn direct_clients_need_no_server_or_token_and_reconnect_to_persisted_revie
             Err(error) => failures.push(error),
             _ => {}
         }
-        if let Err(error) = child.stderr().await {
-            failures.push(error);
+        match child.stderr().await {
+            Ok(bytes) if !failures.is_empty() && !bytes.is_empty() => {
+                failures.push(format!(
+                    "Direct child diagnostic: {}",
+                    String::from_utf8_lossy(&bytes)
+                ));
+            }
+            Err(error) => failures.push(error),
+            _ => {}
         }
     }
     if let Some(id) = id {
