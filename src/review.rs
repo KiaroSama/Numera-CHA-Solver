@@ -51,6 +51,21 @@ impl ReviewStore {
         {
             return Err(failure());
         }
+        // Serialize initial WAL/schema setup, not the lifetime of a client. SQLite can
+        // reject concurrent journal-mode changes before invoking its busy handler.
+        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(3);
+        let _initialization = loop {
+            match crate::ownership::Ownership::acquire(&path.with_extension("init.lock")) {
+                Ok(owner) => break owner,
+                Err(error)
+                    if error.code == "ownership_busy" && std::time::Instant::now() < deadline =>
+                {
+                    // Contended OS locks have no portable readiness event.
+                    std::thread::park_timeout(std::time::Duration::from_millis(10));
+                }
+                Err(_) => return Err(failure()),
+            }
+        };
         let connection = Connection::open(path).map_err(|_| failure())?;
         connection
             .busy_timeout(std::time::Duration::from_secs(3))
