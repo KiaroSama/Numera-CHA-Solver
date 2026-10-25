@@ -50,7 +50,7 @@ try {
     [IO.File]::WriteAllText((Join-Path $fixture 'alloc-BSD-3-Clause.txt'),'altered notice',[Text.UTF8Encoding]::new($false))
     Expect-Failure {Get-DependencyFallback $dependency $work} 'notice bytes differ'
     $portable=[IO.File]::ReadAllText((Join-Path $root 'plugin.json'),[Text.Encoding]::UTF8)|ConvertFrom-Json
-    if($portable.'$schema' -cne 'https://agent-plugins.org/schemas/1.0.0/plugin.schema.json' -or $portable.name -cne 'numera-cha-solver' -or $portable.version -cne '0.4.1'){throw 'Portable plugin identity/schema differs.'}
+    if($portable.'$schema' -cne 'https://agent-plugins.org/schemas/1.0.0/plugin.schema.json' -or $portable.name -cne 'numera-cha-solver' -or $portable.version -cne '0.4.2'){throw 'Portable plugin identity/schema differs.'}
     $allowed=@('$schema','name','version','description','author','homepage','repository','license','keywords','extensions')
     if(@($portable.PSObject.Properties.Name|Where-Object {$_ -cnotin $allowed}).Count){throw 'Portable plugin contains an unsupported field.'}
     foreach($relative in @('.claude-plugin/plugin.json','.codex-plugin/plugin.json','.cursor-plugin/plugin.json')){

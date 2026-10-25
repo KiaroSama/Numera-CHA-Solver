@@ -24,7 +24,7 @@ try {
     }
     $distribution=Join-Path $root "target/debug/examples/distribution$suffix"
     function Write-Manifest([string]$Directory,[string]$Kind) {
-        Assert-Exit (Invoke-Hosted $distribution @('manifest','--directory',$Directory,'--platform',$Platform,'--kind',$Kind,'--source',$sha,'--version','0.4.1','--signing','owner-self-signed') 45 20) 'native-package-manifest'
+        Assert-Exit (Invoke-Hosted $distribution @('manifest','--directory',$Directory,'--platform',$Platform,'--kind',$Kind,'--source',$sha,'--version','0.4.2','--signing','owner-self-signed') 45 20) 'native-package-manifest'
     }
     function New-CheckedZip([string]$Directory,[string]$Path) {
         Assert-Exit (Invoke-Hosted $distribution @('archive','--directory',$Directory,'--output',$Path) 90 30) 'native-archive-integrity'
@@ -79,7 +79,7 @@ try {
         foreach($required in @('desktop/src/main.rs','Cargo.lock','run.ps1','plugin.json','.claude-plugin/plugin.json','.claude-plugin/marketplace.json','.codex-plugin/plugin.json','.cursor-plugin/plugin.json','assets/brand/logo.png')){
             if($source -cnotcontains $required){throw 'Matching source archive omits a required public payload.'}
         }
-        $archive=Join-Path $resources "source/numera-cha-0.4.1-source-$sha.zip"
+        $archive=Join-Path $resources "source/numera-cha-0.4.2-source-$sha.zip"
         [IO.Directory]::CreateDirectory((Split-Path -Parent $archive))|Out-Null
         Assert-Exit (Invoke-Hosted git (@('-C',$root,'archive','--format=zip',"--output=$archive",'HEAD','--')+$source) 60 30) 'matching-source-archive'
         Assert-Exit (Invoke-Hosted $distribution @('source','--archive',$archive,'--source',$sha) 45 20) 'native-source-archive-inspection'
@@ -110,7 +110,7 @@ try {
             foreach ($name in @('Common.psm1','NativeProcessOwner.cs','setup.ps1','start.ps1','stop.ps1','update.ps1','doctor.ps1')) { Add-File (Join-Path $PSScriptRoot $name) (Join-Path $stage "scripts/$name") }
         }
         Write-Manifest $stage 'cli-agent'
-        $cliArchive=Join-Path $output "numera-cha-0.4.1-$Platform.zip"
+        $cliArchive=Join-Path $output "numera-cha-0.4.2-$Platform.zip"
         New-CheckedZip $stage $cliArchive
         $desktopStage=Join-Path $root ('.ci-work/desktop-package/'+[guid]::NewGuid().ToString('N'))
         [IO.Directory]::CreateDirectory($desktopStage)|Out-Null
@@ -151,7 +151,7 @@ try {
         foreach ($name in @('LICENSE','THIRD_PARTY_NOTICES.md')) { Add-File (Join-Path $root $name) (Join-Path $desktopStage $name) }
         Add-File (Join-Path $root 'docs/DESKTOP.md') (Join-Path $desktopStage 'DESKTOP.md')
         Write-Manifest $desktopStage 'desktop-installer'
-        New-CheckedZip $desktopStage (Join-Path $output "numera-cha-desktop-0.4.1-$Platform.zip")
+        New-CheckedZip $desktopStage (Join-Path $output "numera-cha-desktop-0.4.2-$Platform.zip")
         $hashes=@(Get-ChildItem -LiteralPath $output -File|ForEach-Object { "$((Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant())  $($_.Name)" })
         [IO.File]::WriteAllLines((Join-Path $output 'SHA256SUMS.txt'),$hashes,[Text.UTF8Encoding]::new($false))
         & (Join-Path $PSScriptRoot 'sign_release.ps1') -Phase Archives -Path $output

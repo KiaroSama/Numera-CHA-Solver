@@ -6,7 +6,7 @@ The CLI/agent packaging includes the project-root `plugin.json`, `.claude-plugin
 
 For clients supporting Agent Skills, copy only `skills/numera-cha-solver/` into that client's documented skill directory with the owner's approval. Clients without native plugin support can use the standalone instruction. Do not overwrite modified client configuration or install these instructions automatically.
 
-MCP installation is separate: extract the verified0.4.1 native archive and merge the [stdio configuration](../docs/MCP.md). The default client-owned process runs directly without a separate server; only explicit `--remote` relays to a manually managed authenticated loopback instance. Claude Desktop, Claude Code, Codex and Cursor examples retain the exact registration name `Numera-CHA-Solver-MCP` and `bridge` argument. Loading the skill alone does not connect the service.
+MCP installation is separate: extract the verified0.4.2 native archive and merge the [stdio configuration](../docs/MCP.md). The default client-owned process runs directly without a separate server; only explicit `--remote` relays to a manually managed authenticated loopback instance. Claude Desktop, Claude Code, Codex and Cursor examples retain the exact registration name `Numera-CHA-Solver-MCP` and `bridge` argument. Loading the skill alone does not connect the service.
 
 | Client surface | Delivered route | Verification boundary |
 |---|---|---|

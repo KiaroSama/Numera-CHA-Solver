@@ -1,6 +1,6 @@
 # Cursor IDE
 
-Release0.4.1: verify the native package against the pinned owner self-signed key before replacement ([signing guide](../../docs/SIGNING.md)). Instructions and MCP installation are separate; self-signed does not establish public OS trust or notarization. Preserve private state and matching service/device configuration.
+Release0.4.2: verify the native package against the pinned owner self-signed key before replacement ([signing guide](../../docs/SIGNING.md)). Instructions and MCP installation are separate; self-signed does not establish public OS trust or notarization. Preserve private state and matching service/device configuration.
 
 ## Local instruction plugin
 
@@ -10,7 +10,7 @@ Root portable metadata and `.cursor-plugin/plugin.json` expose the same canonica
 
 ## MCP connection
 
-Install the verified0.4.1 native package. Default direct mode needs no separately started loopback service. Merge [cursor-mcp.json](../../examples/cursor-mcp.json) into project `.cursor/mcp.json` or the intended user scope. Set non-secret launching environment variables `NUMERA_MCP_COMMAND` (absolute executable), `NUMERA_ROOT` (absolute installation/state root), and `NUMERA_DEVICE` (`cuda` only with verified runtime; otherwise explicit `cpu`). The example uses native `${env:NAME}` interpolation, `args:["bridge"]` and port1583. The direct process uses the selected root/device; port1583 is used only with explicit `--remote`, whose separately managed server must match root/port/device.
+Install the verified0.4.2 native package. Default direct mode needs no separately started loopback service. Merge [cursor-mcp.json](../../examples/cursor-mcp.json) into project `.cursor/mcp.json` or the intended user scope. Set non-secret launching environment variables `NUMERA_MCP_COMMAND` (absolute executable), `NUMERA_ROOT` (absolute installation/state root), and `NUMERA_DEVICE` (`cuda` only with verified runtime; otherwise explicit `cpu`). The example uses native `${env:NAME}` interpolation, `args:["bridge"]` and port1583. The direct process uses the selected root/device; port1583 is used only with explicit `--remote`, whose separately managed server must match root/port/device.
 
 Native plugin MCP supports `${CURSOR_PLUGIN_ROOT}` / `${CLAUDE_PLUGIN_ROOT}`; portable `${PLUGIN_ROOT}` / `${PLUGIN_DATA}` are not currently expanded. Do not add a falsely universal bundled MCP file or hidden autostart. Only explicit remote mode uses the owner's restricted HTTP credential.
 

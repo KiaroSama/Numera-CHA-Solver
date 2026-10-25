@@ -1,6 +1,6 @@
 # Claude Code and Claude Desktop
 
-Release0.4.1: verify the native package against the pinned owner self-signed key before replacement ([signing guide](../../docs/SIGNING.md)). Instructions and MCP installation are separate; self-signed does not establish public OS trust or notarization. Preserve private state and matching service/device configuration.
+Release0.4.2: verify the native package against the pinned owner self-signed key before replacement ([signing guide](../../docs/SIGNING.md)). Instructions and MCP installation are separate; self-signed does not establish public OS trust or notarization. Preserve private state and matching service/device configuration.
 
 ## Claude Code: instruction plugin
 
@@ -44,7 +44,7 @@ Alternatively, copy the complete `skills/numera-cha-solver/` folder into the pro
 
 ## Separate MCP connection
 
-Install the verified0.4.1 native executable and merge the [connection configuration](../../docs/MCP.md) into the intended client scope. Preserve `Numera-CHA-Solver-MCP`, `args:["bridge"]` and the selected root/device. The client owns the local runtime directly; no separate HTTP server or token is required. Explicit `["bridge","--remote"]` retains the separately managed authenticated HTTP relay. No token belongs in public configuration.
+Install the verified0.4.2 native executable and merge the [connection configuration](../../docs/MCP.md) into the intended client scope. Preserve `Numera-CHA-Solver-MCP`, `args:["bridge"]` and the selected root/device. The client owns the local runtime directly; no separate HTTP server or token is required. Explicit `["bridge","--remote"]` retains the separately managed authenticated HTTP relay. No token belongs in public configuration.
 
 This plugin is instruction-only. A bundled MCP server would automatically launch a bridge and Claude scopes its name as `plugin:<plugin>:<server>`, rather than the existing bare identity. No hidden autostart or broad tool allowlist is installed.
 

@@ -10,7 +10,7 @@
       "name": "numera-cha-solver",
       "source": "./",
       "description": "Licensed local recognition and explicit human review; native MCP configuration is separate.",
-      "version": "0.4.1",
+      "version": "0.4.2",
       "license": "LicenseRef-Noncommercial-Network-ShareAlike-1.0"
     }
   ]

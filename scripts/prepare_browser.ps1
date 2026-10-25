@@ -3,7 +3,8 @@ param([Parameter(Mandatory)][ValidateSet('windows-x64','linux-x64','macos-arm64'
 Import-Module (Join-Path $PSScriptRoot '../desktop/ci/Hosted.psm1') -Force
 Initialize-HostedLog 'prepare-browser'
 $root=Get-HostedRoot
-$version='155.0.8059.84'
+# Linux must match the hosted image's sandbox-allowlisted installed Chrome family.
+$version=if($Platform -eq 'linux-x64'){'155.0.8059.84'}else{'156.0.8078.47'}
 $target=@{'windows-x64'='win64';'linux-x64'='linux64';'macos-arm64'='mac-arm64'}[$Platform]
 $directory=Join-Path $root '.ci-work/browser-tools'
 [IO.Directory]::CreateDirectory($directory)|Out-Null

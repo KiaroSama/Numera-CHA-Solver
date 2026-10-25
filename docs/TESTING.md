@@ -4,7 +4,7 @@ Confirmed seams: native SDK/CLI, authenticated HTTP/tasks/review, real model/dev
 
 ## Hosted-only delivery validation
 
-Version0.4.1 is built/tested on GitHub-hosted Windows x64, Ubuntu24.04 x64 and Apple Silicon macOS. Only manual dispatch triggers the native matrix; no local/self-hosted runner is used. Local builds and general suites remain excluded. The later explicit installation request permits only current-host activation and GPU checks that hosted CPU cannot establish. Source formatting/config syntax inspection does not count as execution evidence.
+Version0.4.2 is built/tested on GitHub-hosted Windows x64, Ubuntu24.04 x64 and Apple Silicon macOS. Only manual dispatch triggers the native matrix; no local/self-hosted runner is used. Local builds and general suites remain excluded. The later explicit installation request permits only current-host activation and GPU checks that hosted CPU cannot establish. Source formatting/config syntax inspection does not count as execution evidence.
 
 Each job first checks the portable plugin schema identity/allowed fields, native compatibility manifests and canonical skill payload, then exercises duplicate executable discovery and fail-closed dependency notice selection (unknown version, mismatched license/revision and altered bytes). The discovery placeholders are never executed. Packaging verifies all omitted notice texts and includes unchanged preferred source for every MPL-covered dependency; missing or mismatched catalog entries block delivery.
 

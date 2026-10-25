@@ -14,7 +14,7 @@ use tempfile::TempDir;
 use zip::{ZipArchive, ZipWriter, write::SimpleFileOptions};
 
 const SHA: &str = "0123456789abcdef0123456789abcdef01234567";
-const VERSION: &str = "0.4.1";
+const VERSION: &str = "0.4.2";
 
 fn temporary_directory() -> TempDir {
     let root = Path::new(env!("CARGO_MANIFEST_DIR")).join(".ci-work/distribution-tests");

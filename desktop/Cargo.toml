@@ -1,6 +1,6 @@
 [package]
 name = "numera-cha-desktop"
-version = "0.4.1"
+version = "0.4.2"
 edition = "2024"
 rust-version = "1.99"
 authors = ["KiaroSama <Kiaro.Sama.Dev@gmail.com>"]
@@ -8,13 +8,13 @@ description = "Native desktop shell for the local Numera perception laboratory"
 license-file = "../LICENSE"
 
 [build-dependencies]
-tauri-build = "=2.7.3"
+tauri-build = "=2.7.4"
 
 [dependencies]
 numera-cha-solver = { path = ".." }
 serde = { version = "=1.0.229", features = ["derive"] }
-tauri = "=2.12.4"
-tokio = { version = "=1.53.3", features = ["rt-multi-thread", "net", "io-util", "time"] }
+tauri = "=2.12.5"
+tokio = { version = "=1.54.1", features = ["rt-multi-thread", "net", "io-util", "time"] }
 tokio-util = { version = "=0.7.20", features = ["rt"] }
 
 [dev-dependencies]
